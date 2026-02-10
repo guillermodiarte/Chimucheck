@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  chimuchek-web:
+    container_name: chimuchek-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    # Add other environment variables here if needed
