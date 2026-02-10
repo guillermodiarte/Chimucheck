@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 const PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 
-export async function login(formData: FormData) {
+export async function login(prevState: any, formData: FormData) {
   const password = formData.get("password");
 
   if (password === PASSWORD) {

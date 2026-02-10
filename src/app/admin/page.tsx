@@ -1,8 +1,8 @@
 "use client";
 
 import { login } from "@/app/actions/auth";
+import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { useState } from "react"; // Ensure useState is imported
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -17,16 +17,26 @@ function SubmitButton() {
   );
 }
 
+const initialState = {
+  error: "",
+};
+
 export default function AdminLogin() {
-  // We need to handle the server action response properly.
-  // Since useFormState is newer, we can just wrap the action or use a simpler approach for now.
-  // For simplicity in this demo, I'll use a basic form submission.
+  // Use useActionState to handle the server action result
+  const [state, formAction] = useActionState(login, initialState);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
       <div className="bg-gray-900 p-8 rounded-lg shadow-xl border border-white/10 w-full max-w-md">
         <h1 className="text-2xl font-bold text-white mb-6 text-center">Admin Panel</h1>
-        <form action={login} className="space-y-4">
+
+        {state?.error && (
+          <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded mb-4 text-sm text-center">
+            {state.error}
+          </div>
+        )}
+
+        <form action={formAction} className="space-y-4">
           <div>
             <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="password">
               Contraseña
