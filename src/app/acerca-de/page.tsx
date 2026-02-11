@@ -1,6 +1,8 @@
 import AboutSection from "@/components/AboutSection";
 import { db } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 async function getAboutData() {
   const section = await db.siteSection.findUnique({
     where: { key: "about_us" },

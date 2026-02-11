@@ -13,6 +13,8 @@ async function getData() {
 import { db } from "@/lib/prisma";
 import { Banner, News, Event } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 async function getBanners(): Promise<Banner[]> {
   return await db.banner.findMany({
     where: { active: true },
