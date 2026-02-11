@@ -43,11 +43,11 @@ export function NewsForm({ initialData }: NewsFormProps) {
         <Input
           id="title"
           name="title"
-          defaultValue={state?.payload?.title as string || initialData?.title}
+          defaultValue={payload?.title as string || initialData?.title}
           placeholder="Título de la noticia"
           className="bg-gray-800 border-gray-700 text-white"
         />
-        {state?.errors?.title && <p className="text-red-500 text-sm">{state.errors.title}</p>}
+        {(state as any)?.errors?.title && <p className="text-red-500 text-sm">{(state as any).errors.title}</p>}
       </div>
 
       <div className="space-y-2">
@@ -55,11 +55,11 @@ export function NewsForm({ initialData }: NewsFormProps) {
         <Textarea
           id="content"
           name="content"
-          defaultValue={state?.payload?.content as string || initialData?.content}
+          defaultValue={payload?.content as string || initialData?.content}
           placeholder="Escribe el contenido aquí..."
           className="bg-gray-800 border-gray-700 text-white h-32"
         />
-        {state?.errors?.content && <p className="text-red-500 text-sm">{state.errors.content}</p>}
+        {(state as any)?.errors?.content && <p className="text-red-500 text-sm">{(state as any).errors.content}</p>}
       </div>
 
       <div className="space-y-2">
@@ -110,13 +110,13 @@ export function NewsForm({ initialData }: NewsFormProps) {
           type="checkbox"
           id="published"
           name="published"
-          defaultChecked={state?.payload?.published !== undefined ? state.payload.published : (initialData?.published ?? false)}
+          defaultChecked={payload?.published !== undefined ? payload.published : (initialData?.published ?? false)}
           className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary"
         />
         <Label htmlFor="published" className="text-white cursor-pointer">Publicar inmediatamente</Label>
       </div>
 
-      {state?.message && <p className="text-red-500">{state.message}</p>}
+      {(state as any)?.message && <p className="text-red-500">{(state as any).message}</p>}
 
       <Button type="submit" className="w-full bg-secondary text-black hover:bg-yellow-400">
         {initialData ? "Guardar Cambios" : "Guardar Noticia"}

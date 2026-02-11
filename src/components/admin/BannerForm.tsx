@@ -39,11 +39,11 @@ export function BannerForm({ initialData }: BannerFormProps) {
         <Input
           id="title"
           name="title"
-          defaultValue={state?.payload?.title as string || initialData?.title}
+          defaultValue={payload?.title as string || initialData?.title}
           placeholder="Título del banner"
           className="bg-gray-800 border-gray-700 text-white"
         />
-        {state?.errors?.title && <p className="text-red-500 text-sm">{state.errors.title}</p>}
+        {(state as any)?.errors?.title && <p className="text-red-500 text-sm">{(state as any).errors.title}</p>}
       </div>
 
       <div className="space-y-2">
@@ -51,7 +51,7 @@ export function BannerForm({ initialData }: BannerFormProps) {
         <Input
           id="subtitle"
           name="subtitle"
-          defaultValue={state?.payload?.subtitle as string || initialData?.subtitle || ""}
+          defaultValue={payload?.subtitle as string || initialData?.subtitle || ""}
           placeholder="Texto descriptivo"
           className="bg-gray-800 border-gray-700 text-white"
         />
@@ -62,7 +62,7 @@ export function BannerForm({ initialData }: BannerFormProps) {
         <Input
           id="link"
           name="link"
-          defaultValue={state?.payload?.link as string || initialData?.link || ""}
+          defaultValue={payload?.link as string || initialData?.link || ""}
           placeholder="/novedades/mi-noticia"
           className="bg-gray-800 border-gray-700 text-white"
         />
@@ -113,7 +113,7 @@ export function BannerForm({ initialData }: BannerFormProps) {
         </div>
 
         {!imageUrl && <p className="text-yellow-500 text-xs mt-1">Debes subir una imagen o video antes de crear el banner.</p>}
-        {state?.errors?.imageUrl && <p className="text-red-500 text-sm">{state.errors.imageUrl}</p>}
+        {(state as any)?.errors?.imageUrl && <p className="text-red-500 text-sm">{(state as any).errors.imageUrl}</p>}
       </div>
 
       <div className="flex gap-4">
@@ -122,7 +122,7 @@ export function BannerForm({ initialData }: BannerFormProps) {
             type="checkbox"
             id="active"
             name="active"
-            defaultChecked={state?.payload?.active !== undefined ? state.payload.active : (initialData?.active ?? true)}
+            defaultChecked={payload?.active !== undefined ? payload.active : (initialData?.active ?? true)}
             className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary"
           />
           <Label htmlFor="active" className="text-white cursor-pointer">Activo</Label>
@@ -134,13 +134,13 @@ export function BannerForm({ initialData }: BannerFormProps) {
             type="number"
             id="order"
             name="order"
-            defaultValue={(state?.payload?.order as string) || initialData?.order || "0"}
+            defaultValue={(payload?.order as string) || initialData?.order || "0"}
             className="w-20 bg-gray-800 border-gray-700 text-white"
           />
         </div>
       </div>
 
-      {state?.message && <p className="text-red-500">{state.message}</p>}
+      {(state as any)?.message && <p className="text-red-500">{(state as any).message}</p>}
 
       <Button
         type="submit"
