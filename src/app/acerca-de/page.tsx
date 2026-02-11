@@ -1,20 +1,19 @@
-"use client";
-
-import { useEffect } from "react";
 import AboutSection from "@/components/AboutSection";
+import { db } from "@/lib/prisma";
 
-export default function AboutPage() {
-  useEffect(() => {
-    // Force scroll to top on mount with a slight delay to ensure layout is ready
-    // This fixes the issue when navigating from a hash URL (like #news)
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-    }, 0);
-  }, []);
+async function getAboutData() {
+  const section = await db.siteSection.findUnique({
+    where: { key: "about_us" },
+  });
+  return section?.content || null;
+}
+
+export default async function AboutPage() {
+  const aboutData = await getAboutData();
 
   return (
     <div className="pt-14 bg-black min-h-screen">
-      <AboutSection />
+      <AboutSection initialData={aboutData} />
     </div>
   );
 }

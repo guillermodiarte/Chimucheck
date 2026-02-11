@@ -4,7 +4,10 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const session = request.cookies.get("admin_session");
 
-  if (!session && request.nextUrl.pathname.startsWith("/admin/dashboard")) {
+  const isLoginPage = request.nextUrl.pathname === "/admin";
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+
+  if (isAdminRoute && !isLoginPage && !session) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 

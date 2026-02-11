@@ -4,28 +4,36 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+// import { Banner } from "@prisma/client";
 
-type Slide = {
+interface Banner {
   id: string;
-  type: "image" | "video";
-  src: string;
   title: string;
-  subtitle: string;
-};
+  subtitle: string | null;
+  imageUrl: string;
+  link: string | null;
+  active: boolean;
+  order: number;
+}
 
-import contentData from "@/data/content.json";
+interface HeroCarouselProps {
+  slides: Banner[];
+}
 
-const slides = contentData.hero.slides;
-
-export default function HeroCarousel() {
+export default function HeroCarousel({ slides }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0);
+
+  // If no slides, allow infinite loading or fallback
+  if (!slides || slides.length === 0) {
+    return <div className="h-screen bg-black flex items-center justify-center text-white">No banners available</div>;
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length);
     }, 8000); // 8 seconds per slide
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
   const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
@@ -41,9 +49,9 @@ export default function HeroCarousel() {
           transition={{ duration: 0.8 }}
           className="absolute inset-0"
         >
-          {slides[current].type === "video" ? (
+          {slides[current].imageUrl.endsWith(".mp4") || slides[current].imageUrl.endsWith(".webm") ? (
             <video
-              src={slides[current].src}
+              src={slides[current].imageUrl}
               autoPlay
               muted
               loop
@@ -53,7 +61,7 @@ export default function HeroCarousel() {
           ) : (
             <div className="relative w-full h-full">
               <Image
-                src={slides[current].src}
+                src={slides[current].imageUrl}
                 alt={slides[current].title}
                 fill
                 className="object-cover opacity-60"
@@ -75,15 +83,17 @@ export default function HeroCarousel() {
         >
           {slides[current].title}
         </motion.h1>
-        <motion.p
-          key={`sub-${current}`}
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-xl md:text-3xl font-medium text-white tracking-widest uppercase border-b-2 border-primary pb-2"
-        >
-          {slides[current].subtitle}
-        </motion.p>
+        {slides[current].subtitle && (
+          <motion.p
+            key={`sub-${current}`}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            className="text-xl md:text-3xl font-medium text-white tracking-widest uppercase border-b-2 border-primary pb-2"
+          >
+            {slides[current].subtitle}
+          </motion.p>
+        )}
       </div>
 
       {/* Navigation Buttons */}

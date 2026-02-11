@@ -38,6 +38,19 @@ export default function AdminLogin() {
 
         <form action={formAction} className="space-y-4">
           <div>
+            <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="email">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              className="w-full bg-gray-800 text-white border border-gray-700 rounded py-2 px-3 focus:outline-none focus:border-secondary transition-colors"
+              placeholder="admin@chimuchek.com"
+              required
+            />
+          </div>
+          <div>
             <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="password">
               Contraseña
             </label>

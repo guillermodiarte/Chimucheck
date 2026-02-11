@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: chimu_db_dev
+    restart: always
+    environment:
+      POSTGRES_USER: chimu_user
+      POSTGRES_PASSWORD: chimupassword
+      POSTGRES_DB: chimuchek_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data_dev:/var/lib/postgresql/data
+
+volumes:
+  db_data_dev:

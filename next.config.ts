@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "cdn.instagram.com", // covering bases
+      },
+      {
+        protocol: "https",
+        hostname: "utfs.io",
       }
     ],
   },
