@@ -29,8 +29,9 @@ export function EventForm({ initialData }: EventFormProps) {
   const [state, formAction] = useActionState(updateAction as any, { message: "", errors: {}, payload: null });
 
   // Sync state payload with local state
-  if (state?.payload?.imageUrl && state.payload.imageUrl !== imageUrl && !imageUrl) {
-    setImageUrl(state.payload.imageUrl);
+  const payload = (state as any)?.payload;
+  if (payload?.imageUrl && payload.imageUrl !== imageUrl && !imageUrl) {
+    setImageUrl(payload.imageUrl);
   }
 
   // Helper to format date for input (YYYY-MM-DDTHH:mm)
