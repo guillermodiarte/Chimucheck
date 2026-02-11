@@ -32,7 +32,7 @@ export async function login(prevState: any, formData: FormData) {
     const cookieStore = await cookies();
     cookieStore.set("admin_session", "true", { // In a real app, sign a JWT with user info
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
     });
