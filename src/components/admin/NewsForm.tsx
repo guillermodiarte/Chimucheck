@@ -1,32 +1,63 @@
 "use client";
 
 import { useActionState } from "react";
-import { createNews } from "@/app/actions/news";
+import { updateNews, createNews } from "@/app/actions/news";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadButton } from "@/lib/uploadthing";
+import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation"; // Added router for explicit redirect if needed
+import { useRouter } from "next/navigation";
 
-export function NewsForm() {
-  const [imageUrl, setImageUrl] = useState("");
-  const [state, formAction] = useActionState(createNews, null);
+interface NewsFormProps {
+  initialData?: {
+    id: string;
+    title: string;
+    content: string;
+    imageUrl: string | null;
+    published: boolean;
+    date: Date;
+  } | null;
+}
+
+export function NewsForm({ initialData }: NewsFormProps) {
+  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
+  const updateAction = initialData ? updateNews.bind(null, initialData.id) : createNews;
+
+  // Define the state type explicitly to avoid TS errors
+  const [state, formAction] = useActionState(updateAction as any, { message: "", errors: {}, payload: null });
   const router = useRouter();
+
+  // Sync state payload with local state if error occurred and we have a payload
+  if (state?.payload?.imageUrl && state.payload.imageUrl !== imageUrl && !imageUrl) {
+    setImageUrl(state.payload.imageUrl);
+  }
 
   return (
     <form action={formAction} className="space-y-6 bg-gray-900 p-6 rounded-lg border border-gray-800">
       <div className="space-y-2">
         <Label htmlFor="title" className="text-white">Título</Label>
-        <Input id="title" name="title" placeholder="Título de la noticia" className="bg-gray-800 border-gray-700 text-white" />
+        <Input
+          id="title"
+          name="title"
+          defaultValue={state?.payload?.title as string || initialData?.title}
+          placeholder="Título de la noticia"
+          className="bg-gray-800 border-gray-700 text-white"
+        />
         {state?.errors?.title && <p className="text-red-500 text-sm">{state.errors.title}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="content" className="text-white">Contenido</Label>
-        <Textarea id="content" name="content" placeholder="Escribe el contenido aquí..." className="bg-gray-800 border-gray-700 text-white h-32" />
+        <Textarea
+          id="content"
+          name="content"
+          defaultValue={state?.payload?.content as string || initialData?.content}
+          placeholder="Escribe el contenido aquí..."
+          className="bg-gray-800 border-gray-700 text-white h-32"
+        />
         {state?.errors?.content && <p className="text-red-500 text-sm">{state.errors.content}</p>}
       </div>
 
@@ -48,20 +79,12 @@ export function NewsForm() {
           ) : (
             <div className="text-gray-500 text-sm italic">Sin imagen seleccionada</div>
           )}
-          <UploadButton
-            endpoint="imageUploader"
-            onClientUploadComplete={(res) => {
-              if (res && res[0]) {
-                setImageUrl(res[0].url);
-                toast.success("Imagen subida correctamente");
-              }
+          <LocalImageUpload
+            onUploadComplete={(url) => {
+              setImageUrl(url);
             }}
-            onUploadError={(error: Error) => {
-              toast.error(`Error al subir: ${error.message}`);
-            }}
-            appearance={{
-              button: "bg-secondary text-black hover:bg-yellow-400 after:bg-yellow-500",
-              allowedContent: "text-gray-400"
+            onUploadError={(error) => {
+              toast.error(`Error al subir: ${error}`);
             }}
           />
           <input type="hidden" name="imageUrl" value={imageUrl} />
@@ -82,14 +105,20 @@ export function NewsForm() {
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="published" name="published" className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary" />
+        <input
+          type="checkbox"
+          id="published"
+          name="published"
+          defaultChecked={state?.payload?.published !== undefined ? state.payload.published : (initialData?.published ?? false)}
+          className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary"
+        />
         <Label htmlFor="published" className="text-white cursor-pointer">Publicar inmediatamente</Label>
       </div>
 
       {state?.message && <p className="text-red-500">{state.message}</p>}
 
       <Button type="submit" className="w-full bg-secondary text-black hover:bg-yellow-400">
-        Guardar Noticia
+        {initialData ? "Guardar Cambios" : "Guardar Noticia"}
       </Button>
     </form>
   );

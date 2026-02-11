@@ -50,6 +50,65 @@ export async function createNews(prevState: any, formData: FormData) {
   redirect("/admin/news");
 }
 
+export async function updateNews(id: string, prevState: any, formData: FormData) {
+  const validatedFields = NewsSchema.safeParse({
+    title: formData.get("title"),
+    content: formData.get("content"),
+    imageUrl: formData.get("imageUrl"),
+    published: formData.get("published") === "on",
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Error en los campos del formulario",
+      payload: {
+        title: formData.get("title") as string,
+        content: formData.get("content") as string,
+        imageUrl: formData.get("imageUrl") as string,
+        published: formData.get("published") === "on",
+      }
+    };
+  }
+
+  const { title, content, imageUrl, published } = validatedFields.data;
+  // Don't update slug to preserve SEO URLs
+
+  try {
+    await db.news.update({
+      where: { id },
+      data: {
+        title,
+        content,
+        imageUrl: imageUrl || null,
+        published: published || false,
+      },
+    });
+  } catch (error) {
+    return {
+      message: "Error de base de datos: No se pudo actualizar la noticia.",
+      payload: {
+        title, content, imageUrl, published
+      }
+    };
+  }
+
+  revalidatePath("/admin/news");
+  redirect("/admin/news");
+}
+
+export async function toggleNewsStatus(id: string, currentStatus: boolean) {
+  try {
+    await db.news.update({
+      where: { id },
+      data: { published: !currentStatus },
+    });
+    revalidatePath("/admin/news");
+  } catch (error) {
+    console.error("Error al cambiar estado de la noticia.", error);
+  }
+}
+
 export async function deleteNews(id: string) {
   try {
     await db.news.delete({

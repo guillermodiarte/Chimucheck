@@ -3,6 +3,7 @@
 import { login } from "@/app/actions/auth";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { PasswordInput } from "@/components/ui/password-input";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -54,8 +55,7 @@ export default function AdminLogin() {
             <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="password">
               Contraseña
             </label>
-            <input
-              type="password"
+            <PasswordInput
               name="password"
               id="password"
               className="w-full bg-gray-800 text-white border border-gray-700 rounded py-2 px-3 focus:outline-none focus:border-secondary transition-colors"

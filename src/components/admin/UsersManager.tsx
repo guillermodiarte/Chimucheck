@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Power } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -21,7 +22,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { createUser, updateUser, deleteUser } from "@/app/actions/users";
+import { createUser, updateUser, deleteUser, toggleUserStatus } from "@/app/actions/users";
 import { toast } from "sonner";
 
 interface User {
@@ -30,6 +31,7 @@ interface User {
   email: string;
   role: string;
   createdAt: Date;
+  active?: boolean;
 }
 
 export default function UsersManager({ initialUsers }: { initialUsers: User[] }) {
@@ -92,7 +94,7 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
-                <Input id="password" name="password" type="password" required className="bg-gray-800 border-gray-700" />
+                <PasswordInput id="password" name="password" required className="bg-gray-800 border-gray-700" />
               </div>
               <DialogFooter>
                 <Button type="submit" className="bg-primary text-black hover:bg-yellow-400">Guardar</Button>
@@ -118,16 +120,30 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
                 <TableCell className="font-medium text-white">{user.name}</TableCell>
                 <TableCell className="text-gray-300">{user.email}</TableCell>
                 <TableCell>
+                  <span className={`px-2 py-1 rounded text-xs font-semibold ${user.active !== false
+                    ? "bg-green-900/30 text-green-400 border border-green-900"
+                    : "bg-gray-800 text-gray-400 border border-gray-700"
+                    }`}
+                  >
+                    {user.active !== false ? "Activo" : "Inactivo"}
+                  </span>
+                </TableCell>
+                <TableCell>
                   <span className="px-2 py-1 rounded-full text-xs font-bold bg-primary/20 text-primary border border-primary/20">
                     {user.role}
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <form action={() => toggleUserStatus(user.id, user.active !== false)}>
+                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title={user.active !== false ? "Desactivar" : "Activar"}>
+                        <Power className={`w-4 h-4 ${user.active !== false ? "text-green-500" : "text-gray-500"}`} />
+                      </Button>
+                    </form>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-gray-400 hover:text-white"
+                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
                       onClick={() => setEditingUser(user)}
                     >
                       <Pencil className="w-4 h-4" />
@@ -135,7 +151,7 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                       onClick={() => handleDelete(user.id)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -180,10 +196,9 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-password">Nueva Contraseña (Opcional)</Label>
-                <Input
+                <PasswordInput
                   id="edit-password"
                   name="password"
-                  type="password"
                   className="bg-gray-800 border-gray-700"
                   placeholder="Dejar vacía para mantener la actual"
                 />

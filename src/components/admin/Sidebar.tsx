@@ -59,7 +59,7 @@ export function Sidebar() {
           Chimuchek Admin
         </h2>
       </div>
-      <nav className="flex-1 px-4 space-y-2">
+      <nav className="px-4 space-y-2 overflow-y-auto">
         {sidebarData.map((item) => (
           <Link
             key={item.href}
@@ -76,9 +76,10 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4 mt-4 border-t border-gray-800">
         <form action={logout}>
           <Button
+            type="submit"
             variant="ghost"
             className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-900/20"
           >

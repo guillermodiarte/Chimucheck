@@ -8,9 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { Power, Trash2, Plus, Edit } from "lucide-react";
 import Link from "next/link";
-import { deleteNews } from "@/app/actions/news";
+import { deleteNews, toggleNewsStatus } from "@/app/actions/news";
 
 export default async function NewsPage() {
   const news = await db.news.findMany({
@@ -49,7 +49,7 @@ export default async function NewsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              news.map((item) => (
+              news.map((item: any) => (
                 <TableRow key={item.id} className="border-gray-800 hover:bg-gray-900/50">
                   <TableCell className="font-medium text-white">{item.title}</TableCell>
                   <TableCell className="text-gray-400">
@@ -58,8 +58,8 @@ export default async function NewsPage() {
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${item.published
-                          ? "bg-green-900/30 text-green-400 border border-green-900"
-                          : "bg-yellow-900/30 text-yellow-400 border border-yellow-900"
+                        ? "bg-green-900/30 text-green-400 border border-green-900"
+                        : "bg-gray-800 text-gray-400 border border-gray-700"
                         }`}
                     >
                       {item.published ? "Publicada" : "Borrador"}
@@ -67,9 +67,16 @@ export default async function NewsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <form action={toggleNewsStatus.bind(null, item.id, item.published)}>
+                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title={item.published ? "Desactivar" : "Activar"}>
+                          <Power className={`w-4 h-4 ${item.published ? "text-green-500" : "text-gray-500"}`} />
+                        </Button>
+                      </form>
+                      <Link href={`/admin/news/${item.id}`}>
+                        <Button variant="ghost" size="icon" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20" title="Editar">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                        </Button>
+                      </Link>
                       <form action={deleteNews.bind(null, item.id)}>
                         <Button
                           variant="ghost"

@@ -50,7 +50,7 @@ export default async function BannersPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              banners.map((item) => (
+              banners.map((item: any) => (
                 <TableRow key={item.id} className="border-gray-800 hover:bg-gray-900/50">
                   <TableCell>
                     <img src={item.imageUrl} alt={item.title} className="w-16 h-10 object-cover rounded" />
@@ -60,8 +60,8 @@ export default async function BannersPage() {
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${item.active
-                          ? "bg-green-900/30 text-green-400 border border-green-900"
-                          : "bg-gray-800 text-gray-400 border border-gray-700"
+                        ? "bg-green-900/30 text-green-400 border border-green-900"
+                        : "bg-gray-800 text-gray-400 border border-gray-700"
                         }`}
                     >
                       {item.active ? "Activo" : "Inactivo"}
@@ -74,6 +74,11 @@ export default async function BannersPage() {
                           <Power className={`w-4 h-4 ${item.active ? "text-green-500" : "text-gray-500"}`} />
                         </Button>
                       </form>
+                      <Link href={`/admin/banners/${item.id}`}>
+                        <Button variant="ghost" size="icon" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20" title="Editar">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                        </Button>
+                      </Link>
                       <form action={deleteBanner.bind(null, item.id)}>
                         <Button
                           variant="ghost"

@@ -8,26 +8,31 @@ import { z } from "zod";
 const BannerSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   subtitle: z.string().optional(),
-  imageUrl: z.string().url("URL de imagen inválida"),
+  imageUrl: z.string().refine((val) => val.startsWith("/uploads/") || z.string().url().safeParse(val).success, {
+    message: "URL de imagen inválida (debe ser una URL válida o una ruta local)"
+  }),
   link: z.string().optional(),
   active: z.boolean().optional(),
   order: z.coerce.number().optional(),
 });
 
 export async function createBanner(prevState: any, formData: FormData) {
-  const validatedFields = BannerSchema.safeParse({
-    title: formData.get("title"),
-    subtitle: formData.get("subtitle"),
-    imageUrl: formData.get("imageUrl"),
-    link: formData.get("link"),
+  const rawData = {
+    title: formData.get("title") as string,
+    subtitle: formData.get("subtitle") as string,
+    imageUrl: formData.get("imageUrl") as string,
+    link: formData.get("link") as string,
     active: formData.get("active") === "on",
     order: formData.get("order"),
-  });
+  };
+
+  const validatedFields = BannerSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Error en los campos del formulario",
+      payload: rawData, // Return data to repopulate form
     };
   }
 
@@ -41,12 +46,58 @@ export async function createBanner(prevState: any, formData: FormData) {
         imageUrl,
         link,
         active: active || true,
-        order: order || 0,
+        order: Number(order) || 0,
       },
     });
   } catch (error) {
     return {
       message: "Error de base de datos: No se pudo crear el banner.",
+      payload: rawData,
+    };
+  }
+
+  revalidatePath("/admin/banners");
+  redirect("/admin/banners");
+}
+
+export async function updateBanner(id: string, prevState: any, formData: FormData) {
+  const rawData = {
+    title: formData.get("title") as string,
+    subtitle: formData.get("subtitle") as string,
+    imageUrl: formData.get("imageUrl") as string,
+    link: formData.get("link") as string,
+    active: formData.get("active") === "on",
+    order: formData.get("order"),
+  };
+
+  const validatedFields = BannerSchema.safeParse(rawData);
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Error en los campos del formulario",
+      payload: rawData,
+    };
+  }
+
+  const { title, subtitle, imageUrl, link, active, order } = validatedFields.data;
+
+  try {
+    await db.banner.update({
+      where: { id },
+      data: {
+        title,
+        subtitle,
+        imageUrl,
+        link,
+        active,
+        order: Number(order) || 0,
+      },
+    });
+  } catch (error) {
+    return {
+      message: "Error de base de datos: No se pudo actualizar el banner.",
+      payload: rawData,
     };
   }
 
