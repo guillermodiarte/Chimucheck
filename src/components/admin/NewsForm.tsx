@@ -31,8 +31,9 @@ export function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
 
   // Sync state payload with local state if error occurred and we have a payload
-  if (state?.payload?.imageUrl && state.payload.imageUrl !== imageUrl && !imageUrl) {
-    setImageUrl(state.payload.imageUrl);
+  const payload = (state as any)?.payload;
+  if (payload?.imageUrl && payload.imageUrl !== imageUrl && !imageUrl) {
+    setImageUrl(payload.imageUrl);
   }
 
   return (
