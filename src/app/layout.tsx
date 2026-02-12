@@ -35,13 +35,14 @@ export default async function RootLayout({
     // Fallback or null
   }
   const logoUrl = (homeSection?.content as any)?.logoUrl;
+  const logoText = (homeSection?.content as any)?.logoText;
 
   return (
     <html lang="es" className="scroll-smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <Navbar logoUrl={logoUrl} />
+        <Navbar logoUrl={logoUrl} logoText={logoText} />
         <main className="flex-grow">
           {children}
         </main>

@@ -18,8 +18,8 @@ export function LocalImageUpload({ onUploadComplete, onUploadError }: LocalImage
     if (!file) return;
 
     // Client-side validation
-    if (file.size > 64 * 1024 * 1024) { // 64MB limit
-      toast.error("El archivo es demasiado grande (Máx 64MB)");
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast.error("El archivo es demasiado grande (Máx 5MB)");
       return;
     }
 
@@ -80,7 +80,7 @@ export function LocalImageUpload({ onUploadComplete, onUploadError }: LocalImage
           disabled={isUploading}
         />
       </Button>
-      <p className="text-xs text-gray-400">Máx: 64MB (Imágenes/Videos)</p>
+      <p className="text-xs text-gray-400">Máx: 5MB (Imágenes/Videos)</p>
     </div>
   );
 }

@@ -10,12 +10,17 @@ interface AboutData {
   bio?: string;
   location?: string;
   role?: string;
-  image?: string;
+  headlinePart1?: string;
+  headlinePart2?: string;
   imageUrl?: string;
+  image?: string;
   stats?: {
     followers?: string;
+    followersLabel?: string;
     tournaments?: string;
+    tournamentsLabel?: string;
     uptime?: string;
+    uptimeLabel?: string;
   };
 }
 
@@ -75,7 +80,7 @@ export default function AboutSection({ initialData }: { initialData: any }) {
             </div>
 
             <h2 className="text-5xl md:text-6xl font-black text-white mb-8 leading-tight">
-              PASIÓN POR <br /> <span className="text-primary">EL GAMING</span>
+              {data.headlinePart1 || "PASIÓN POR"} <br /> <span className="text-primary">{data.headlinePart2 || "EL GAMING"}</span>
             </h2>
 
             <div className="space-y-6 text-lg text-gray-300 leading-relaxed font-light">
@@ -87,15 +92,15 @@ export default function AboutSection({ initialData }: { initialData: any }) {
             <div className="mt-12 pt-8 border-t border-white/10 flex gap-12">
               <div>
                 <span className="block text-4xl font-black text-white">{data.stats?.followers || "10K+"}</span>
-                <span className="text-sm text-gray-500 uppercase tracking-wider">Seguidores</span>
+                <span className="text-sm text-gray-500 uppercase tracking-wider">{data.stats?.followersLabel || "SEGUIDORES"}</span>
               </div>
               <div>
                 <span className="block text-4xl font-black text-white">{data.stats?.tournaments || "50+"}</span>
-                <span className="text-sm text-gray-500 uppercase tracking-wider">Torneos</span>
+                <span className="text-sm text-gray-500 uppercase tracking-wider">{data.stats?.tournamentsLabel || "TORNEOS"}</span>
               </div>
               <div>
                 <span className="block text-4xl font-black text-white">{data.stats?.uptime || "24/7"}</span>
-                <span className="text-sm text-gray-500 uppercase tracking-wider">Diversión</span>
+                <span className="text-sm text-gray-500 uppercase tracking-wider">{data.stats?.uptimeLabel || "DIVERSIÓN"}</span>
               </div>
             </div>
           </motion.div>

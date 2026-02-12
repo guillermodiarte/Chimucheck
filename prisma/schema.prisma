@@ -62,3 +62,15 @@ model SiteSection {
   content     Json     // Flexible structure for different sections
   updatedAt   DateTime @updatedAt
 }
+
+model Prize {
+  id          String   @id @default(uuid())
+  title       String
+  price       String
+  description String
+  images      Json     // Array of image URLs
+  active      Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

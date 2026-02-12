@@ -16,6 +16,12 @@ export default async function SectionsPage() {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const homeData = (homeSection?.content as any) || {};
 
+  // Fetch Prizes Data
+  const prizes = await db.prize.findMany({ orderBy: { order: "asc" } });
+  const prizesSection = await db.siteSection.findUnique({ where: { key: "prizes_section" } });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const prizesConfig = (prizesSection?.content as any) || {};
+
   const aboutContent = {
     title: aboutData.title || "Nuestra Historia",
     bio: aboutData.bio || "",
@@ -24,7 +30,8 @@ export default async function SectionsPage() {
   };
 
   const homeContent = {
-    logoUrl: homeData.logoUrl || "/images/logo5.png", // Default logo
+    logoUrl: homeData.logoUrl || "/images/logo5.png",
+    logoText: homeData.logoText || "",
   };
 
   return (
@@ -34,7 +41,11 @@ export default async function SectionsPage() {
         <p className="text-gray-400">Selecciona una sección para editar su contenido.</p>
       </div>
 
-      <SectionsDashboard homeContent={homeContent} aboutContent={aboutContent} />
+      <SectionsDashboard
+        homeContent={homeContent}
+        aboutContent={aboutContent}
+        prizesData={{ initialPrizes: prizes, initialConfig: prizesConfig }}
+      />
     </div>
   );
 }

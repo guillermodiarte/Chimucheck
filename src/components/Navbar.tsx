@@ -7,7 +7,7 @@ import { Menu, X, Instagram, Youtube, Twitch, Monitor } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 
-export default function Navbar({ logoUrl }: { logoUrl?: string }) {
+export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoText?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -25,15 +25,21 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
         <div className="flex items-center justify-between h-auto py-2">
           <div className="flex items-center">
 
-            <Link href="/" className="flex items-center gap-2" onClick={handleHomeClick}>
-              <Image
-                src={logoUrl || "/images/logo5.png"}
-                alt="ChimuCheck Logo"
-                width={120}
-                height={60}
-                className="object-contain"
-                priority
-              />
+            <Link href="/" className="flex items-center gap-3" onClick={handleHomeClick}>
+              <div className="relative h-12 w-auto aspect-[2/1]">
+                <Image
+                  src={logoUrl || "/images/logo5.png"}
+                  alt="ChimuCheck Logo"
+                  fill
+                  className="object-contain object-left"
+                  priority
+                />
+              </div>
+              {logoText && (
+                <span className="text-white font-bold text-xl tracking-wider uppercase hidden sm:block">
+                  {logoText}
+                </span>
+              )}
             </Link>
           </div>
           <div className="hidden md:block">

@@ -140,6 +140,89 @@ async function main() {
     console.log('About section seeded.')
   }
 
+  // Seed Prizes
+  const initialPrizes = [
+    {
+      title: "Taza Chimucheck (Varias Skins)",
+      price: "7 ChimuCoins",
+      description: "Tu café o bebida energética nunca se vio tan bien.",
+      images: [
+        "/images/prizes/premio-1.jpg",
+        "/images/prizes/premio-2.jpg",
+        "/images/prizes/premio-3.jpg",
+        "/images/prizes/premio-4.jpg"
+      ],
+      order: 1
+    },
+    {
+      title: "Gorra Oficial",
+      price: "7 ChimuCoins",
+      description: "Lleva el estilo de ChimuCheck a donde vayas.",
+      images: ["/images/prizes/premio-5.jpg"],
+      order: 2
+    },
+    {
+      title: "Remera Exclusiva",
+      price: "15 ChimuCoins",
+      description: "Vístete como un pro. Calidad premium y diseño único.",
+      images: [
+        "/images/prizes/premio-6.jpg",
+        "/images/prizes/premio-7.jpg",
+        "/images/prizes/premio-8.jpg",
+        "/images/prizes/premio-9.jpg"
+      ],
+      order: 3
+    },
+    {
+      title: "Almohadón Chimucheck",
+      price: "20 ChimuCoins",
+      description: "Comodidad máxima para esas largas sesiones de juego.",
+      images: ["/images/prizes/premio-10.jpg"],
+      order: 4
+    },
+    {
+      title: "Caja Misteriosa",
+      price: "25 ChimuCoins",
+      description: "¿Te atreves? Un premio sorpresa de alto valor.",
+      images: ["/images/prizes/premio-incognita.jpg"],
+      order: 5
+    }
+  ];
+
+  for (const prize of initialPrizes) {
+    const existing = await prisma.prize.findFirst({ where: { title: prize.title } });
+    if (!existing) {
+      await prisma.prize.create({
+        data: prize
+      });
+    }
+  }
+  console.log("Prizes seeded.");
+
+  // Seed Prizes Page Section
+  await prisma.siteSection.upsert({
+    where: { key: "prizes_section" },
+    update: {},
+    create: {
+      key: "prizes_section",
+      content: {
+        headerTitle: "PREMIOS EXCLUSIVOS",
+        headerSubtitle: "Tu esfuerzo tiene recompensa. Canjea tus ChimuCoins por el mejor equipamiento.",
+        infoTitle: "ACUMULA. GANA. RECLAMA.",
+        infoDescription: "Cada torneo, cada victoria y cada participación te otorga ChimuCoins. Úsalas sabiamente para desbloquear premios físicos reales. No es solo un juego, es tu recompensa por ser el mejor.",
+        infoImage: "/images/prizes/premio-info-v2.jpg",
+        comboImage: "/images/prizes/premio-combo.jpg",
+        steps: [
+          { title: "Paso 1", description: "Juega Torneos" },
+          { title: "Paso 2", description: "Gana ChimuCoins" },
+          { title: "Paso 3", description: "Elige tu Premio" },
+          { title: "Paso 4", description: "Canjealos en el Torneo" }
+        ]
+      }
+    }
+  });
+  console.log("Prizes section seeded.");
+
   console.log('Seeding finished.')
 }
 

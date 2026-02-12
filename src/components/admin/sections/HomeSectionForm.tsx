@@ -31,40 +31,62 @@ export function HomeSectionForm({ initialContent }: { initialContent: any }) {
         <h3 className="text-xl font-semibold text-white">Editar "Inicio" (Configuración General)</h3>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-white">Logo de la Página (Navbar)</Label>
-        <div className="flex items-center gap-4">
-          {content.logoUrl ? (
-            <div className="relative group">
-              <img src={content.logoUrl} alt="Preview" className="h-12 object-contain bg-black/50 p-1 rounded border border-gray-700" />
-              <button
-                type="button"
-                onClick={() => setContent({ ...content, logoUrl: "" })}
-                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Eliminar imagen"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-              </button>
+      <div className="space-y-4">
+        <Label className="text-white">Logo y Texto del Navbar</Label>
+        <div className="flex items-center gap-6 bg-black/30 p-4 rounded-xl border border-gray-800">
+
+          {/* Logo Image */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Imagen</span>
+            <div className="relative group w-48 h-32 flex items-center justify-center bg-black/50 rounded-lg border border-gray-700 overflow-hidden">
+              {content.logoUrl ? (
+                <>
+                  <img src={content.logoUrl} alt="Preview" className="w-full h-full object-contain p-4 transition-opacity group-hover:opacity-50" />
+
+                  {/* Overlay for upload */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
+                    <LocalImageUpload
+                      onUploadComplete={(url) => setContent({ ...content, logoUrl: url })}
+                      onUploadError={(error) => toast.error(`Error al subir: ${error}`)}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setContent({ ...content, logoUrl: "" })
+                      }}
+                      className="mt-2 text-red-400 hover:text-red-300 text-xs flex items-center gap-1 bg-red-900/20 px-2 py-1 rounded border border-red-900/50 hover:bg-red-900/40 transition-colors"
+                      title="Eliminar imagen"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                      Eliminar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center w-full h-full p-4">
+                  <LocalImageUpload
+                    onUploadComplete={(url) => setContent({ ...content, logoUrl: url })}
+                    onUploadError={(error) => toast.error(`Error al subir: ${error}`)}
+                  />
+                  <span className="text-gray-500 text-xs mt-2">Subir Logo</span>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-gray-500 text-sm italic">Sin logo seleccionado</div>
-          )}
-          <LocalImageUpload
-            onUploadComplete={(url) => {
-              setContent({ ...content, logoUrl: url });
-            }}
-            onUploadError={(error) => {
-              toast.error(`Error al subir: ${error}`);
-            }}
-          />
-        </div>
-        <div className="pt-2">
-          <Input
-            placeholder="https://ejemplo.com/logo.png"
-            className="bg-gray-800 border-gray-700 text-white mt-1 text-sm"
-            value={content.logoUrl || ""}
-            onChange={(e) => setContent({ ...content, logoUrl: e.target.value })}
-          />
+          </div>
+
+          {/* Logo Text */}
+          <div className="flex-1 space-y-2">
+            <Label className="text-gray-400 text-xs uppercase font-bold tracking-wider">Texto del Logo (Opcional)</Label>
+            <Input
+              placeholder="Ej: CHIMUCHECK"
+              className="bg-gray-800 border-gray-700 text-white h-12 text-lg font-bold"
+              value={content.logoText || ""}
+              onChange={(e) => setContent({ ...content, logoText: e.target.value })}
+            />
+            <p className="text-xs text-gray-500">Este texto aparecerá a la derecha del logo en la barra de navegación.</p>
+          </div>
+
         </div>
       </div>
 

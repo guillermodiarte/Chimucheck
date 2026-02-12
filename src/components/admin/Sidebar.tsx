@@ -13,6 +13,7 @@ import {
   LogOut,
   Image as ImageIcon,
   Library,
+  Gift,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -41,6 +42,11 @@ const sidebarData = [
     title: "Secciones",
     href: "/admin/sections",
     icon: Library,
+  },
+  {
+    title: "Premios",
+    href: "/admin/prizes",
+    icon: Gift,
   },
   {
     title: "Configuración",
