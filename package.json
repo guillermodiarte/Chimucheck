@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && mkdir -p .next/standalone/.next && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
-    "start": "npx prisma migrate deploy && node prisma/seed.js && node .next/standalone/server.js",
+    "start": "chmod +x start.sh && ./start.sh",
     "lint": "eslint"
   },
   "engines": {
