@@ -29,9 +29,22 @@ COPY . .
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  if [ -f yarn.lock ]; then \
+  export DATABASE_URL="file:./build.db" && \
+  npx prisma generate && \
+  npx prisma migrate deploy && \
+  yarn run build; \
+  elif [ -f package-lock.json ]; then \
+  export DATABASE_URL="file:./build.db" && \
+  npx prisma generate && \
+  npx prisma migrate deploy && \
+  npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then \
+  corepack enable pnpm && \
+  export DATABASE_URL="file:./build.db" && \
+  npx prisma generate && \
+  npx prisma migrate deploy && \
+  pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
