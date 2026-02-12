@@ -47,7 +47,7 @@ export default function AdminLogin() {
               name="email"
               id="email"
               className="w-full bg-gray-800 text-white border border-gray-700 rounded py-2 px-3 focus:outline-none focus:border-secondary transition-colors"
-              placeholder="admin@chimuchek.com"
+              placeholder="admin@chimucheck.com"
               required
             />
           </div>

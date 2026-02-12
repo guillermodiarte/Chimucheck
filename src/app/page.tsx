@@ -32,7 +32,7 @@ async function getNews(): Promise<News[]> {
 
 async function getEvents(): Promise<Event[]> {
   return await db.event.findMany({
-    where: { date: { gte: new Date() } },
+    where: { date: { gte: new Date() }, active: true },
     orderBy: { date: "asc" },
     take: 3,
   });
@@ -41,8 +41,15 @@ async function getEvents(): Promise<Event[]> {
 export default async function Home() {
   const data = await getData(); // Still needed for static texts like hero subtitle
   const banners = await getBanners();
-  const news = await getNews();
-  const events = await getEvents();
+
+  const newsSection = await db.siteSection.findUnique({ where: { key: "news_section" } });
+  const showNews = (newsSection?.content as any)?.enabled ?? true;
+
+  const eventsSection = await db.siteSection.findUnique({ where: { key: "events_section" } });
+  const showEvents = (eventsSection?.content as any)?.enabled ?? true;
+
+  const news = showNews ? await getNews() : [];
+  const events = showEvents ? await getEvents() : [];
 
   return (
     <div className="bg-black text-white">
@@ -72,39 +79,41 @@ export default async function Home() {
 
 
       {/* News Section */}
-      <section id="news" className="py-24 px-4 max-w-7xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
-          <span className="text-primary">Últimas</span> Novedades
-        </h2>
+      {showNews && (
+        <section id="news" className="py-24 px-4 max-w-7xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
+            <span className="text-primary">Últimas</span> Novedades
+          </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {news.map((item) => (
-            <div
-              key={item.id}
-              className="bg-gray-900/50 rounded-2xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all hover:transform hover:-translate-y-2 group"
-            >
-              <div className="aspect-video relative overflow-hidden">
-                {item.imageUrl && (
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {news.map((item) => (
+              <div
+                key={item.id}
+                className="bg-gray-900/50 rounded-2xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all hover:transform hover:-translate-y-2 group"
+              >
+                <div className="aspect-video relative overflow-hidden">
+                  {item.imageUrl && (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  )}
+                </div>
+                <div className="p-6">
+                  <div className="text-secondary text-sm font-bold mb-2">{new Date(item.date).toLocaleDateString()}</div>
+                  <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
+                  <p className="text-gray-400 text-sm line-clamp-3">{item.content}</p>
+                </div>
               </div>
-              <div className="p-6">
-                <div className="text-secondary text-sm font-bold mb-2">{new Date(item.date).toLocaleDateString()}</div>
-                <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
-                <p className="text-gray-400 text-sm line-clamp-3">{item.content}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Events Section */}
-      {events.length > 0 && (
+      {showEvents && events.length > 0 && (
         <section id="events" className="py-24 px-4 max-w-7xl mx-auto bg-gray-900/20">
           <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
             Próximos <span className="text-secondary">Eventos</span>

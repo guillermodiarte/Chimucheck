@@ -81,7 +81,7 @@ const initialEvents = [
 const initialAboutData = {
   title: "Dario Ruiz",
   bio: "Apasionado por los videojuegos y la creación de contenido. Fundé ChimuCheck para conectar a gamers de todo el mundo y premiar su pasión.",
-  instagram: "chimuchek"
+  instagram: "chimucheck"
 }
 
 async function main() {
@@ -90,10 +90,10 @@ async function main() {
   // Seed Admin User
   const password = await hash('admin123', 12)
   const user = await prisma.user.upsert({
-    where: { email: 'admin@chimuchek.com' },
+    where: { email: 'admin@chimucheck.com' },
     update: {},
     create: {
-      email: 'admin@chimuchek.com',
+      email: 'admin@chimucheck.com',
       name: 'Admin',
       password, // Hashed password
       role: 'ADMIN'

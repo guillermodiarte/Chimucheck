@@ -9,7 +9,7 @@ import { useState } from "react";
 const prizeGroups = [
   {
     id: "mugs",
-    title: "Taza Chimuchek (Varias Skins)",
+    title: "Taza Chimucheck (Varias Skins)",
     price: "7 ChimuCoins",
     description: "Tu café o bebida energética nunca se vio tan bien.",
     images: [
@@ -40,7 +40,7 @@ const prizeGroups = [
   },
   {
     id: "cushion",
-    title: "Almohadón Chimuchek",
+    title: "Almohadón Chimucheck",
     price: "20 ChimuCoins",
     description: "Comodidad máxima para esas largas sesiones de juego.",
     images: ["/images/prizes/premio-10.jpg"]
@@ -65,7 +65,7 @@ export default function PrizesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white pt-24 pb-20 px-4">
+    <div className="min-h-screen bg-black text-white pt-28 pb-20 px-4">
       <div className="max-w-7xl mx-auto space-y-24">
 
         {/* Header Title */}

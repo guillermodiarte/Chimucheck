@@ -7,7 +7,7 @@ import { Menu, X, Instagram, Youtube, Twitch, Monitor } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 
-export default function Navbar() {
+export default function Navbar({ logoUrl }: { logoUrl?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -20,14 +20,14 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-black border-b border-white/10">
+    <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-auto py-2">
           <div className="flex items-center">
 
             <Link href="/" className="flex items-center gap-2" onClick={handleHomeClick}>
               <Image
-                src="/images/logo5.png"
+                src={logoUrl || "/images/logo5.png"}
                 alt="ChimuCheck Logo"
                 width={120}
                 height={60}
@@ -53,7 +53,7 @@ export default function Navbar() {
                 Premios
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
               </Link>
-              <Link
+              {/* <Link
                 href="#news"
                 className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
                 onClick={(e) => {
@@ -67,7 +67,7 @@ export default function Navbar() {
               >
                 Novedades
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
-              </Link>
+              </Link> */}
               <Link
                 href="/acerca-de"
                 className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
@@ -126,7 +126,7 @@ export default function Navbar() {
               >
                 Premios
               </Link>
-              <Link
+              {/* <Link
                 href="#news"
                 className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
                 onClick={(e) => {
@@ -140,7 +140,7 @@ export default function Navbar() {
                 }}
               >
                 Novedades
-              </Link>
+              </Link> */}
               <Link
                 href="/acerca-de"
                 className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"

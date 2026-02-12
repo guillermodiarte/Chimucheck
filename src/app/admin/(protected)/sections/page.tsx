@@ -1,5 +1,5 @@
 import { db } from "@/lib/prisma";
-import { AboutSectionForm } from "@/components/admin/sections/AboutSectionForm";
+import { SectionsDashboard } from "@/components/admin/sections/SectionsDashboard";
 
 export default async function SectionsPage() {
   // Fetch existing content or default to null
@@ -7,19 +7,34 @@ export default async function SectionsPage() {
     where: { key: "about_us" },
   });
 
-  const aboutContent = aboutSection?.content || { title: "Nuestra Historia", bio: "", instagram: "chimuchek" };
+  const homeSection = await db.siteSection.findUnique({
+    where: { key: "home_section" },
+  });
+
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const aboutData = (aboutSection?.content as any) || {};
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const homeData = (homeSection?.content as any) || {};
+
+  const aboutContent = {
+    title: aboutData.title || "Nuestra Historia",
+    bio: aboutData.bio || "",
+    instagram: aboutData.instagram || "chimucheck",
+    imageUrl: aboutData.imageUrl || aboutData.image || "/images/about/dario.jpg", // Default image
+  };
+
+  const homeContent = {
+    logoUrl: homeData.logoUrl || "/images/logo5.png", // Default logo
+  };
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Editor de Secciones</h1>
-        <p className="text-gray-400">Edita los textos estáticos del sitio web.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Panel de Secciones</h1>
+        <p className="text-gray-400">Selecciona una sección para editar su contenido.</p>
       </div>
 
-      <div className="grid gap-8 max-w-2xl">
-        <AboutSectionForm initialContent={aboutContent} />
-        {/* Future: Add Contact Form Editor, Footer Editor, etc. */}
-      </div>
+      <SectionsDashboard homeContent={homeContent} aboutContent={aboutContent} />
     </div>
   );
 }

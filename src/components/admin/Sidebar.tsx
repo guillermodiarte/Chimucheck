@@ -56,7 +56,7 @@ export function Sidebar() {
     <div className="flex flex-col h-full bg-gray-900 text-white w-64 border-r border-gray-800">
       <div className="p-6">
         <h2 className="text-xl font-bold tracking-tight text-secondary">
-          Chimuchek Admin
+          Chimucheck Admin
         </h2>
       </div>
       <nav className="px-4 space-y-2 overflow-y-auto">

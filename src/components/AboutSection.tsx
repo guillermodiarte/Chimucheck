@@ -11,6 +11,7 @@ interface AboutData {
   location?: string;
   role?: string;
   image?: string;
+  imageUrl?: string;
   stats?: {
     followers?: string;
     tournaments?: string;
@@ -42,7 +43,7 @@ export default function AboutSection({ initialData }: { initialData: any }) {
           >
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
               <Image
-                src={data.image || "/images/about/dario.jpg"}
+                src={data.imageUrl || data.image || "/images/about/dario.jpg"}
                 alt={data.title || "Dario Ruiz"}
                 fill
                 className="object-cover"

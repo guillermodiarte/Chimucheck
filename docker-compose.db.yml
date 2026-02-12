@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: chimu_user
       POSTGRES_PASSWORD: chimupassword
-      POSTGRES_DB: chimuchek_db
+      POSTGRES_DB: chimucheck_db
     ports:
       - "5432:5432"
     volumes:

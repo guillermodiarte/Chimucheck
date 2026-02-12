@@ -10,7 +10,8 @@ const EventSchema = z.object({
   description: z.string().optional(),
   date: z.coerce.date(),
   location: z.string().optional(),
-  imageUrl: z.string().url("URL de imagen inválida").optional().or(z.literal("")),
+  imageUrl: z.string().optional().or(z.literal("")),
+  active: z.boolean().optional(),
 });
 
 export async function createEvent(prevState: any, formData: FormData) {
@@ -20,6 +21,7 @@ export async function createEvent(prevState: any, formData: FormData) {
     date: formData.get("date"),
     location: formData.get("location"),
     imageUrl: formData.get("imageUrl"),
+    active: formData.get("active") === "on",
   });
 
   if (!validatedFields.success) {
@@ -29,7 +31,7 @@ export async function createEvent(prevState: any, formData: FormData) {
     };
   }
 
-  const { name, description, date, location, imageUrl } = validatedFields.data;
+  const { name, description, date, location, imageUrl, active } = validatedFields.data;
 
   try {
     await db.event.create({
@@ -39,6 +41,7 @@ export async function createEvent(prevState: any, formData: FormData) {
         date,
         location,
         imageUrl: imageUrl || null,
+        active: active || false,
       },
     });
   } catch (error) {
@@ -58,6 +61,7 @@ export async function updateEvent(id: string, prevState: any, formData: FormData
     date: formData.get("date"),
     location: formData.get("location"),
     imageUrl: formData.get("imageUrl"),
+    active: formData.get("active") === "on",
   });
 
   if (!validatedFields.success) {
@@ -70,11 +74,12 @@ export async function updateEvent(id: string, prevState: any, formData: FormData
         date: formData.get("date") as string,
         location: formData.get("location") as string,
         imageUrl: formData.get("imageUrl") as string,
+        active: formData.get("active") === "on",
       }
     };
   }
 
-  const { name, description, date, location, imageUrl } = validatedFields.data;
+  const { name, description, date, location, imageUrl, active } = validatedFields.data;
 
   try {
     await db.event.update({
@@ -85,13 +90,14 @@ export async function updateEvent(id: string, prevState: any, formData: FormData
         date,
         location,
         imageUrl: imageUrl || null,
+        active: active || false,
       },
     });
   } catch (error) {
     return {
       message: "Error de base de datos: No se pudo actualizar el evento.",
       payload: {
-        name, description, date: date.toString(), location, imageUrl
+        name, description, date: date.toString(), location, imageUrl, active
       }
     };
   }

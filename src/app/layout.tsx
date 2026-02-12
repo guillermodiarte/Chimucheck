@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { db } from "@/lib/prisma";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,18 +20,23 @@ export const metadata: Metadata = {
   description: "Web oficial de ChimuCheck - Gaming, Noticias y Diversión",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const homeSection = await db.siteSection.findUnique({
+    where: { key: "home_section" },
+  });
+  const logoUrl = (homeSection?.content as any)?.logoUrl;
+
   return (
     <html lang="es" className="scroll-smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <Navbar />
-        <main className="flex-grow pt-16">
+        <Navbar logoUrl={logoUrl} />
+        <main className="flex-grow">
           {children}
         </main>
         <Footer />

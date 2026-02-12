@@ -18,6 +18,7 @@ interface EventFormProps {
     date: Date;
     location: string | null;
     imageUrl: string | null;
+    active: boolean;
   } | null;
 }
 
@@ -131,6 +132,17 @@ export function EventForm({ initialData }: EventFormProps) {
         </div>
 
         {!imageUrl && <p className="text-yellow-500 text-xs mt-1">Se recomienda subir una imagen para el evento.</p>}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="active"
+          name="active"
+          defaultChecked={payload?.active !== undefined ? payload.active : (initialData?.active ?? true)}
+          className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary"
+        />
+        <Label htmlFor="active" className="text-white cursor-pointer">Evento Activo</Label>
       </div>
 
       {(state as any)?.message && <p className="text-red-500">{(state as any).message}</p>}

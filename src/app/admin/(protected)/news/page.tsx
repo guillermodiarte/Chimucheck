@@ -11,11 +11,15 @@ import {
 import { Power, Trash2, Plus, Edit } from "lucide-react";
 import Link from "next/link";
 import { deleteNews, toggleNewsStatus } from "@/app/actions/news";
+import { SectionToggle } from "@/components/admin/SectionToggle";
 
 export default async function NewsPage() {
   const news = await db.news.findMany({
     orderBy: { date: "desc" },
   });
+
+  const section = await db.siteSection.findUnique({ where: { key: "news_section" } });
+  const isEnabled = (section?.content as any)?.enabled ?? true;
 
   return (
     <div className="space-y-6">
@@ -24,11 +28,14 @@ export default async function NewsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Novedades</h1>
           <p className="text-gray-400">Gestiona las noticias y artículos del blog.</p>
         </div>
-        <Link href="/admin/news/create">
-          <Button className="bg-secondary text-black hover:bg-yellow-400 gap-2">
-            <Plus className="w-4 h-4" /> Nueva Noticia
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <SectionToggle sectionKey="news_section" initialEnabled={isEnabled} label="Mostrar Secc." />
+          <Link href="/admin/news/create">
+            <Button className="bg-secondary text-black hover:bg-yellow-400 gap-2">
+              <Plus className="w-4 h-4" /> Nueva Noticia
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="border border-gray-800 rounded-lg overflow-hidden">

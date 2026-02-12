@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  chimuchek-web:
-    container_name: chimuchek-web
+  chimucheck-web:
+    container_name: chimucheck-web
     build:
       context: .
       dockerfile: Dockerfile

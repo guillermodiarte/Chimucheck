@@ -26,7 +26,7 @@ export async function exportDatabase() {
     return {
       success: true,
       data: JSON.stringify(backupData, null, 2),
-      filename: `backup-chimuchek-${new Date().toISOString().split("T")[0]}.json`,
+      filename: `backup-chimucheck-${new Date().toISOString().split("T")[0]}.json`,
     };
   } catch (error) {
     console.error("Error exporting database:", error);
@@ -44,7 +44,7 @@ export async function importDatabase(jsonContent: string) {
 
     const { banners, news, events, siteSections, users } = parsed.data;
 
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx: any) => {
       // 1. Clean existing data (Risk: Deleting all data!)
       // We delete dependent data first if there were relations, but here models are mostly independent.
       await tx.banner.deleteMany();

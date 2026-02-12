@@ -8,7 +8,7 @@ import { z } from "zod";
 const NewsSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   content: z.string().min(10, "El contenido debe tener al menos 10 caracteres"),
-  imageUrl: z.string().url("URL de imagen inválida").optional().or(z.literal("")),
+  imageUrl: z.string().optional().or(z.literal("")),
   published: z.boolean().optional(),
 });
 
