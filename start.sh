@@ -17,5 +17,18 @@ if [ -f "prisma/seed.js" ]; then
 fi
 
 # Start the application
+# Start the application
 echo "Starting application..."
-exec node server.js
+
+# Find server.js (handles cases where it's nested in standalone/project-name)
+SERVER_JS=$(find . -type f -name "server.js" | head -n 1)
+
+if [ -z "$SERVER_JS" ]; then
+    echo "ERROR: server.js not found in $(pwd)"
+    echo "Listing directory contents:"
+    ls -R
+    exit 1
+fi
+
+echo "Found server.js at: $SERVER_JS"
+exec node "$SERVER_JS"
