@@ -25,9 +25,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const homeSection = await db.siteSection.findUnique({
-    where: { key: "home_section" },
-  });
+  let homeSection;
+  try {
+    homeSection = await db.siteSection.findUnique({
+      where: { key: "home_section" },
+    });
+  } catch (error) {
+    console.error("Failed to load home section:", error);
+    // Fallback or null
+  }
   const logoUrl = (homeSection?.content as any)?.logoUrl;
 
   return (
