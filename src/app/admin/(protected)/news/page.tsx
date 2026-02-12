@@ -38,7 +38,8 @@ export default async function NewsPage() {
         </div>
       </div>
 
-      <div className="border border-gray-800 rounded-lg overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block border border-gray-800 rounded-lg overflow-hidden">
         <Table>
           <TableHeader className="bg-gray-900">
             <TableRow className="border-gray-800 hover:bg-gray-900">
@@ -101,6 +102,61 @@ export default async function NewsPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {news.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 border border-gray-800 rounded-lg">
+            No hay noticias creadas.
+          </div>
+        ) : (
+          news.map((item: any) => (
+            <div key={item.id} className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-4">
+              <div className="space-y-2">
+                <h3 className="font-bold text-white text-lg">{item.title}</h3>
+                <div className="flex flex-wrap gap-2 items-center text-sm">
+                  <span className="text-gray-400">{new Date(item.date).toLocaleDateString()}</span>
+                  <span className="text-gray-600">•</span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-xs font-semibold ${item.published
+                      ? "bg-green-900/30 text-green-400 border border-green-900"
+                      : "bg-gray-800 text-gray-400 border border-gray-700"
+                      }`}
+                  >
+                    {item.published ? "Publicada" : "Borrador"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-gray-700/50 pt-3">
+                <form action={toggleNewsStatus.bind(null, item.id, item.published)}>
+                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700">
+                    <Power className={`w-4 h-4 mr-2 ${item.published ? "text-green-500" : "text-gray-500"}`} />
+                    {item.published ? "Desactivar" : "Activar"}
+                  </Button>
+                </form>
+                <Link href={`/admin/news/${item.id}`}>
+                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-700 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                </Link>
+                <form action={deleteNews.bind(null, item.id)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="submit"
+                    className="bg-gray-800 border-gray-700 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </Button>
+                </form>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -69,7 +69,7 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
           <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30">MODO EDICIÓN</span>
         </div>
 
-        <div className="max-w-7xl mx-auto space-y-24 py-12 px-4">
+        <div className="max-w-7xl mx-auto space-y-12 md:space-y-24 py-8 md:py-12 px-2 md:px-4">
 
           {/* Header Title */}
           <div className="text-center">
@@ -80,22 +80,21 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
               <Input
                 value={config.headerTitle}
                 onChange={(e) => handleChange("headerTitle", e.target.value)}
-                className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-secondary text-center border-none p-0 h-auto focus:ring-0 placeholder:text-gray-700"
-                style={{ WebkitTextFillColor: 'initial', color: 'white' }} // Override gradient for editing visibility if needed, or keep input simple
+                className="text-4xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-secondary text-center border-none p-0 h-auto focus:ring-0 placeholder:text-gray-700 w-full"
+                style={{ WebkitTextFillColor: 'initial', color: 'white' }}
               />
-              {/* Note: Gradient text input is tricky. Let's use standard white text for input but styled largely */}
             </div>
             <div className="max-w-3xl mx-auto">
               <Textarea
                 value={config.headerSubtitle}
                 onChange={(e) => handleChange("headerSubtitle", e.target.value)}
-                className="text-xl text-gray-400 text-center bg-transparent border-none p-0 resize-none h-[80px] focus:ring-0"
+                className="text-base md:text-xl text-gray-400 text-center bg-transparent border-none p-0 resize-none h-[100px] md:h-[80px] focus:ring-0"
               />
             </div>
           </div>
 
           {/* Info Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
 
             {/* Image Side - Info */}
             <div className="relative aspect-square md:aspect-video lg:aspect-auto lg:h-full w-full rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] bg-gray-900 group">
@@ -133,12 +132,12 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
                 <Input
                   value={config.infoTitle}
                   onChange={(e) => handleChange("infoTitle", e.target.value)}
-                  className="text-4xl md:text-5xl font-black text-white leading-none whitespace-pre-line bg-transparent border-none p-0 h-auto focus:ring-0 uppercase placeholder:text-gray-700"
+                  className="text-3xl md:text-5xl font-black text-white leading-none whitespace-pre-line bg-transparent border-none p-0 h-auto focus:ring-0 uppercase placeholder:text-gray-700 w-full"
                 />
                 <Textarea
                   value={config.infoDescription}
                   onChange={(e) => handleChange("infoDescription", e.target.value)}
-                  className="text-lg text-gray-400 leading-relaxed bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 h-[150px] resize-none focus:ring-0"
+                  className="text-base md:text-lg text-gray-400 leading-relaxed bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 h-[180px] md:h-[150px] resize-none focus:ring-0"
                 />
               </div>
 

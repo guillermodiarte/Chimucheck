@@ -59,6 +59,13 @@ export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoTe
                 Premios
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
               </Link>
+              <Link
+                href="/torneos"
+                className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
+              >
+                Torneos
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+              </Link>
               {/* <Link
                 href="#news"
                 className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
@@ -131,6 +138,13 @@ export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoTe
                 onClick={() => setIsOpen(false)}
               >
                 Premios
+              </Link>
+              <Link
+                href="/torneos"
+                className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Torneos
               </Link>
               {/* <Link
                 href="#news"

@@ -127,8 +127,8 @@ export default function BackupManager() {
               />
               <label htmlFor="file-upload">
                 <Button
-                  variant="outline"
-                  className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer"
+                  variant="secondary"
+                  className="w-full cursor-pointer hover:bg-yellow-400 text-black"
                   asChild
                 >
                   <span>

@@ -38,7 +38,8 @@ export default async function EventsPage() {
         </div>
       </div>
 
-      <div className="border border-gray-800 rounded-lg overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block border border-gray-800 rounded-lg overflow-hidden">
         <Table>
           <TableHeader className="bg-gray-900">
             <TableRow className="border-gray-800 hover:bg-gray-900">
@@ -103,6 +104,73 @@ export default async function EventsPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {events.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 border border-gray-800 rounded-lg">
+            No hay eventos programados.
+          </div>
+        ) : (
+          events.map((item: any) => (
+            <div key={item.id} className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-4">
+              <div className="space-y-2">
+                <h3 className="font-bold text-white text-lg">{item.name}</h3>
+
+                <div className="flex flex-col gap-1 text-sm text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                    {new Date(item.date).toLocaleString()}
+                  </div>
+                  {item.location && (
+                    <div className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                      {item.location}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-1">
+                  <span
+                    className={`px-2 py-0.5 rounded text-xs font-semibold ${item.active
+                      ? "bg-green-900/30 text-green-400 border border-green-900"
+                      : "bg-gray-800 text-gray-400 border border-gray-700"
+                      }`}
+                  >
+                    {item.active ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-gray-700/50 pt-3">
+                <form action={toggleEventStatus.bind(null, item.id, item.active)}>
+                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700">
+                    <Power className={`w-4 h-4 mr-2 ${item.active ? "text-green-500" : "text-gray-500"}`} />
+                    {item.active ? "Desactivar" : "Activar"}
+                  </Button>
+                </form>
+                <Link href={`/admin/events/${item.id}`}>
+                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-700 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                    Editar
+                  </Button>
+                </Link>
+                <form action={deleteEvent.bind(null, item.id)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="submit"
+                    className="bg-gray-800 border-gray-700 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </Button>
+                </form>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

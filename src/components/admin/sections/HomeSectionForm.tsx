@@ -33,12 +33,12 @@ export function HomeSectionForm({ initialContent }: { initialContent: any }) {
 
       <div className="space-y-4">
         <Label className="text-white">Logo y Texto del Navbar</Label>
-        <div className="flex items-center gap-6 bg-black/30 p-4 rounded-xl border border-gray-800">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6 bg-black/30 p-4 rounded-xl border border-gray-800">
 
           {/* Logo Image */}
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 w-full md:w-auto">
             <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Imagen</span>
-            <div className="relative group w-48 h-32 flex items-center justify-center bg-black/50 rounded-lg border border-gray-700 overflow-hidden">
+            <div className="relative group w-full md:w-48 h-32 flex items-center justify-center bg-black/50 rounded-lg border border-gray-700 overflow-hidden">
               {content.logoUrl ? (
                 <>
                   <img src={content.logoUrl} alt="Preview" className="w-full h-full object-contain p-4 transition-opacity group-hover:opacity-50" />
@@ -76,11 +76,11 @@ export function HomeSectionForm({ initialContent }: { initialContent: any }) {
           </div>
 
           {/* Logo Text */}
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-2 w-full">
             <Label className="text-gray-400 text-xs uppercase font-bold tracking-wider">Texto del Logo (Opcional)</Label>
             <Input
               placeholder="Ej: CHIMUCHECK"
-              className="bg-gray-800 border-gray-700 text-white h-12 text-lg font-bold"
+              className="bg-gray-800 border-gray-700 text-white h-12 text-lg font-bold w-full"
               value={content.logoText || ""}
               onChange={(e) => setContent({ ...content, logoText: e.target.value })}
             />

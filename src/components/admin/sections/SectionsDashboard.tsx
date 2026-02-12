@@ -83,19 +83,19 @@ export function SectionsDashboard({ homeContent, aboutContent, prizesData }: Sec
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-in fade-in duration-500">
       {/* Home Card */}
       <div
         onClick={() => handleSelectSection("home")}
-        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10"
+        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-5 md:p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10 active:scale-95 md:active:scale-100"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400 group-hover:text-blue-300 group-hover:bg-blue-500/20 transition-colors">
-            <Home size={32} />
+            <Home className="w-6 h-6 md:w-8 md:h-8" />
           </div>
           <ChevronRight className="text-gray-600 group-hover:text-white transition-colors" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Inicio</h3>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Inicio</h3>
         <p className="text-gray-400 text-sm">Configuración general de la página principal, incluyendo logo y banner.</p>
 
         {/* Preview mini-images or colors */}
@@ -108,15 +108,15 @@ export function SectionsDashboard({ homeContent, aboutContent, prizesData }: Sec
       {/* About Card */}
       <div
         onClick={() => handleSelectSection("about")}
-        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10"
+        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-5 md:p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10 active:scale-95 md:active:scale-100"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="p-3 bg-purple-500/10 rounded-lg text-purple-400 group-hover:text-purple-300 group-hover:bg-purple-500/20 transition-colors">
-            <BookOpen size={32} />
+            <BookOpen className="w-6 h-6 md:w-8 md:h-8" />
           </div>
           <ChevronRight className="text-gray-600 group-hover:text-white transition-colors" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Historia / Acerca de</h3>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Historia / Acerca de</h3>
         <p className="text-gray-400 text-sm">Edita la biografía, imagen de perfil e información de la sección Historia.</p>
 
         <div className="mt-6 flex gap-2">
@@ -128,15 +128,15 @@ export function SectionsDashboard({ homeContent, aboutContent, prizesData }: Sec
       {/* Prizes Card */}
       <div
         onClick={() => handleSelectSection("prizes")}
-        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10"
+        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-5 md:p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10 active:scale-95 md:active:scale-100"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="p-3 bg-green-500/10 rounded-lg text-green-400 group-hover:text-green-300 group-hover:bg-green-500/20 transition-colors">
-            <Gift size={32} />
+            <Gift className="w-6 h-6 md:w-8 md:h-8" />
           </div>
           <ChevronRight className="text-gray-600 group-hover:text-white transition-colors" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Premios</h3>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Premios</h3>
         <p className="text-gray-400 text-sm">Gestiona el catálogo de premios, precios y descripciones de la página.</p>
 
         <div className="mt-6 flex gap-2">

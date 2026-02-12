@@ -219,7 +219,8 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-md border border-gray-800 bg-gray-900 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block rounded-md border border-gray-800 bg-gray-900 overflow-hidden">
         <Table>
           <TableHeader className="bg-gray-800">
             <TableRow className="border-gray-700 hover:bg-gray-800">
@@ -299,6 +300,89 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
             })}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {prizes.map((prize) => {
+          // Parse images safely for display
+          let displayImage = "";
+          if (Array.isArray(prize.images) && prize.images.length > 0) {
+            displayImage = (prize.images as string[])[0];
+          } else if (typeof prize.images === 'string') {
+            try {
+              const parsed = JSON.parse(prize.images);
+              if (Array.isArray(parsed) && parsed.length > 0) displayImage = parsed[0];
+              else displayImage = prize.images;
+            } catch {
+              displayImage = prize.images || "";
+            }
+          }
+
+          return (
+            <div key={prize.id} className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="relative w-20 h-20 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+                  {displayImage ? (
+                    <Image
+                      src={displayImage}
+                      alt={prize.title}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-600">
+                      <span className="text-xs">No img</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0 space-y-1">
+                  <h3 className="font-bold text-white text-lg truncate">{prize.title}</h3>
+                  <div className="text-secondary font-bold text-sm">
+                    {prize.price}
+                  </div>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">Orden: {prize.order}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-semibold ${prize.active
+                        ? "bg-green-900/30 text-green-400 border border-green-900"
+                        : "bg-gray-800 text-gray-400 border border-gray-700"
+                        }`}
+                    >
+                      {prize.active ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-gray-700/50 pt-3">
+                <Button variant="outline" size="sm" onClick={() => handleToggleActive(prize)} className="bg-gray-800 border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700">
+                  <Power className={`w-4 h-4 mr-2 ${prize.active ? "text-green-500" : "text-gray-500"}`} />
+                  {prize.active ? "Desactivar" : "Activar"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditPrize(prize)}
+                  className="bg-gray-800 border-gray-700 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeletePrize(prize.id)}
+                  className="bg-gray-800 border-gray-700 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar
+                </Button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

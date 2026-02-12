@@ -76,11 +76,11 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
           <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30">MODO EDICIÓN</span>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
 
             {/* Image Side */}
-            <div className="relative group">
+            <div className="relative group mx-auto w-full max-w-[400px] md:max-w-none">
               <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <Image
                   src={content.imageUrl}
@@ -112,18 +112,18 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
                   </div>
                 </div>
 
-                <div className="absolute bottom-8 left-8 right-8 pointer-events-none">
+                <div className="absolute bottom-6 left-6 right-6 md:bottom-8 md:left-8 md:right-8 pointer-events-none">
                   <Input
                     value={content.title}
                     onChange={(e) => handleChange("title", e.target.value)}
-                    className="text-4xl font-black text-white mb-2 bg-transparent border-none p-0 h-auto focus:ring-0 placeholder:text-gray-600 pointer-events-auto uppercase"
+                    className="text-3xl md:text-4xl font-black text-white mb-2 bg-transparent border-none p-0 h-auto focus:ring-0 placeholder:text-gray-600 pointer-events-auto uppercase w-full"
                   />
                   <div className="flex items-center gap-2 text-primary pointer-events-auto">
                     <MapPin size={18} />
                     <Input
                       value={content.location}
                       onChange={(e) => handleChange("location", e.target.value)}
-                      className="font-bold tracking-wider bg-transparent border-none p-0 h-auto focus:ring-0 w-full text-primary placeholder:text-primary/50 uppercase"
+                      className="font-bold tracking-wider bg-transparent border-none p-0 h-auto focus:ring-0 w-full text-primary placeholder:text-primary/50 uppercase text-sm md:text-base"
                     />
                   </div>
                 </div>
@@ -131,36 +131,36 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
             </div>
 
             {/* Text Side */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full text-gray-400 mb-8 border border-transparent hover:border-white/10 transition-colors">
+            <div className="space-y-6 md:space-y-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full text-gray-400 border border-transparent hover:border-white/10 transition-colors">
                 <User size={16} />
                 <Input
                   value={content.role}
                   onChange={(e) => handleChange("role", e.target.value)}
-                  className="text-sm font-bold uppercase tracking-wider bg-transparent border-none p-0 h-auto w-[200px] focus:ring-0 text-gray-400 text-center"
+                  className="text-xs md:text-sm font-bold uppercase tracking-wider bg-transparent border-none p-0 h-auto w-[150px] md:w-[200px] focus:ring-0 text-gray-400 text-center"
                 />
               </div>
 
-              <h2 className="text-5xl md:text-6xl font-black text-white mb-8 leading-tight flex flex-col gap-2">
+              <h2 className="text-4xl md:text-6xl font-black text-white leading-tight flex flex-col gap-1 md:gap-2">
                 <Input
                   value={content.headlinePart1}
                   onChange={(e) => handleChange("headlinePart1", e.target.value)}
-                  className="bg-transparent border-none p-0 h-auto focus:ring-0 text-white font-black text-5xl md:text-6xl uppercase placeholder:text-gray-700 w-full"
+                  className="bg-transparent border-none p-0 h-auto focus:ring-0 text-white font-black text-4xl md:text-6xl uppercase placeholder:text-gray-700 w-full"
                   placeholder="PASIÓN POR"
                 />
                 <Input
                   value={content.headlinePart2}
                   onChange={(e) => handleChange("headlinePart2", e.target.value)}
-                  className="bg-transparent border-none p-0 h-auto focus:ring-0 text-primary font-black text-5xl md:text-6xl uppercase placeholder:text-primary/50 w-full"
+                  className="bg-transparent border-none p-0 h-auto focus:ring-0 text-primary font-black text-4xl md:text-6xl uppercase placeholder:text-primary/50 w-full"
                   placeholder="EL GAMING"
                 />
               </h2>
 
-              <div className="space-y-6 text-lg text-gray-300 leading-relaxed font-light">
+              <div className="space-y-6 text-base md:text-lg text-gray-300 leading-relaxed font-light">
                 <Textarea
                   value={content.bio}
                   onChange={(e) => handleChange("bio", e.target.value)}
-                  className="bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 text-gray-300 w-full h-[200px] resize-none p-2 rounded text-lg leading-relaxed focus:ring-0"
+                  className="bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 text-gray-300 w-full h-[150px] md:h-[200px] resize-none p-2 rounded text-base md:text-lg leading-relaxed focus:ring-0"
                 />
               </div>
 
@@ -169,22 +169,22 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
                 <Input
                   value={content.instagram}
                   onChange={(e) => handleChange("instagram", e.target.value)}
-                  className="bg-transparent border-none text-gray-400 w-[200px] p-0 h-auto focus:ring-0"
+                  className="bg-transparent border-none text-gray-400 w-full md:w-[200px] p-0 h-auto focus:ring-0 text-sm md:text-base"
                   placeholder="Usuario de Instagram"
                 />
               </div>
 
-              <div className="mt-12 pt-8 border-t border-white/10 flex gap-12">
+              <div className="mt-8 md:mt-12 pt-8 border-t border-white/10 grid grid-cols-3 gap-4 md:flex md:gap-12">
                 <div>
                   <Input
                     value={content.stats.followers}
                     onChange={(e) => handleStatChange("followers", e.target.value)}
-                    className="block text-4xl font-black text-white bg-transparent border-none p-0 h-auto w-[100px] focus:ring-0"
+                    className="block text-2xl md:text-4xl font-black text-white bg-transparent border-none p-0 h-auto w-full md:w-[100px] focus:ring-0 text-center md:text-left"
                   />
                   <Input
                     value={content.stats.followersLabel}
                     onChange={(e) => handleStatChange("followersLabel", e.target.value)}
-                    className="text-sm text-gray-500 uppercase tracking-wider bg-transparent border-none p-0 h-auto w-[100px] focus:ring-0 placeholder:text-gray-700"
+                    className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider bg-transparent border-none p-0 h-auto w-full md:w-[100px] focus:ring-0 placeholder:text-gray-700 text-center md:text-left"
                     placeholder="SEGUIDORES"
                   />
                 </div>
@@ -192,12 +192,12 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
                   <Input
                     value={content.stats.tournaments}
                     onChange={(e) => handleStatChange("tournaments", e.target.value)}
-                    className="block text-4xl font-black text-white bg-transparent border-none p-0 h-auto w-[100px] focus:ring-0"
+                    className="block text-2xl md:text-4xl font-black text-white bg-transparent border-none p-0 h-auto w-full md:w-[100px] focus:ring-0 text-center md:text-left"
                   />
                   <Input
                     value={content.stats.tournamentsLabel}
                     onChange={(e) => handleStatChange("tournamentsLabel", e.target.value)}
-                    className="text-sm text-gray-500 uppercase tracking-wider bg-transparent border-none p-0 h-auto w-[100px] focus:ring-0 placeholder:text-gray-700"
+                    className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider bg-transparent border-none p-0 h-auto w-full md:w-[100px] focus:ring-0 placeholder:text-gray-700 text-center md:text-left"
                     placeholder="TORNEOS"
                   />
                 </div>
@@ -205,12 +205,12 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
                   <Input
                     value={content.stats.uptime}
                     onChange={(e) => handleStatChange("uptime", e.target.value)}
-                    className="block text-4xl font-black text-white bg-transparent border-none p-0 h-auto w-[100px] focus:ring-0"
+                    className="block text-2xl md:text-4xl font-black text-white bg-transparent border-none p-0 h-auto w-full md:w-[100px] focus:ring-0 text-center md:text-left"
                   />
                   <Input
                     value={content.stats.uptimeLabel}
                     onChange={(e) => handleStatChange("uptimeLabel", e.target.value)}
-                    className="text-sm text-gray-500 uppercase tracking-wider bg-transparent border-none p-0 h-auto w-[100px] focus:ring-0 placeholder:text-gray-700"
+                    className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider bg-transparent border-none p-0 h-auto w-full md:w-[100px] focus:ring-0 placeholder:text-gray-700 text-center md:text-left"
                     placeholder="DIVERSIÓN"
                   />
                 </div>

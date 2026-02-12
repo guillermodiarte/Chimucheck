@@ -31,7 +31,8 @@ export default async function BannersPage() {
         </Link>
       </div>
 
-      <div className="border border-gray-800 rounded-lg overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block border border-gray-800 rounded-lg overflow-hidden">
         <Table>
           <TableHeader className="bg-gray-900">
             <TableRow className="border-gray-800 hover:bg-gray-900">
@@ -96,6 +97,63 @@ export default async function BannersPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {banners.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 border border-gray-800 rounded-lg">
+            No hay banners creados.
+          </div>
+        ) : (
+          banners.map((item: any) => (
+            <div key={item.id} className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-4">
+              <div className="flex items-start gap-4">
+                <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded bg-gray-800" />
+                <div className="flex-1 min-w-0 space-y-1">
+                  <h3 className="font-bold text-white truncate text-lg pr-4">{item.title}</h3>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">Orden: {item.order}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-semibold ${item.active
+                        ? "bg-green-900/30 text-green-400 border border-green-900"
+                        : "bg-gray-800 text-gray-400 border border-gray-700"
+                        }`}
+                    >
+                      {item.active ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-gray-700/50 pt-3">
+                <form action={toggleBannerStatus.bind(null, item.id, item.active)}>
+                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700">
+                    <Power className={`w-4 h-4 mr-2 ${item.active ? "text-green-500" : "text-gray-500"}`} />
+                    {item.active ? "Desactivar" : "Activar"}
+                  </Button>
+                </form>
+                <Link href={`/admin/banners/${item.id}`}>
+                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-700 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                    Editar
+                  </Button>
+                </Link>
+                <form action={deleteBanner.bind(null, item.id)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="submit"
+                    className="bg-gray-800 border-gray-700 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </Button>
+                </form>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

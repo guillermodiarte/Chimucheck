@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
-const sidebarData = [
+export const sidebarData = [
   {
     title: "Dashboard",
     href: "/admin/dashboard",
