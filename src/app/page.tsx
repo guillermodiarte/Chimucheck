@@ -1,5 +1,7 @@
 import HeroCarousel from "@/components/HeroCarousel";
 import GamingSection from "@/components/GamingSection";
+import EventsGrid from "@/components/EventsGrid";
+import NewsGrid from "@/components/NewsGrid";
 
 import ChimuCoinSection from "@/components/ChimuCoinSection";
 
@@ -32,7 +34,7 @@ async function getNews(): Promise<News[]> {
 
 async function getEvents(): Promise<Event[]> {
   return await db.event.findMany({
-    where: { date: { gte: new Date() }, active: true },
+    where: { active: true },
     orderBy: { date: "asc" },
     take: 3,
   });
@@ -85,30 +87,7 @@ export default async function Home() {
             <span className="text-primary">Últimas</span> Novedades
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {news.map((item) => (
-              <div
-                key={item.id}
-                className="bg-gray-900/50 rounded-2xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all hover:transform hover:-translate-y-2 group"
-              >
-                <div className="aspect-video relative overflow-hidden">
-                  {item.imageUrl && (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  )}
-                </div>
-                <div className="p-6">
-                  <div className="text-secondary text-sm font-bold mb-2">{new Date(item.date).toLocaleDateString()}</div>
-                  <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-3">{item.content}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <NewsGrid news={news} />
         </section>
       )}
 
@@ -119,34 +98,7 @@ export default async function Home() {
             Próximos <span className="text-secondary">Eventos</span>
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {events.map((event) => (
-              <div key={event.id} className="flex flex-col md:flex-row bg-black rounded-xl border border-gray-800 overflow-hidden hover:border-secondary/50 transition-colors">
-                <div className="w-full md:w-1/3 relative h-48 md:h-auto">
-                  {event.imageUrl ? (
-                    <Image
-                      src={event.imageUrl}
-                      alt={event.name}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-500">Sin Imagen</div>
-                  )}
-                </div>
-                <div className="p-6 flex flex-col justify-center flex-1">
-                  <div className="text-secondary font-bold mb-1 uppercase tracking-wider text-sm">
-                    {new Date(event.date).toLocaleString()}
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2 text-white">{event.name}</h3>
-                  <p className="text-gray-400 mb-4">{event.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    📍 {event.location || "Online"}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <EventsGrid events={events} />
         </section>
       )}
     </div >

@@ -11,12 +11,16 @@ export default async function CreateBannerPage() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Nuevo Banner</h1>
-        <p className="text-gray-400">Añade una nueva imagen al carrusel principal.</p>
-      </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Nuevo Banner</h1>
+            <p className="text-gray-400">Añade una nueva imagen al carrusel principal.</p>
+          </div>
+        </div>
 
-      <BannerForm defaultOrder={nextOrder} />
+        <BannerForm defaultOrder={nextOrder} />
+      </div>
     </div>
   );
 }

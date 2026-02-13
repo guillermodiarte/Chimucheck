@@ -26,7 +26,7 @@ export const sidebarData = [
   {
     title: "Banners",
     href: "/admin/banners",
-    icon: ImageIcon,
+    icon: Megaphone,
   },
   {
     title: "Novedades",
@@ -47,6 +47,11 @@ export const sidebarData = [
     title: "Premios",
     href: "/admin/prizes",
     icon: Gift,
+  },
+  {
+    title: "Biblioteca",
+    href: "/admin/media",
+    icon: ImageIcon,
   },
   {
     title: "Configuración",

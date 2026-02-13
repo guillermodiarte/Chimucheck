@@ -33,15 +33,50 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
     };
   });
   const [loading, setLoading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async () => {
     setLoading(true);
-    const res = await updateSectionContent("about_us", content);
+
+    let finalContent = { ...content };
+
+    if (pendingFile) {
+      const formData = new FormData();
+      formData.append("file", pendingFile);
+
+      try {
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await uploadRes.json();
+
+        if (uploadRes.ok && data.success) {
+          finalContent.imageUrl = data.url;
+          // Update local state too so if save fails, we have the URL? 
+          // Or just use the one we are sending.
+        } else {
+          toast.error("Error al subir la imagen");
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Error al subir imagen");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const res = await updateSectionContent("about_us", finalContent);
     setLoading(false);
 
     if (res.success) {
       toast.success(res.message);
+      setPendingFile(null); // Clear pending file after successful save
+      // Optionally update content.imageUrl to the new URL if we want to be persistent
+      if (pendingFile) handleChange("imageUrl", finalContent.imageUrl);
     } else {
       toast.error(res.message);
     }
@@ -49,6 +84,12 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
 
   const handleChange = (field: string, value: any) => {
     setContent(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileSelect = (file: File) => {
+    setPendingFile(file);
+    const url = URL.createObjectURL(file);
+    handleChange("imageUrl", url);
   };
 
   const handleStatChange = (key: string, value: string) => {
@@ -94,14 +135,18 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm cursor-pointer">
                   <div className="text-center">
                     <LocalImageUpload
-                      onUploadComplete={(url) => handleChange("imageUrl", url)}
-                      onUploadError={(err) => toast.error(err)}
+                      onFileSelect={handleFileSelect}
+                      onUrlSelect={(url) => {
+                        handleChange("imageUrl", url);
+                        setPendingFile(null);
+                      }}
                     />
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleChange("imageUrl", "")
+                        handleChange("imageUrl", "");
+                        setPendingFile(null);
                       }}
                       className="mt-2 text-red-400 hover:text-red-300 text-xs flex items-center gap-1 bg-red-900/20 px-2 py-1 rounded border border-red-900/50 hover:bg-red-900/40 transition-colors mx-auto"
                       title="Eliminar imagen"

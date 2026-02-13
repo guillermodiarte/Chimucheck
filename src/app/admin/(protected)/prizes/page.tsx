@@ -5,7 +5,7 @@ export default async function AdminPrizesPage() {
   const prizes = await getPrizes();
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div>
         <h1 className="text-3xl font-black tracking-tight text-white mb-2">Administrar Premios</h1>
         <p className="text-gray-400">Gestiona el catálogo de premios.</p>

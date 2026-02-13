@@ -25,6 +25,7 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import Image from "next/image";
 import { createPrize, updatePrize, deletePrize } from "@/app/actions/prizes";
 import { LocalMultiImageUpload } from "@/components/admin/LocalMultiImageUpload";
+import { toast } from "sonner";
 
 interface PrizesListManagerProps {
   initialPrizes: Prize[];
@@ -35,6 +36,10 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
   const [isEditingPrize, setIsEditingPrize] = useState<Prize | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Store pending files and their object URLs to map them back during upload
+  const [pendingFiles, setPendingFiles] = useState<Map<string, File>>(new Map());
+  const [customFilename, setCustomFilename] = useState("");
 
   // Form State for Prize
   const [formData, setFormData] = useState<{
@@ -55,6 +60,8 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
 
   const handleEditPrize = (prize: Prize) => {
     setIsEditingPrize(prize);
+    setPendingFiles(new Map()); // Clear pending files on edit open
+    setCustomFilename(""); // Reset custom filename
 
     let images: string[] = [];
     if (Array.isArray(prize.images)) {
@@ -82,6 +89,8 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
 
   const handleCreatePrize = () => {
     setIsEditingPrize(null);
+    setPendingFiles(new Map()); // Clear pending files
+    setCustomFilename(""); // Reset custom filename
     const maxOrder = prizes.reduce((max, prize) => (prize.order > max ? prize.order : max), 0);
     setFormData({
       title: "",
@@ -96,31 +105,92 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
 
   const handleSubmitPrize = async () => {
     setIsLoading(true);
-    // images is already an array of strings
-    const imagesArray = formData.images;
+
+    // Process images: Upload pending files and replace blob URLs with real URLs
+    let finalImages: string[] = [];
+    const newImages = [...formData.images];
+    let hasUploadErrors = false;
+
+    // We process sequentially or parallel. Parallel is better.
+    // We need to maintain the index/order.
+
+    const uploadPromises = newImages.map(async (imgUrl, index) => {
+      if (pendingFiles.has(imgUrl)) {
+        const file = pendingFiles.get(imgUrl)!;
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+
+        // Determine custom name
+        let nameToSend;
+        if (customFilename) {
+          // If custom name provided: premio-customName-index
+          // We use index+1 to be user friendly 1-based
+          nameToSend = `premio-${customFilename}-${index + 1}`;
+        } else {
+          // If not provided: premio-originalName
+          const originalNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+          nameToSend = `premio-${originalNameWithoutExt}`;
+        }
+        uploadFormData.append("customName", nameToSend);
+
+        try {
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: uploadFormData,
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            return data.url;
+          } else {
+            console.error("Failed to upload file:", data.message);
+            return null; // or throw
+          }
+        } catch (e) {
+          console.error("Upload error:", e);
+          return null;
+        }
+      }
+      return imgUrl; // Already a real URL
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    // Check for failures
+    if (results.some(r => r === null)) {
+      toast.error("Algunas imágenes no se pudieron subir. Inténtalo de nuevo.");
+      setIsLoading(false);
+      return;
+    }
+
+    finalImages = results as string[];
 
     if (isEditingPrize) {
       await updatePrize(isEditingPrize.id, {
         ...formData,
-        images: imagesArray,
+        images: finalImages,
       });
 
       setPrizes((prev) =>
         prev.map((p) =>
           p.id === isEditingPrize.id
-            ? { ...p, ...formData, images: imagesArray }
+            ? { ...p, ...formData, images: finalImages }
             : p
         )
       );
     } else {
       const res = await createPrize({
         ...formData,
-        images: imagesArray,
+        images: finalImages,
       });
       if (res.success && res.prize) {
         setPrizes((prev) => [...prev, res.prize!]);
       }
     }
+
+    // Cleanup blob URLs to avoid memory leaks (optional, browser handles it mostly)
+    pendingFiles.forEach((_, url) => URL.revokeObjectURL(url));
+    setPendingFiles(new Map());
+
     setIsLoading(false);
     setIsDialogOpen(false);
   };
@@ -136,17 +206,49 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
+    const urlToRemove = formData.images[indexToRemove];
+
+    // If it's a pending file, remove from map
+    if (pendingFiles.has(urlToRemove)) {
+      const newPending = new Map(pendingFiles);
+      newPending.delete(urlToRemove);
+      setPendingFiles(newPending);
+      URL.revokeObjectURL(urlToRemove); // Good practice
+    }
+
     setFormData(prev => ({
       ...prev,
       images: prev.images.filter((_, index) => index !== indexToRemove)
     }));
   };
 
-  const handleAddImages = (newUrls: string[]) => {
+  const handleAddFiles = (files: File[]) => {
+    const newEntries: [string, File][] = [];
+    const newUrls: string[] = [];
+
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      newEntries.push([url, file]);
+      newUrls.push(url);
+    });
+
+    setPendingFiles(prev => {
+      const newMap = new Map(prev);
+      newEntries.forEach(([url, file]) => newMap.set(url, file));
+      return newMap;
+    });
+
     setFormData(prev => ({
       ...prev,
       images: [...prev.images, ...newUrls]
     }));
+
+    // Auto-fill custom filename if empty (take first file's name)
+    if (!customFilename && files.length > 0) {
+      const firstFile = files[0];
+      const nameWithoutExt = firstFile.name.replace(/\.[^/.]+$/, "");
+      setCustomFilename(nameWithoutExt);
+    }
   };
 
   return (
@@ -224,11 +326,38 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
 
               <div className="flex flex-col gap-1">
                 <LocalMultiImageUpload
-                  onUploadComplete={handleAddImages}
+                  onFilesSelected={handleAddFiles}
+                  onUrlSelected={(url) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      images: [...prev.images, url]
+                    }));
+                  }}
                   maxFiles={10}
                   currentCount={formData.images.length}
                 />
                 <p className="text-xs text-gray-500">Sube hasta 10 imágenes.</p>
+
+                {/* Custom filename input (only if there are pending files) */}
+                {Array.from(pendingFiles.keys()).length > 0 && (
+                  <div className="mt-2 space-y-1 bg-gray-800/50 p-2 rounded border border-gray-700">
+                    <label className="text-xs text-gray-400">Nombre base para archivos nuevos (opcional)</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">premio-</span>
+                      <Input
+                        value={customFilename}
+                        onChange={(e) => setCustomFilename(e.target.value)}
+                        placeholder="nombre-base"
+                        className="h-7 text-xs bg-gray-900 border-gray-600 text-white"
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-500">
+                      {customFilename
+                        ? `Se guardarán como: premio-${customFilename}-1.ext, premio-${customFilename}-2.ext...`
+                        : "Se usarán los nombres originales con prefijo 'premio-'"}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             <div>

@@ -8,7 +8,8 @@ import { z } from "zod";
 const BannerSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   subtitle: z.string().optional(),
-  imageUrl: z.string().refine((val) => val.startsWith("/uploads/") || z.string().url().safeParse(val).success, {
+  // Allow local paths (starting with /) or absolute URLs
+  imageUrl: z.string().refine((val) => val.startsWith("/") || val.startsWith("http") || val.length > 0, {
     message: "URL de imagen inválida (debe ser una URL válida o una ruta local)"
   }),
   link: z.string().optional(),

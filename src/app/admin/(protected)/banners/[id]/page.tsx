@@ -18,11 +18,13 @@ export default async function EditBannerPage({ params }: EditBannerPageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Editar Banner</h1>
-        <p className="text-gray-400">Modifica los detalles del banner existente.</p>
+      <div className="max-w-4xl mx-auto">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Editar Banner</h1>
+          <p className="text-gray-400">Modifica los detalles del banner existente.</p>
+        </div>
+        <BannerForm initialData={banner} />
       </div>
-      <BannerForm initialData={banner} />
     </div>
   );
 }

@@ -26,8 +26,10 @@ export async function POST(request: NextRequest) {
 
   // Create unique filename
   // Sanitize filename: normalize, remove accents, replace spaces/special chars with -
-  const originalName = file.name.replace(/\.[^/.]+$/, ""); // remove extension
-  const sanitized = originalName
+  const customName = data.get("customName") as string;
+  const baseName = customName || file.name.replace(/\.[^/.]+$/, ""); // remove extension if not custom
+
+  const sanitized = baseName
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "") // remove accents
     .replace(/[^a-zA-Z0-9]/g, "-")   // replace non-alphanumeric with -

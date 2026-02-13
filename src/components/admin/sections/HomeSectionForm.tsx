@@ -11,18 +11,56 @@ import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
 export function HomeSectionForm({ initialContent }: { initialContent: any }) {
   const [content, setContent] = useState(initialContent || { logoUrl: "" });
   const [loading, setLoading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const res = await updateSectionContent("home_section", content);
+
+    let finalContent = { ...content };
+
+    if (pendingFile) {
+      const formData = new FormData();
+      formData.append("file", pendingFile);
+
+      try {
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await uploadRes.json();
+
+        if (uploadRes.ok && data.success) {
+          finalContent.logoUrl = data.url;
+        } else {
+          toast.error("Error al subir la imagen");
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Error al subir imagen");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const res = await updateSectionContent("home_section", finalContent);
     setLoading(false);
 
     if (res.success) {
       toast.success(res.message);
+      setPendingFile(null);
+      if (pendingFile) setContent(finalContent);
     } else {
       toast.error(res.message);
     }
+  };
+
+  const handleFileSelect = (file: File) => {
+    setPendingFile(file);
+    const url = URL.createObjectURL(file);
+    setContent({ ...content, logoUrl: url });
   };
 
   return (
@@ -46,14 +84,18 @@ export function HomeSectionForm({ initialContent }: { initialContent: any }) {
                   {/* Overlay for upload */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
                     <LocalImageUpload
-                      onUploadComplete={(url) => setContent({ ...content, logoUrl: url })}
-                      onUploadError={(error) => toast.error(`Error al subir: ${error}`)}
+                      onFileSelect={handleFileSelect}
+                      onUrlSelect={(url) => {
+                        setContent({ ...content, logoUrl: url });
+                        setPendingFile(null);
+                      }}
                     />
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setContent({ ...content, logoUrl: "" })
+                        setContent({ ...content, logoUrl: "" });
+                        setPendingFile(null);
                       }}
                       className="mt-2 text-red-400 hover:text-red-300 text-xs flex items-center gap-1 bg-red-900/20 px-2 py-1 rounded border border-red-900/50 hover:bg-red-900/40 transition-colors"
                       title="Eliminar imagen"
@@ -66,8 +108,11 @@ export function HomeSectionForm({ initialContent }: { initialContent: any }) {
               ) : (
                 <div className="flex flex-col items-center justify-center w-full h-full p-4">
                   <LocalImageUpload
-                    onUploadComplete={(url) => setContent({ ...content, logoUrl: url })}
-                    onUploadError={(error) => toast.error(`Error al subir: ${error}`)}
+                    onFileSelect={handleFileSelect}
+                    onUrlSelect={(url) => {
+                      setContent({ ...content, logoUrl: url });
+                      setPendingFile(null);
+                    }}
                   />
                   <span className="text-gray-500 text-xs mt-2">Subir Logo</span>
                 </div>

@@ -23,7 +23,7 @@ export default async function EventsPage() {
   const isEnabled = (section?.content as any)?.enabled ?? true;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Eventos</h1>
@@ -44,6 +44,7 @@ export default async function EventsPage() {
         <Table>
           <TableHeader className="bg-gray-900">
             <TableRow className="border-gray-800 hover:bg-gray-900">
+              <TableHead className="text-gray-300">Imagen</TableHead>
               <TableHead className="text-gray-300">Nombre</TableHead>
               <TableHead className="text-gray-300">Fecha</TableHead>
               <TableHead className="text-gray-300">Ubicación</TableHead>
@@ -61,6 +62,15 @@ export default async function EventsPage() {
             ) : (
               events.map((item: any) => (
                 <TableRow key={item.id} className="border-gray-800 hover:bg-gray-900/50">
+                  <TableCell>
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.name} className="w-16 h-10 object-cover rounded border border-gray-800" />
+                    ) : (
+                      <div className="w-16 h-10 bg-gray-800 rounded border border-gray-700 flex items-center justify-center text-gray-500 text-xs">
+                        Sin img
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium text-white">{item.name}</TableCell>
                   <TableCell className="text-gray-400">
                     {new Date(item.date).toLocaleString()}
@@ -112,31 +122,41 @@ export default async function EventsPage() {
         ) : (
           events.map((item: any) => (
             <div key={item.id} className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-bold text-white text-lg">{item.name}</h3>
-
-                <div className="flex flex-col gap-1 text-sm text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                    {new Date(item.date).toLocaleString()}
+              <div className="flex items-start gap-4">
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt={item.name} className="w-20 h-20 object-cover rounded bg-gray-800 border-gray-700 flex-shrink-0" />
+                ) : (
+                  <div className="w-20 h-20 bg-gray-800 rounded border-gray-700 flex items-center justify-center text-gray-500 text-xs flex-shrink-0">
+                    Sin img
                   </div>
-                  {item.location && (
-                    <div className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                      {item.location}
-                    </div>
-                  )}
-                </div>
+                )}
 
-                <div className="pt-1">
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-semibold ${item.active
-                      ? "bg-green-900/30 text-green-400 border border-green-900"
-                      : "bg-gray-800 text-gray-400 border border-gray-700"
-                      }`}
-                  >
-                    {item.active ? "Activo" : "Inactivo"}
-                  </span>
+                <div className="space-y-2 flex-1 min-w-0">
+                  <h3 className="font-bold text-white text-lg">{item.name}</h3>
+
+                  <div className="flex flex-col gap-1 text-sm text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                      {new Date(item.date).toLocaleString()}
+                    </div>
+                    {item.location && (
+                      <div className="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                        {item.location}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-1">
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-semibold ${item.active
+                        ? "bg-green-900/30 text-green-400 border border-green-900"
+                        : "bg-gray-800 text-gray-400 border border-gray-700"
+                        }`}
+                    >
+                      {item.active ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -169,3 +189,4 @@ export default async function EventsPage() {
     </div>
   );
 }
+

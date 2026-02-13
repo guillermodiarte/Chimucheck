@@ -23,7 +23,7 @@ export default async function NewsPage() {
   const isEnabled = (section?.content as any)?.enabled ?? true;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Novedades</h1>
@@ -44,6 +44,7 @@ export default async function NewsPage() {
         <Table>
           <TableHeader className="bg-gray-900">
             <TableRow className="border-gray-800 hover:bg-gray-900">
+              <TableHead className="text-gray-300">Imagen</TableHead>
               <TableHead className="text-gray-300">Título</TableHead>
               <TableHead className="text-gray-300">Fecha</TableHead>
               <TableHead className="text-gray-300">Estado</TableHead>
@@ -60,6 +61,15 @@ export default async function NewsPage() {
             ) : (
               news.map((item: any) => (
                 <TableRow key={item.id} className="border-gray-800 hover:bg-gray-900/50">
+                  <TableCell>
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.title} className="w-16 h-10 object-cover rounded border border-gray-800" />
+                    ) : (
+                      <div className="w-16 h-10 bg-gray-800 rounded border border-gray-700 flex items-center justify-center text-gray-500 text-xs">
+                        Sin img
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium text-white">{item.title}</TableCell>
                   <TableCell className="text-gray-400">
                     {new Date(item.date).toLocaleDateString()}
@@ -110,19 +120,29 @@ export default async function NewsPage() {
         ) : (
           news.map((item: any) => (
             <div key={item.id} className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-bold text-white text-lg">{item.title}</h3>
-                <div className="flex flex-wrap gap-2 items-center text-sm">
-                  <span className="text-gray-400">{new Date(item.date).toLocaleDateString()}</span>
-                  <span className="text-gray-600">•</span>
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-semibold ${item.published
-                      ? "bg-green-900/30 text-green-400 border border-green-900"
-                      : "bg-gray-800 text-gray-400 border border-gray-700"
-                      }`}
-                  >
-                    {item.published ? "Publicada" : "Borrador"}
-                  </span>
+              <div className="flex items-start gap-4">
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded bg-gray-800 border-gray-700 flex-shrink-0" />
+                ) : (
+                  <div className="w-20 h-20 bg-gray-800 rounded border-gray-700 flex items-center justify-center text-gray-500 text-xs flex-shrink-0">
+                    Sin img
+                  </div>
+                )}
+
+                <div className="space-y-2 flex-1 min-w-0">
+                  <h3 className="font-bold text-white text-lg">{item.title}</h3>
+                  <div className="flex flex-wrap gap-2 items-center text-sm">
+                    <span className="text-gray-400">{new Date(item.date).toLocaleDateString()}</span>
+                    <span className="text-gray-600">•</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-semibold ${item.published
+                        ? "bg-green-900/30 text-green-400 border border-green-900"
+                        : "bg-gray-800 text-gray-400 border border-gray-700"
+                        }`}
+                    >
+                      {item.published ? "Publicada" : "Borrador"}
+                    </span>
+                  </div>
                 </div>
               </div>
 

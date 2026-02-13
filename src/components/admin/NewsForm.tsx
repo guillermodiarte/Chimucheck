@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, startTransition } from "react";
 import { updateNews, createNews } from "@/app/actions/news";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,8 @@ interface NewsFormProps {
 
 export function NewsForm({ initialData }: NewsFormProps) {
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [customFilename, setCustomFilename] = useState("");
   const updateAction = initialData ? updateNews.bind(null, initialData.id) : createNews;
 
   // Define the state type explicitly to avoid TS errors
@@ -32,12 +34,69 @@ export function NewsForm({ initialData }: NewsFormProps) {
 
   // Sync state payload with local state if error occurred and we have a payload
   const payload = (state as any)?.payload;
-  if (payload?.imageUrl && payload.imageUrl !== imageUrl && !imageUrl) {
+  if (payload?.imageUrl && payload.imageUrl !== imageUrl && !imageUrl && !pendingFile) {
     setImageUrl(payload.imageUrl);
   }
 
+  const handleFileSelect = (file: File) => {
+    setPendingFile(file);
+    setImageUrl(URL.createObjectURL(file));
+    // Default custom name from original filename (without extension)
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+    setCustomFilename(nameWithoutExt);
+  };
+
+  const handleSubmit = async (formData: FormData) => {
+    // Client-side validation
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+
+    if (!title || title.trim().length === 0) {
+      toast.error("El título es obligatorio");
+      return;
+    }
+
+    if (!content || content.trim().length < 10) {
+      toast.error("El contenido debe tener al menos 10 caracteres");
+      return;
+    }
+
+    if (pendingFile) {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", pendingFile);
+      if (customFilename) {
+        uploadFormData.append("customName", `novedades-${customFilename}`);
+      }
+
+      try {
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          formData.set("imageUrl", data.url);
+        } else {
+          toast.error(data.message || "Error al subir la imagen");
+          return; // Stop submission
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error("Error al subir la imagen");
+        return; // Stop submission
+      }
+    }
+
+    startTransition(() => {
+      // @ts-ignore
+      formAction(formData);
+    });
+  };
+
   return (
-    <form action={formAction} className="space-y-6 bg-gray-900 p-6 rounded-lg border border-gray-800">
+    <form action={handleSubmit} className="space-y-6 bg-gray-900 p-6 rounded-lg border border-gray-800">
       <div className="space-y-2">
         <Label htmlFor="title" className="text-white">Título</Label>
         <Input
@@ -64,34 +123,56 @@ export function NewsForm({ initialData }: NewsFormProps) {
 
       <div className="space-y-2">
         <Label className="text-white">Imagen Destacada</Label>
-        <div className="flex items-center gap-4">
-          {imageUrl ? (
-            <div className="relative group">
-              <img src={imageUrl} alt="Preview" className="w-24 h-24 object-cover rounded border border-gray-700" />
-              <button
-                type="button"
-                onClick={() => setImageUrl("")}
-                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Eliminar imagen"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-              </button>
+        <div className="flex flex-col gap-3 w-full max-w-sm">
+          <div className="flex items-center gap-4">
+            {imageUrl ? (
+              <div className="relative group shrink-0">
+                <img src={imageUrl} alt="Preview" className="w-24 h-24 object-cover rounded border border-gray-700" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl("");
+                    setPendingFile(null);
+                    setCustomFilename("");
+                  }}
+                  className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Eliminar imagen"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                </button>
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm italic shrink-0 w-24">Sin imagen</div>
+            )}
+            <LocalImageUpload
+              onFileSelect={handleFileSelect}
+              onUrlSelect={(url) => {
+                setImageUrl(url);
+                setPendingFile(null);
+                setCustomFilename("");
+              }}
+            />
+          </div>
+
+          {pendingFile && (
+            <div className="space-y-1">
+              <Label htmlFor="customFilename" className="text-xs text-gray-400">Nombre del archivo (opcional)</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">novedades-</span>
+                <Input
+                  id="customFilename"
+                  value={customFilename}
+                  onChange={(e) => setCustomFilename(e.target.value)}
+                  placeholder="nombre-del-archivo"
+                  className="h-8 text-xs bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <p className="text-[10px] text-gray-500">Se guardará como: novedades-{customFilename || "..."}-{Date.now()}.ext</p>
             </div>
-          ) : (
-            <div className="text-gray-500 text-sm italic">Sin imagen seleccionada</div>
           )}
-          <LocalImageUpload
-            onUploadComplete={(url) => {
-              setImageUrl(url);
-            }}
-            onUploadError={(error) => {
-              toast.error(`Error al subir: ${error}`);
-            }}
-          />
+
           <input type="hidden" name="imageUrl" value={imageUrl} />
         </div>
-
-
 
         {!imageUrl && <p className="text-yellow-500 text-xs mt-1">Se recomienda añadir una imagen para destacar la noticia.</p>}
       </div>

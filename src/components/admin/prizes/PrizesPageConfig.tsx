@@ -33,16 +33,72 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
     };
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<Map<string, File>>(new Map());
 
   const handleSaveConfig = async () => {
     setIsLoading(true);
-    await updatePrizesPageConfig(config);
+
+    // Upload pending files
+    const finalConfig: any = { ...config };
+    const fileFields = ["infoImage", "comboImage"];
+
+    for (const field of fileFields) {
+      const currentUrl = finalConfig[field];
+      if (pendingFiles.has(field)) {
+        const file = pendingFiles.get(field)!;
+        // Check if the current URL matches the blob URL we created?
+        // Actually, the user might have changed it again.
+        // If I store file by field name, it's easier.
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const res = await fetch("/api/upload", { method: "POST", body: formData });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            finalConfig[field] = data.url;
+          } else {
+            toast.error(`Error al subir imagen para ${field}`);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error(e);
+          toast.error(`Error al subir imagen para ${field}`);
+          setIsLoading(false);
+          return;
+        }
+      }
+    }
+
+    await updatePrizesPageConfig(finalConfig);
+
+    // Cleanup
+    setPendingFiles(new Map());
+    setConfig(finalConfig);
+
     setIsLoading(false);
     toast.success("Configuración actualizada correctamente");
   };
 
   const handleChange = (field: string, value: any) => {
     setConfig((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileSelect = (field: string, file: File) => {
+    const url = URL.createObjectURL(file);
+    handleChange(field, url);
+    setPendingFiles(prev => new Map(prev).set(field, file));
+  };
+
+  const handleRemoveImage = (field: string) => {
+    handleChange(field, "");
+    setPendingFiles(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(field);
+      return newMap;
+    });
   };
 
   const handleStepChange = (index: number, field: string, value: string) => {
@@ -107,14 +163,21 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm cursor-pointer">
                 <div className="text-center">
                   <LocalImageUpload
-                    onUploadComplete={(url) => handleChange("infoImage", url)}
-                    onUploadError={(err) => toast.error(err)}
+                    onFileSelect={(file) => handleFileSelect("infoImage", file)}
+                    onUrlSelect={(url) => {
+                      handleChange("infoImage", url);
+                      setPendingFiles(prev => {
+                        const newMap = new Map(prev);
+                        newMap.delete("infoImage");
+                        return newMap;
+                      });
+                    }}
                   />
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleChange("infoImage", "")
+                      handleRemoveImage("infoImage");
                     }}
                     className="mt-2 text-red-400 hover:text-red-300 text-xs flex items-center gap-1 bg-red-900/20 px-2 py-1 rounded border border-red-900/50 hover:bg-red-900/40 transition-colors mx-auto"
                     title="Eliminar imagen"
@@ -152,14 +215,21 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm cursor-pointer">
                   <div className="text-center">
                     <LocalImageUpload
-                      onUploadComplete={(url) => handleChange("comboImage", url)}
-                      onUploadError={(err) => toast.error(err)}
+                      onFileSelect={(file) => handleFileSelect("comboImage", file)}
+                      onUrlSelect={(url) => {
+                        handleChange("comboImage", url);
+                        setPendingFiles(prev => {
+                          const newMap = new Map(prev);
+                          newMap.delete("comboImage");
+                          return newMap;
+                        });
+                      }}
                     />
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleChange("comboImage", "")
+                        handleRemoveImage("comboImage");
                       }}
                       className="mt-2 text-red-400 hover:text-red-300 text-xs flex items-center gap-1 bg-red-900/20 px-2 py-1 rounded border border-red-900/50 hover:bg-red-900/40 transition-colors mx-auto"
                       title="Eliminar imagen"
