@@ -25,9 +25,19 @@ export async function POST(request: NextRequest) {
   }
 
   // Create unique filename
-  const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-  const ext = file.name.split('.').pop();
-  const filename = `${file.name.replace(/\.[^/.]+$/, "")}-${uniqueSuffix}.${ext}`;
+  // Sanitize filename: normalize, remove accents, replace spaces/special chars with -
+  const originalName = file.name.replace(/\.[^/.]+$/, ""); // remove extension
+  const sanitized = originalName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove accents
+    .replace(/[^a-zA-Z0-9]/g, "-")   // replace non-alphanumeric with -
+    .replace(/-+/g, "-")             // collapse multiple -
+    .replace(/^-|-$/g, "")           // remove leading/trailing -
+    .toLowerCase();
+
+  const uniqueSuffix = Date.now();
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  const filename = `${sanitized}-${uniqueSuffix}.${ext}`;
   const filepath = join(uploadDir, filename);
 
   try {
