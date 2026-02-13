@@ -24,6 +24,14 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "utfs.io",
+      },
+      {
+        protocol: "https",
+        hostname: "wallpaper.forfun.com",
+      },
+      {
+        protocol: "https",
+        hostname: "img.pikbest.com",
       }
     ],
   },

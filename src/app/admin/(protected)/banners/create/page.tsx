@@ -1,6 +1,14 @@
 import { BannerForm } from "@/components/admin/BannerForm";
 
-export default function CreateBannerPage() {
+import { db } from "@/lib/prisma";
+
+export default async function CreateBannerPage() {
+  const lastBanner = await db.banner.findFirst({
+    orderBy: { order: "desc" },
+  });
+
+  const nextOrder = (lastBanner?.order ?? -1) + 1;
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
@@ -8,7 +16,7 @@ export default function CreateBannerPage() {
         <p className="text-gray-400">Añade una nueva imagen al carrusel principal.</p>
       </div>
 
-      <BannerForm />
+      <BannerForm defaultOrder={nextOrder} />
     </div>
   );
 }

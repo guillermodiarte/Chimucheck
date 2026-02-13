@@ -8,7 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, Power } from "lucide-react";
+import { Plus, Power } from "lucide-react";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 import Link from "next/link";
 import { deleteBanner, toggleBannerStatus } from "@/app/actions/banners";
 
@@ -84,16 +85,12 @@ export default async function BannersPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                         </Button>
                       </Link>
-                      <form action={deleteBanner.bind(null, item.id)}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="submit"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </form>
+                      <DeleteButton
+                        id={item.id}
+                        deleteAction={deleteBanner}
+                        itemName="Banner"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -147,17 +144,12 @@ export default async function BannersPage() {
                     Editar
                   </Button>
                 </Link>
-                <form action={deleteBanner.bind(null, item.id)}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="submit"
-                    className="bg-gray-800 border-gray-700 text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Eliminar
-                  </Button>
-                </form>
+                <DeleteButton
+                  id={item.id}
+                  deleteAction={deleteBanner}
+                  itemName="Banner"
+                  className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                />
               </div>
             </div>
           ))

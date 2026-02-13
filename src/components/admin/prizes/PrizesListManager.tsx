@@ -20,7 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Power } from "lucide-react";
+import { Plus, Pencil, Power } from "lucide-react";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 import Image from "next/image";
 import { createPrize, updatePrize, deletePrize } from "@/app/actions/prizes";
 
@@ -105,12 +106,7 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
     setIsDialogOpen(false);
   };
 
-  const handleDeletePrize = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar este premio?")) {
-      await deletePrize(id);
-      setPrizes((prev) => prev.filter((p) => p.id !== id));
-    }
-  };
+
 
   const handleToggleActive = async (prize: Prize) => {
     const newActiveState = !prize.active;
@@ -285,14 +281,13 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeletePrize(prize.id)}
+                      <DeleteButton
+                        id={prize.id}
+                        deleteAction={deletePrize}
+                        itemName="Premio"
+                        onSuccess={() => setPrizes((prev) => prev.filter((p) => p.id !== prize.id))}
                         className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -370,15 +365,15 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
                   <Pencil className="w-4 h-4 mr-2" />
                   Editar
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDeletePrize(prize.id)}
+                <DeleteButton
+                  id={prize.id}
+                  deleteAction={deletePrize}
+                  itemName="Premio"
+                  onSuccess={() => setPrizes((prev) => prev.filter((p) => p.id !== prize.id))}
                   className="bg-gray-800 border-gray-700 text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Eliminar
-                </Button>
+                  size="sm"
+                  variant="outline"
+                />
               </div>
             </div>
           );

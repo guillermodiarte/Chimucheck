@@ -19,9 +19,10 @@ interface BannerFormProps {
     active: boolean;
     order: number;
   } | null;
+  defaultOrder?: number;
 }
 
-export function BannerForm({ initialData }: BannerFormProps) {
+export function BannerForm({ initialData, defaultOrder = 0 }: BannerFormProps) {
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
   const updateAction = initialData ? updateBanner.bind(null, initialData.id) : createBanner;
   const [state, formAction] = useActionState(updateAction, null);
@@ -101,16 +102,7 @@ export function BannerForm({ initialData }: BannerFormProps) {
           <input type="hidden" name="imageUrl" value={imageUrl} />
         </div>
 
-        <div className="pt-2">
-          <Label htmlFor="manualUrl" className="text-xs text-gray-500 uppercase tracking-wider">O usa una URL externa</Label>
-          <Input
-            id="manualUrl"
-            placeholder="https://ejemplo.com/imagen.jpg"
-            className="bg-gray-800 border-gray-700 text-white mt-1 text-sm"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-          />
-        </div>
+
 
         {!imageUrl && <p className="text-yellow-500 text-xs mt-1">Debes subir una imagen o video antes de crear el banner.</p>}
         {(state as any)?.errors?.imageUrl && <p className="text-red-500 text-sm">{(state as any).errors.imageUrl}</p>}
@@ -134,7 +126,7 @@ export function BannerForm({ initialData }: BannerFormProps) {
             type="number"
             id="order"
             name="order"
-            defaultValue={(payload?.order as string) || initialData?.order || "0"}
+            defaultValue={(payload?.order as string) || initialData?.order || defaultOrder}
             className="w-20 bg-gray-800 border-gray-700 text-white"
           />
         </div>

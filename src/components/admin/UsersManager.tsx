@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, X, Power } from "lucide-react";
+import { Plus, Pencil, X, Power } from "lucide-react";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input"
@@ -68,13 +69,7 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
     }
   }
 
-  async function handleDelete(id: string) {
-    if (confirm("¿Estás seguro de eliminar este usuario?")) {
-      await deleteUser(id);
-      toast.success("Usuario eliminado");
-      setUsers(users.filter(u => u.id !== id));
-    }
-  }
+
 
   return (
     <div className="space-y-6">
@@ -239,14 +234,13 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <DeleteButton
+                      id={user.id}
+                      deleteAction={deleteUser}
+                      itemName="Usuario"
+                      onSuccess={() => setUsers(users.filter(u => u.id !== user.id))}
                       className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                      onClick={() => handleDelete(user.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    />
                   </div>
                 </TableCell>
               </TableRow>
@@ -298,15 +292,15 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
                 <Pencil className="w-4 h-4 mr-2" />
                 Editar
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              <DeleteButton
+                id={user.id}
+                deleteAction={deleteUser}
+                itemName="Usuario"
+                onSuccess={() => setUsers(users.filter(u => u.id !== user.id))}
                 className="bg-gray-800 border-gray-700 text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                onClick={() => handleDelete(user.id)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Eliminar
-              </Button>
+                size="sm"
+                variant="outline"
+              />
             </div>
           </div>
         ))}
