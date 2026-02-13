@@ -3,11 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, X, Instagram, Youtube, Twitch, Monitor } from "lucide-react";
+import { Menu, X, Instagram, Youtube, Twitch, Monitor, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { Session } from "next-auth";
+import { useSession } from "next-auth/react";
 
-export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoText?: string }) {
+export default function Navbar({ logoUrl, logoText, session: initialSession }: { logoUrl?: string; logoText?: string; session?: Session | null }) {
+  const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -66,21 +69,6 @@ export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoTe
                 Torneos
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
               </Link>
-              {/* <Link
-                href="#news"
-                className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (pathname !== '/') {
-                    window.location.href = '/#news';
-                  } else {
-                    document.getElementById('news')?.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              >
-                Novedades
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
-              </Link> */}
               <Link
                 href="/acerca-de"
                 className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
@@ -92,18 +80,47 @@ export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoTe
             </div>
           </div>
           <div className="hidden md:flex items-center space-x-6">
-            <a href="https://www.instagram.com/chimucheck/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 hover:scale-125 transition-all duration-300">
-              <Instagram size={22} />
-            </a>
-            <a href="https://www.twitch.tv/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-500 hover:scale-125 transition-all duration-300">
-              <Twitch size={22} />
-            </a>
-            <a href="https://www.youtube.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 hover:scale-125 transition-all duration-300">
-              <Youtube size={22} />
-            </a>
-            <a href="https://www.kick.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
-              <Monitor size={22} />
-            </a>
+            <div className="flex items-center space-x-4">
+              <a href="https://www.instagram.com/chimucheck/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 hover:scale-125 transition-all duration-300">
+                <Instagram size={20} />
+              </a>
+              <a href="https://www.twitch.tv/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-500 hover:scale-125 transition-all duration-300">
+                <Twitch size={20} />
+              </a>
+              <a href="https://www.youtube.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 hover:scale-125 transition-all duration-300">
+                <Youtube size={20} />
+              </a>
+              <a href="https://www.kick.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
+                <Monitor size={20} />
+              </a>
+            </div>
+
+            <div className="h-6 w-px bg-white/20"></div>
+
+            {session?.user ? (
+              <Link
+                href="/player/dashboard"
+                className="flex items-center gap-2 text-white hover:text-primary transition-colors group"
+              >
+                <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
+                  <User size={16} className="text-primary" />
+                </div>
+                <span className="font-bold text-sm tracking-wide">
+                  {/* Show alias if available, otherwise name or "Jugador" */}
+                  {(session.user as any).alias || session.user.name || "Jugador"}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                href="/player/login"
+                className="flex items-center gap-2 text-primary hover:text-white transition-colors group"
+              >
+                <div className="p-1.5 rounded-full border border-primary/30 group-hover:border-primary/80 group-hover:bg-primary/10 transition-all">
+                  <User size={16} />
+                </div>
+                <span className="font-bold text-sm tracking-wide">INGRESAR</span>
+              </Link>
+            )}
           </div>
           <div className="-mr-2 flex md:hidden">
             <button
@@ -129,7 +146,7 @@ export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoTe
                 href="/"
                 className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
                 onClick={handleHomeClick}
-              >{/* // turbo-all */}
+              >
                 Inicio
               </Link>
               <Link
@@ -146,21 +163,6 @@ export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoTe
               >
                 Torneos
               </Link>
-              {/* <Link
-                href="#news"
-                className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (pathname !== '/') {
-                    window.location.href = '/#news';
-                  } else {
-                    document.getElementById('news')?.scrollIntoView({ behavior: 'smooth' });
-                  }
-                  setIsOpen(false);
-                }}
-              >
-                Novedades
-              </Link> */}
               <Link
                 href="/acerca-de"
                 className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
@@ -171,6 +173,25 @@ export default function Navbar({ logoUrl, logoText }: { logoUrl?: string; logoTe
               >
                 Historia
               </Link>
+              {session?.user ? (
+                <Link
+                  href="/player/dashboard"
+                  className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <User size={18} className="text-primary" />
+                  {(session.user as any).alias || session.user.name || "Mi Cuenta"}
+                </Link>
+              ) : (
+                <Link
+                  href="/player/login"
+                  className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <User size={18} className="text-primary" />
+                  Ingresar
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

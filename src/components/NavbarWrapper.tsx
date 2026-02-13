@@ -3,18 +3,22 @@
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 
+import { Session } from "next-auth";
+
 interface NavbarWrapperProps {
   logoUrl?: string;
   logoText?: string;
+  session?: Session | null;
 }
 
-export default function NavbarWrapper({ logoUrl, logoText }: NavbarWrapperProps) {
+export default function NavbarWrapper({ logoUrl, logoText, session }: NavbarWrapperProps) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
+  const isPlayer = pathname?.startsWith("/player");
 
-  if (isAdmin) {
+  if (isAdmin || isPlayer) {
     return null;
   }
 
-  return <Navbar logoUrl={logoUrl} logoText={logoText} />;
+  return <Navbar logoUrl={logoUrl} logoText={logoText} session={session} />;
 }

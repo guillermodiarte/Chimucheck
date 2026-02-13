@@ -54,7 +54,11 @@ export default async function BannersPage() {
               banners.map((item: any) => (
                 <TableRow key={item.id} className="border-gray-800 hover:bg-gray-900/50">
                   <TableCell>
-                    <img src={item.imageUrl} alt={item.title} className="w-16 h-10 object-cover rounded" />
+                    {item.imageUrl?.endsWith(".mp4") || item.imageUrl?.endsWith(".webm") ? (
+                      <video src={item.imageUrl} className="w-16 h-10 object-cover rounded border border-gray-800" muted loop autoPlay />
+                    ) : (
+                      <img src={item.imageUrl} alt={item.title} className="w-16 h-10 object-cover rounded border border-gray-800" />
+                    )}
                   </TableCell>
                   <TableCell className="font-medium text-white">{item.title}</TableCell>
                   <TableCell className="text-white">{item.order}</TableCell>
@@ -109,7 +113,11 @@ export default async function BannersPage() {
           banners.map((item: any) => (
             <div key={item.id} className="bg-gray-900 p-4 rounded-lg border border-gray-800 space-y-4">
               <div className="flex items-start gap-4">
-                <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded bg-gray-800" />
+                {item.imageUrl?.endsWith(".mp4") || item.imageUrl?.endsWith(".webm") ? (
+                  <video src={item.imageUrl} className="w-20 h-20 object-cover rounded bg-gray-800 border-gray-700" muted loop autoPlay />
+                ) : (
+                  <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded bg-gray-800 border-gray-700" />
+                )}
                 <div className="flex-1 min-w-0 space-y-1">
                   <h3 className="font-bold text-white truncate text-lg pr-4">{item.title}</h3>
                   <div className="flex flex-wrap gap-2 items-center">

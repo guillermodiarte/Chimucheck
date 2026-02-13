@@ -74,3 +74,59 @@ model Prize {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// --- Player System Models (Isolated from User/Admin) ---
+
+model Player {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  password      String
+  alias         String?   @unique
+  image         String?
+  phone         String?
+  chimucoins    Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  stats         PlayerStats?
+  registrations TournamentRegistration[]
+}
+
+model PlayerStats {
+  id            String   @id @default(uuid())
+  playerId      String   @unique
+  player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  wins          Int      @default(0)
+  matchesPlayed Int      @default(0)
+  winRate       Float    @default(0.0)
+}
+
+model Tournament {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  date        DateTime
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, FINISHED, CANCELLED
+  maxPlayers  Int      @default(16)
+  currentPlayers Int   @default(0)
+  prizePool   String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  registrations TournamentRegistration[]
+}
+
+model TournamentRegistration {
+  id            String     @id @default(uuid())
+  playerId      String
+  player        Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  status        String     @default("PENDING") // PENDING, CONFIRMED, ELIMINATED, WINNER
+  registeredAt  DateTime   @default(now())
+
+  @@unique([playerId, tournamentId])
+}

@@ -4,6 +4,9 @@ import "./globals.css";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import FooterWrapper from "@/components/FooterWrapper";
 import { db } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { Providers } from "@/components/Providers";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,16 +40,21 @@ export default async function RootLayout({
   const logoUrl = (homeSection?.content as any)?.logoUrl;
   const logoText = (homeSection?.content as any)?.logoText;
 
+  const session = await auth();
+
   return (
     <html lang="es" className="scroll-smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <NavbarWrapper logoUrl={logoUrl} logoText={logoText} />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <FooterWrapper />
+        <Providers>
+          <NavbarWrapper logoUrl={logoUrl} logoText={logoText} session={session} />
+          <main className="flex-grow">
+            {children}
+          </main>
+          <FooterWrapper />
+          <Toaster richColors position="top-center" />
+        </Providers>
       </body>
     </html>
   );

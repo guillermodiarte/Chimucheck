@@ -18,8 +18,8 @@ export function LocalImageUpload({ onUploadComplete, onUploadError }: LocalImage
     if (!file) return;
 
     // Client-side validation
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      toast.error("El archivo es demasiado grande (Máx 5MB)");
+    if (file.size > 20 * 1024 * 1024) { // 20MB limit
+      toast.error("El archivo es demasiado grande (Máx 20MB)");
       return;
     }
 
@@ -58,29 +58,31 @@ export function LocalImageUpload({ onUploadComplete, onUploadError }: LocalImage
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="secondary"
-        className="relative overflow-hidden bg-secondary text-black hover:bg-yellow-400"
-        disabled={isUploading}
-      >
-        <div className="flex items-center gap-2">
-          {isUploading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <UploadCloud className="w-4 h-4" />
-          )}
-          <span>{isUploading ? "Subiendo..." : "Subir Archivo"}</span>
-        </div>
+      <div className="relative">
+        <Button
+          type="button"
+          variant="secondary"
+          className="bg-secondary text-black hover:bg-yellow-400"
+          disabled={isUploading}
+        >
+          <div className="flex items-center gap-2">
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <UploadCloud className="w-4 h-4" />
+            )}
+            <span>{isUploading ? "Subiendo..." : "Subir Archivo"}</span>
+          </div>
+        </Button>
         <input
           type="file"
-          className="absolute inset-0 opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
           onChange={handleFileChange}
           accept="image/*,video/*"
           disabled={isUploading}
         />
-      </Button>
-      <p className="text-xs text-gray-400">Máx: 5MB (Imágenes/Videos)</p>
+      </div>
+      <p className="text-xs text-gray-400">Máx: 20MB (Imágenes/Videos)</p>
     </div>
   );
 }
