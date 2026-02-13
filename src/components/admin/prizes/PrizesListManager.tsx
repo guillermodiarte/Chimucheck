@@ -20,10 +20,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Power } from "lucide-react";
+import { Plus, Pencil, Power, X } from "lucide-react";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import Image from "next/image";
 import { createPrize, updatePrize, deletePrize } from "@/app/actions/prizes";
+import { LocalMultiImageUpload } from "@/components/admin/LocalMultiImageUpload";
 
 interface PrizesListManagerProps {
   initialPrizes: Prize[];
@@ -36,24 +37,43 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
   const [isLoading, setIsLoading] = useState(false);
 
   // Form State for Prize
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    price: string;
+    description: string;
+    images: string[];
+    active: boolean;
+    order: number;
+  }>({
     title: "",
     price: "",
     description: "",
-    images: "", // comma separated
+    images: [],
     active: true,
     order: 0,
   });
 
   const handleEditPrize = (prize: Prize) => {
     setIsEditingPrize(prize);
+
+    let images: string[] = [];
+    if (Array.isArray(prize.images)) {
+      images = prize.images as string[];
+    } else if (typeof prize.images === 'string') {
+      try {
+        const parsed = JSON.parse(prize.images);
+        if (Array.isArray(parsed)) images = parsed;
+        else if (prize.images) images = [prize.images];
+      } catch {
+        if (prize.images) images = [prize.images];
+      }
+    }
+
     setFormData({
       title: prize.title,
       price: prize.price,
       description: prize.description,
-      images: Array.isArray(prize.images)
-        ? (prize.images as string[]).join(", ")
-        : (typeof prize.images === 'string' ? prize.images : ""),
+      images: images,
       active: prize.active,
       order: prize.order,
     });
@@ -62,23 +82,22 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
 
   const handleCreatePrize = () => {
     setIsEditingPrize(null);
+    const maxOrder = prizes.reduce((max, prize) => (prize.order > max ? prize.order : max), 0);
     setFormData({
       title: "",
       price: "",
       description: "",
-      images: "",
+      images: [],
       active: true,
-      order: 0,
+      order: maxOrder + 1,
     });
     setIsDialogOpen(true);
   };
 
   const handleSubmitPrize = async () => {
     setIsLoading(true);
-    const imagesArray = formData.images
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s !== "");
+    // images is already an array of strings
+    const imagesArray = formData.images;
 
     if (isEditingPrize) {
       await updatePrize(isEditingPrize.id, {
@@ -106,8 +125,6 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
     setIsDialogOpen(false);
   };
 
-
-
   const handleToggleActive = async (prize: Prize) => {
     const newActiveState = !prize.active;
     // Optimistic update
@@ -116,6 +133,20 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
     );
 
     await updatePrize(prize.id, { active: newActiveState });
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove)
+    }));
+  };
+
+  const handleAddImages = (newUrls: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...newUrls]
+    }));
   };
 
   return (
@@ -132,7 +163,7 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-2xl">
+        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isEditingPrize ? "Editar Premio" : "Crear Premio"}
@@ -169,17 +200,36 @@ export default function PrizesListManager({ initialPrizes }: PrizesListManagerPr
                 className="bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="text-sm text-gray-400">URLs de Imágenes (separadas por coma)</label>
-              <Textarea
-                value={formData.images}
-                onChange={(e) =>
-                  setFormData({ ...formData, images: e.target.value })
-                }
-                placeholder="/images/premio-1.jpg, /images/premio-2.jpg"
-                className="bg-gray-800 border-gray-700 text-white"
-              />
-              <p className="text-xs text-gray-500 mt-1">Usa URLs de imágenes subidas o externas.</p>
+            <div className="md:col-span-2 space-y-3">
+              <label className="text-sm text-gray-400">Imágenes del Premio</label>
+
+              <div className="grid grid-cols-5 gap-2">
+                {formData.images.map((url, index) => (
+                  <div key={index} className="relative group aspect-square rounded overflow-hidden border border-gray-700">
+                    <Image src={url} alt={`Imagen ${index}`} fill className="object-cover" />
+                    <button
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {formData.images.length === 0 && (
+                  <div className="col-span-5 text-gray-500 text-sm italic py-2">
+                    No hay imágenes seleccionadas.
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <LocalMultiImageUpload
+                  onUploadComplete={handleAddImages}
+                  maxFiles={10}
+                  currentCount={formData.images.length}
+                />
+                <p className="text-xs text-gray-500">Sube hasta 10 imágenes.</p>
+              </div>
             </div>
             <div>
               <label className="text-sm text-gray-400">Orden</label>

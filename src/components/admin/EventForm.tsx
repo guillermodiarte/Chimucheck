@@ -120,16 +120,7 @@ export function EventForm({ initialData }: EventFormProps) {
           <input type="hidden" name="imageUrl" value={imageUrl} />
         </div>
 
-        <div className="pt-2">
-          <Label htmlFor="manualUrl" className="text-xs text-gray-500 uppercase tracking-wider">O usa una URL externa</Label>
-          <Input
-            id="manualUrl"
-            placeholder="https://ejemplo.com/imagen.jpg"
-            className="bg-gray-800 border-gray-700 text-white mt-1 text-sm"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-          />
-        </div>
+
 
         {!imageUrl && <p className="text-yellow-500 text-xs mt-1">Se recomienda subir una imagen para el evento.</p>}
       </div>
