@@ -35,10 +35,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (passwordsMatch) {
             return {
               id: player.id,
+              alias: player.alias || undefined,
               name: player.name,
               email: player.email,
               image: player.image,
-              alias: player.alias,
             };
           }
         }
