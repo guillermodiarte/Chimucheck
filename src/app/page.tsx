@@ -53,6 +53,10 @@ export default async function Home() {
   const news = showNews ? await getNews() : [];
   const events = showEvents ? await getEvents() : [];
 
+  const gamingSection = await db.siteSection.findUnique({ where: { key: "gaming_section" } });
+  const gamingContent = (gamingSection?.content as any) || null;
+  console.dir({ msg: "DEBUG GAMING FETCH", content: gamingContent, rawSection: gamingSection }, { depth: null });
+
   return (
     <div className="bg-black text-white">
       {/* Hero Carousel */}
@@ -71,7 +75,7 @@ export default async function Home() {
       </section>
 
       {/* Gaming Section */}
-      <GamingSection />
+      <GamingSection content={gamingContent} />
 
       {/* ChimuCoin Section */}
       <ChimuCoinSection />

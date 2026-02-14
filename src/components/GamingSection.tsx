@@ -1,96 +1,151 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Monitor, Youtube } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
-export default function GamingSection() {
+interface GamingSectionContent {
+  title: string;
+  description: string;
+  card1: {
+    title: string;
+    description?: string;
+    link: string;
+    imageUrl: string;
+    tag?: string;
+  };
+  card2: {
+    title: string;
+    description?: string;
+    link: string;
+    imageUrl: string;
+    tag?: string;
+  };
+  ctaButton: {
+    text: string;
+    link: string;
+    enabled: boolean;
+  };
+}
+
+export default function GamingSection({ content }: { content?: GamingSectionContent | null }) {
+  console.log("GAMING SECTION RENDER PROP:", JSON.stringify(content, null, 2));
+  // Safe defaults - Targeted ChimuCoin Design (CS2/Valorant)
+  const defaultData = {
+    title: "¿TIENES LO QUE SE NECESITA?",
+    description: "Participa en nuestros torneos y demuestra tu habilidad.",
+    card1: {
+      title: "CS2 Competitivo",
+      description: "",
+      link: "/torneos/cs2",
+      imageUrl: "/images/chimucoin/game-1.jpg",
+      tag: "FPS"
+    },
+    card2: {
+      title: "Valorant Cups",
+      description: "",
+      link: "/torneos/valorant",
+      imageUrl: "/images/chimucoin/game-2.jpg",
+      tag: "TACTICAL"
+    },
+    ctaButton: {
+      text: "INSCRIBIRSE AL TORNEO",
+      link: "/registro",
+      enabled: true
+    }
+  };
+
+  // Deep merge strategy: Use content values if they exist, otherwise default.
+  // Specifically for images, if content.imageUrl is empty string "", we want default.
+  // For text, if content.title is present (even if empty, but here we expect user text), use it.
+
+  const mergedCard1 = {
+    ...defaultData.card1,
+    ...(content?.card1 || {}),
+    imageUrl: content?.card1?.imageUrl || defaultData.card1.imageUrl // Fallback on empty string
+  };
+
+  const mergedCard2 = {
+    ...defaultData.card2,
+    ...(content?.card2 || {}),
+    imageUrl: content?.card2?.imageUrl || defaultData.card2.imageUrl
+  };
+
+  const mergedCta = {
+    ...defaultData.ctaButton,
+    ...(content?.ctaButton || {})
+  };
+
+  const data = {
+    title: content?.title || defaultData.title,
+    description: content?.description || defaultData.description,
+    card1: mergedCard1,
+    card2: mergedCard2,
+    ctaButton: mergedCta
+  };
+
   return (
-    <section className="py-20 bg-gradient-to-b from-black to-gray-900 border-t border-white/10">
+    <section className="py-20 bg-black" data-version="v2-merged">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-4">
-            ZONA <span className="text-primary">GAMING</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Vive la acción en directo. Sigue nuestros streams y mejores jugadas.
-          </p>
-        </motion.div>
+        <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gray-900/50 p-8 md:p-12">
+          {/* Background Pattern - Use fallback to ensure image always shows */}
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-10 pointer-events-none"
+            style={{ backgroundImage: `url('${data.card1.imageUrl}')` }}
+          />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Twitch Section */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="group relative rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/20 transition-all duration-500"
-          >
-            <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative z-10 text-center max-w-4xl mx-auto">
+            <motion.h3
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-4xl md:text-6xl font-black text-white mb-8 uppercase"
+            >
+              {data.title}
+            </motion.h3>
 
-            <div className="p-8">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-purple-600 rounded-lg shadow-[0_0_15px_rgba(147,51,234,0.5)]">
-                  <Monitor className="w-8 h-8 text-white" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+              {/* Card 1 */}
+              <Link href={data.card1.link} className="block group w-full">
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/30 shadow-[0_0_20px_rgba(0,240,255,0.1)] group">
+                  <Image
+                    src={data.card1.imageUrl}
+                    alt={data.card1.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
+                    <h4 className="text-2xl font-bold text-white text-left">{data.card1.title}</h4>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-white">Twitch Live</h3>
-              </div>
+              </Link>
 
-              <div className="aspect-video w-full rounded-xl overflow-hidden bg-black/50 border border-white/10 shadow-2xl relative group-hover:shadow-[0_0_30px_rgba(147,51,234,0.3)] transition-all">
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
-                  <p>Embed de Twitch aquí (Placeholder)</p>
-                  {/* Aquí iría el iframe de Twitch real */}
+              {/* Card 2 */}
+              <Link href={data.card2.link} className="block group w-full">
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-secondary/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] group">
+                  <Image
+                    src={data.card2.imageUrl}
+                    alt={data.card2.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
+                    <h4 className="text-2xl font-bold text-white text-left">{data.card2.title}</h4>
+                  </div>
                 </div>
-              </div>
-
-              <a
-                href="https://www.twitch.tv/ChimuCheck"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 inline-block w-full py-4 text-center bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                VER CANAL
-              </a>
+              </Link>
             </div>
-          </motion.div>
 
-          {/* YouTube Section */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="group relative rounded-2xl overflow-hidden border border-red-500/30 bg-red-900/10 hover:bg-red-900/20 transition-all duration-500"
-          >
-            <div className="absolute inset-0 bg-gradient-to-tr from-red-600/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-            <div className="p-8">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-red-600 rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.5)]">
-                  <Youtube className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-white">YouTube Highlights</h3>
-              </div>
-
-              <div className="aspect-video w-full rounded-xl overflow-hidden bg-black/50 border border-white/10 shadow-2xl relative group-hover:shadow-[0_0_30px_rgba(220,38,38,0.3)] transition-all">
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
-                  <p>Embed de YouTube aquí (Placeholder)</p>
-                  {/* Aquí iría el iframe de YouTube real */}
-                </div>
-              </div>
-
-              <a
-                href="https://www.youtube.com/ChimuCheck"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 inline-block w-full py-4 text-center bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            {/* CTA Button */}
+            {data.ctaButton?.enabled && (
+              <Link
+                href={data.ctaButton.link}
+                className="inline-block px-12 py-4 bg-white text-black font-black text-xl rounded-full hover:bg-primary hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               >
-                SUSCRIBIRSE
-              </a>
-            </div>
-          </motion.div>
+                {data.ctaButton.text}
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </section>

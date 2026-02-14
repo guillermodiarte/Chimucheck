@@ -3,20 +3,22 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { HomeSectionForm } from "./HomeSectionForm";
 import { AboutSectionForm } from "./AboutSectionForm";
+import { GamingSectionForm } from "./GamingSectionForm";
 import PrizesPageConfig from "../prizes/PrizesPageConfig";
-import { Home, BookOpen, ArrowLeft, ChevronRight, Gift } from "lucide-react";
+import { Home, BookOpen, ArrowLeft, ChevronRight, Gift, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SectionsDashboardProps {
   homeContent: any;
   aboutContent: any;
+  gamingContent: any;
   prizesData: {
     initialPrizes: any[];
     initialConfig: any;
   };
 }
 
-export function SectionsDashboard({ homeContent, aboutContent, prizesData }: SectionsDashboardProps) {
+export function SectionsDashboard({ homeContent, aboutContent, gamingContent, prizesData }: SectionsDashboardProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -77,6 +79,23 @@ export function SectionsDashboard({ homeContent, aboutContent, prizesData }: Sec
         </button>
         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
           <PrizesPageConfig initialConfig={prizesData.initialConfig} />
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedSection === "gaming") {
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={() => handleSelectSection(null)}
+          className="flex items-center text-gray-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver a Secciones
+        </button>
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+          <GamingSectionForm initialContent={gamingContent} />
         </div>
       </div>
     );
@@ -145,6 +164,27 @@ export function SectionsDashboard({ homeContent, aboutContent, prizesData }: Sec
           <div className="h-2 w-8 rounded-full bg-green-500/30"></div>
         </div>
       </div>
+
+      {/* Gaming Card */}
+      <div
+        onClick={() => handleSelectSection("gaming")}
+        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-5 md:p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10 active:scale-95 md:active:scale-100"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="p-3 bg-red-500/10 rounded-lg text-red-400 group-hover:text-red-300 group-hover:bg-red-500/20 transition-colors">
+            <Gamepad2 className="w-6 h-6 md:w-8 md:h-8" />
+          </div>
+          <ChevronRight className="text-gray-600 group-hover:text-white transition-colors" />
+        </div>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Zona Gaming</h3>
+        <p className="text-gray-400 text-sm">Edita la sección de torneos, tarjetas de juegos y botón de inscripción.</p>
+
+        <div className="mt-6 flex gap-2">
+          <div className="h-2 w-6 rounded-full bg-red-500/30"></div>
+          <div className="h-2 w-12 rounded-full bg-gray-700"></div>
+        </div>
+      </div>
+
     </div>
   );
 }

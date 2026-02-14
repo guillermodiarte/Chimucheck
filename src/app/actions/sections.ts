@@ -11,6 +11,7 @@ export async function updateSectionContent(key: string, content: any) {
       create: { key, content },
     });
     revalidatePath("/admin/sections");
+    revalidatePath("/");
     return { success: true, message: "Sección actualizada correctamente" };
   } catch (error) {
     return { success: false, message: "Error al actualizar la sección" };

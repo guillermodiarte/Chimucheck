@@ -14,7 +14,14 @@ export default async function SectionsPage() {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const aboutData = (aboutSection?.content as any) || {};
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const homeData = (homeSection?.content as any) || {};
+
+  const gamingSection = await db.siteSection.findUnique({
+    where: { key: "gaming_section" },
+  });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const gamingData = (gamingSection?.content as any) || null;
 
   // Fetch Prizes Data
   const prizes = await db.prize.findMany({ orderBy: { order: "asc" } });
@@ -44,6 +51,7 @@ export default async function SectionsPage() {
       <SectionsDashboard
         homeContent={homeContent}
         aboutContent={aboutContent}
+        gamingContent={gamingData}
         prizesData={{ initialPrizes: prizes, initialConfig: prizesConfig }}
       />
     </div>

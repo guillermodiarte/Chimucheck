@@ -74,53 +74,7 @@ export default function ChimuCoinSection() {
           </motion.div>
         </div>
 
-        {/* Gaming Competition Section */}
-        <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gray-900/50 p-8 md:p-12">
-          <div className="absolute inset-0 bg-[url('/images/chimucoin/game-1.jpg')] bg-cover bg-center opacity-10" />
 
-          <div className="relative z-10 text-center max-w-4xl mx-auto">
-            <motion.h3
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-4xl md:text-6xl font-black text-white mb-8"
-            >
-              ¿TIENES LO QUE SE NECESITA?
-            </motion.h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/30 shadow-[0_0_20px_rgba(0,240,255,0.1)] group">
-                <Image
-                  src="/images/chimucoin/game-1.jpg"
-                  alt="Competencia Gaming 1"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                  <h4 className="text-2xl font-bold text-white">CS2 Competitivo</h4>
-                </div>
-              </div>
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-secondary/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] group">
-                <Image
-                  src="/images/chimucoin/game-2.jpg"
-                  alt="Competencia Gaming 2"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                  <h4 className="text-2xl font-bold text-white">Valorant Cups</h4>
-                </div>
-              </div>
-            </div>
-
-            <a
-              href="#"
-              className="inline-block px-12 py-4 bg-white text-black font-black text-xl rounded-full hover:bg-primary hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-            >
-              INSCRIBIRSE AL TORNEO
-            </a>
-          </div>
-        </div>
 
       </div>
     </section>
