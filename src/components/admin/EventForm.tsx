@@ -15,7 +15,7 @@ interface EventFormProps {
     id: string;
     name: string;
     description: string | null;
-    date: Date;
+    date: Date | null;
     location: string | null;
     imageUrl: string | null;
     active: boolean;
@@ -38,7 +38,7 @@ export function EventForm({ initialData }: EventFormProps) {
   }
 
   // Helper to format date for input (YYYY-MM-DDTHH:mm)
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: Date | string | null) => {
     if (!date) return "";
     const d = new Date(date);
     return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -55,15 +55,9 @@ export function EventForm({ initialData }: EventFormProps) {
   const handleSubmit = async (formData: FormData) => {
     // Client-side validation
     const name = formData.get("name") as string;
-    const date = formData.get("date") as string;
 
     if (!name || name.trim().length === 0) {
       toast.error("El nombre del evento es obligatorio");
-      return;
-    }
-
-    if (!date) {
-      toast.error("La fecha y hora del evento son obligatorias");
       return;
     }
 
@@ -117,7 +111,7 @@ export function EventForm({ initialData }: EventFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="date" className="text-white">Fecha y Hora</Label>
+          <Label htmlFor="date" className="text-white">Fecha y Hora (Opcional)</Label>
           <Input
             type="datetime-local"
             id="date"
@@ -128,7 +122,7 @@ export function EventForm({ initialData }: EventFormProps) {
           {(state as any)?.errors?.date && <p className="text-red-500 text-sm">{(state as any).errors.date}</p>}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="location" className="text-white">Ubicación</Label>
+          <Label htmlFor="location" className="text-white">Ubicación (Opcional)</Label>
           <Input
             id="location"
             name="location"

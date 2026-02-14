@@ -14,6 +14,8 @@ import {
   Image as ImageIcon,
   Library,
   Gift,
+  Trophy,
+  Users,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -37,6 +39,16 @@ export const sidebarData = [
     title: "Eventos",
     href: "/admin/events",
     icon: Calendar,
+  },
+  {
+    title: "Torneos",
+    href: "/admin/tournaments",
+    icon: Trophy,
+  },
+  {
+    title: "Jugadores",
+    href: "/admin/players",
+    icon: Users,
   },
   {
     title: "Secciones",

@@ -8,8 +8,8 @@ import { z } from "zod";
 const EventSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().optional(),
-  date: z.coerce.date(),
-  location: z.string().optional(),
+  date: z.preprocess((arg) => (arg === "" || arg === undefined ? null : arg), z.coerce.date().nullable().optional()),
+  location: z.preprocess((arg) => (arg === "" || arg === undefined ? null : arg), z.string().nullable().optional()),
   imageUrl: z.string().optional().or(z.literal("")),
   active: z.boolean().optional(),
 });
@@ -38,7 +38,7 @@ export async function createEvent(prevState: any, formData: FormData) {
       data: {
         name,
         description,
-        date,
+        date: date || undefined,
         location,
         imageUrl: imageUrl || null,
         active: active || false,
@@ -87,7 +87,7 @@ export async function updateEvent(id: string, prevState: any, formData: FormData
       data: {
         name,
         description,
-        date,
+        date: date || null,
         location,
         imageUrl: imageUrl || null,
         active: active || false,
@@ -95,9 +95,9 @@ export async function updateEvent(id: string, prevState: any, formData: FormData
     });
   } catch (error) {
     return {
-      message: "Error de base de datos: No se pudo actualizar el evento.",
+      message: `Error DB: ${error instanceof Error ? error.message : String(error)}`,
       payload: {
-        name, description, date: date.toString(), location, imageUrl, active
+        name, description, date: date ? date.toString() : "", location, imageUrl, active
       }
     };
   }

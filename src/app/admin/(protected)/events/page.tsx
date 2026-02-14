@@ -73,7 +73,7 @@ export default async function EventsPage() {
                   </TableCell>
                   <TableCell className="font-medium text-white">{item.name}</TableCell>
                   <TableCell className="text-gray-400">
-                    {new Date(item.date).toLocaleString()}
+                    {item.date ? new Date(item.date).toLocaleString() : "-"}
                   </TableCell>
                   <TableCell className="text-gray-400">{item.location || '-'}</TableCell>
                   <TableCell>

@@ -23,33 +23,29 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
   };
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-auto py-2">
-          <div className="flex items-center">
-
-            <Link href="/" className="flex items-center gap-3" onClick={handleHomeClick}>
-              <div className="relative h-12 w-auto aspect-[2/1]">
+    <nav className="fixed top-0 w-full z-50 transition-all duration-300 pointer-events-none">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-24">
+        <div className="flex items-center justify-between h-full">
+          {/* LOGO - Breaks out of container */}
+          <div className="absolute top-2 left-4 z-50 pointer-events-auto filter drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+            <Link href="/" className="block" onClick={handleHomeClick}>
+              <div className="relative h-28 md:h-32 w-auto aspect-[1/1] hover:scale-105 transition-transform duration-300">
                 <Image
                   src={logoUrl || "/images/logo5.png"}
                   alt="ChimuCheck Logo"
                   fill
-                  className="object-contain object-left"
+                  className="object-contain object-left-top"
                   priority
                 />
               </div>
-              {logoText && (
-                <span className="text-white font-bold text-xl tracking-wider uppercase hidden sm:block">
-                  {logoText}
-                </span>
-              )}
             </Link>
           </div>
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
+
+          <div className="hidden md:flex flex-1 justify-end items-start pointer-events-auto">
+            <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-8 py-3 flex items-center space-x-8 shadow-2xl mt-12">
               <Link
                 href="/"
-                className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
+                className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
                 onClick={handleHomeClick}
               >
                 Inicio
@@ -57,75 +53,74 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
               </Link>
               <Link
                 href="/premios"
-                className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
+                className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
               >
                 Premios
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
               </Link>
               <Link
                 href="/torneos"
-                className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
+                className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
               >
                 Torneos
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
               </Link>
               <Link
                 href="/acerca-de"
-                className="text-gray-300 hover:text-primary hover:scale-110 px-3 py-2 rounded-md text-base font-bold transition-all duration-300 relative group"
+                className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
                 onClick={() => window.scrollTo(0, 0)}
               >
                 Historia
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
               </Link>
+
+              {/* Separator inside pill */}
+              <div className="h-6 w-px bg-white/20"></div>
+
+              {/* Social Icons inside pill */}
+              <div className="flex items-center space-x-3">
+                <a href="https://www.instagram.com/chimucheck/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 hover:scale-125 transition-all duration-300">
+                  <Instagram size={18} />
+                </a>
+                <a href="https://www.twitch.tv/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-500 hover:scale-125 transition-all duration-300">
+                  <Twitch size={18} />
+                </a>
+                <a href="https://www.youtube.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 hover:scale-125 transition-all duration-300">
+                  <Youtube size={18} />
+                </a>
+                <a href="https://www.kick.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
+                  <Monitor size={18} />
+                </a>
+              </div>
+
+              {/* Login inside pill */}
+              {session?.user ? (
+                <Link
+                  href="/player/dashboard"
+                  className="flex items-center gap-2 text-white hover:text-primary transition-colors group ml-2"
+                >
+                  <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
+                    <User size={16} className="text-primary" />
+                  </div>
+                </Link>
+              ) : (
+                <Link
+                  href="/player/login"
+                  className="flex items-center gap-2 text-primary hover:text-white transition-colors group ml-2"
+                >
+                  <div className="p-1.5 rounded-full border border-primary/30 group-hover:border-primary/80 group-hover:bg-primary/10 transition-all">
+                    <User size={16} />
+                  </div>
+                  <span className="font-bold text-sm tracking-wide">INGRESAR</span>
+                </Link>
+              )}
             </div>
           </div>
-          <div className="hidden md:flex items-center space-x-6">
-            <div className="flex items-center space-x-4">
-              <a href="https://www.instagram.com/chimucheck/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 hover:scale-125 transition-all duration-300">
-                <Instagram size={20} />
-              </a>
-              <a href="https://www.twitch.tv/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-500 hover:scale-125 transition-all duration-300">
-                <Twitch size={20} />
-              </a>
-              <a href="https://www.youtube.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 hover:scale-125 transition-all duration-300">
-                <Youtube size={20} />
-              </a>
-              <a href="https://www.kick.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
-                <Monitor size={20} />
-              </a>
-            </div>
 
-            <div className="h-6 w-px bg-white/20"></div>
-
-            {session?.user ? (
-              <Link
-                href="/player/dashboard"
-                className="flex items-center gap-2 text-white hover:text-primary transition-colors group"
-              >
-                <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
-                  <User size={16} className="text-primary" />
-                </div>
-                <span className="font-bold text-sm tracking-wide">
-                  {/* Show alias if available, otherwise name or "Jugador" */}
-                  {(session.user as any).alias || session.user.name || "Jugador"}
-                </span>
-              </Link>
-            ) : (
-              <Link
-                href="/player/login"
-                className="flex items-center gap-2 text-primary hover:text-white transition-colors group"
-              >
-                <div className="p-1.5 rounded-full border border-primary/30 group-hover:border-primary/80 group-hover:bg-primary/10 transition-all">
-                  <User size={16} />
-                </div>
-                <span className="font-bold text-sm tracking-wide">INGRESAR</span>
-              </Link>
-            )}
-          </div>
-          <div className="-mr-2 flex md:hidden">
+          <div className="-mr-2 flex md:hidden pointer-events-auto">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-white bg-black/50 backdrop-blur-md hover:text-primary hover:bg-black/70 focus:outline-none border border-white/10"
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>

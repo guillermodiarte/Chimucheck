@@ -14,7 +14,7 @@ export default async function AboutPage() {
   const aboutData = await getAboutData();
 
   return (
-    <div className="pt-24 bg-black min-h-screen">
+    <div className="pt-40 bg-black min-h-screen">
       <AboutSection initialData={aboutData} />
     </div>
   );
