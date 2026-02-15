@@ -143,10 +143,8 @@ export async function toggleTournamentStatus(id: string, currentStatus: boolean)
     });
     revalidatePath("/admin/tournaments");
     revalidatePath("/torneos");
-    return { success: true };
   } catch (error) {
     console.error("Error toggling tournament status:", error);
-    return { success: false, message: "Error al cambiar estado" };
   }
 }
 
