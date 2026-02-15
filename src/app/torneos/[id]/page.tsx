@@ -137,19 +137,65 @@ export default async function TournamentDetailPage({ params }: { params: Promise
 
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Premios</h2>
-                {tournament.prizePool ? (
-                  <div className="p-6 bg-yellow-900/10 border border-yellow-500/20 rounded-2xl flex items-center gap-6 shadow-lg">
-                    <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0 border border-yellow-500/30">
-                      <Trophy className="w-8 h-8 text-yellow-400" />
+                {(() => {
+                  let prizes = { first: "", second: "", third: "" };
+                  if (tournament.prizePool) {
+                    try {
+                      const parsed = JSON.parse(tournament.prizePool);
+                      if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+                        prizes = { first: parsed.first || "", second: parsed.second || "", third: parsed.third || "" };
+                      } else {
+                        prizes.first = tournament.prizePool;
+                      }
+                    } catch {
+                      prizes.first = tournament.prizePool;
+                    }
+                  }
+                  const hasMultiple = !!prizes.second;
+                  if (!prizes.first) {
+                    return <p className="text-gray-400 italic">Por anunciar.</p>;
+                  }
+                  return (
+                    <div className="space-y-3">
+                      {/* First place */}
+                      <div className="p-5 bg-yellow-900/10 border border-yellow-500/20 rounded-2xl flex items-center gap-5 shadow-lg">
+                        <div className="w-14 h-14 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0 border border-yellow-500/30">
+                          <Trophy className="w-7 h-7 text-yellow-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-yellow-500 font-bold uppercase tracking-wider mb-1">
+                            {hasMultiple ? "🥇 Primer Puesto" : "🏆 Premio del Evento"}
+                          </p>
+                          <p className="text-2xl text-white font-black">{prizes.first}</p>
+                        </div>
+                      </div>
+                      {/* Second place */}
+                      {prizes.second && (
+                        <div className="p-4 bg-gray-400/5 border border-gray-500/20 rounded-xl flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-full bg-gray-400/10 flex items-center justify-center shrink-0 border border-gray-500/20">
+                            <span className="text-xl">🥈</span>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Segundo Puesto</p>
+                            <p className="text-lg text-white font-bold">{prizes.second}</p>
+                          </div>
+                        </div>
+                      )}
+                      {/* Third place */}
+                      {prizes.third && (
+                        <div className="p-4 bg-orange-900/5 border border-orange-500/10 rounded-xl flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/15">
+                            <span className="text-xl">🥉</span>
+                          </div>
+                          <div>
+                            <p className="text-xs text-orange-400 font-bold uppercase tracking-wider mb-0.5">Tercer Puesto</p>
+                            <p className="text-lg text-white font-bold">{prizes.third}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm text-yellow-500 font-bold uppercase tracking-wider mb-1">Prize Pool</p>
-                      <p className="text-3xl text-white font-black">{tournament.prizePool}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-400 italic">Por anunciar.</p>
-                )}
+                  );
+                })()}
               </div>
             </div>
 

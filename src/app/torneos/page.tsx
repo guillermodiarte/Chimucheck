@@ -112,12 +112,27 @@ export default async function TorneosPage() {
                     </div>
 
                     <div className="space-y-3 pt-2 border-t border-white/5">
-                      {tournament.prizePool && (
-                        <div className="flex items-center gap-3 text-sm text-yellow-400 bg-yellow-400/5 p-2 rounded-lg border border-yellow-400/10">
-                          <Trophy className="w-4 h-4 shrink-0" />
-                          <span className="font-bold tracking-wide">{tournament.prizePool}</span>
-                        </div>
-                      )}
+                      {(() => {
+                        let firstPrize = "";
+                        if (tournament.prizePool) {
+                          try {
+                            const parsed = JSON.parse(tournament.prizePool as string);
+                            if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+                              firstPrize = parsed.first || "";
+                            } else {
+                              firstPrize = tournament.prizePool as string;
+                            }
+                          } catch {
+                            firstPrize = tournament.prizePool as string;
+                          }
+                        }
+                        return firstPrize ? (
+                          <div className="flex items-center gap-3 text-sm text-yellow-400 bg-yellow-400/5 p-2 rounded-lg border border-yellow-400/10">
+                            <Trophy className="w-4 h-4 shrink-0" />
+                            <span className="font-bold tracking-wide">{firstPrize}</span>
+                          </div>
+                        ) : null;
+                      })()}
                       <div className="flex items-center gap-3 text-sm text-gray-400 px-2">
                         <Users className="w-4 h-4 shrink-0" />
                         {/* @ts-ignore */}

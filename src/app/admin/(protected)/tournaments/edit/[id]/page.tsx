@@ -12,10 +12,7 @@ export default async function EditTournamentPage({ params }: { params: Promise<{
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight text-white">Editar Torneo</h2>
-      </div>
+    <div>
       <TournamentForm tournament={tournament} />
     </div>
   );

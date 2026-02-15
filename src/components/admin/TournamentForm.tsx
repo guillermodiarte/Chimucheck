@@ -40,7 +40,6 @@ const TournamentSchema = z.object({
     message: "Fecha inválida",
   }),
   maxPlayers: z.coerce.number().min(2, "Mínimo 2 jugadores"),
-  prizePool: z.string().optional(),
   active: z.boolean().default(true),
 });
 
@@ -72,6 +71,23 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
   const [games, setGames] = useState<GameEntry[]>(existingGames);
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
 
+  // --- Prizes state ---
+  const existingPrizes = (() => {
+    if (tournament?.prizePool) {
+      try {
+        const parsed = JSON.parse(tournament.prizePool);
+        if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+          return { first: parsed.first || "", second: parsed.second || "", third: parsed.third || "" };
+        }
+      } catch {
+        // Legacy string value — treat as first place prize
+        return { first: tournament.prizePool, second: "", third: "" };
+      }
+    }
+    return { first: "", second: "", third: "" };
+  })();
+  const [prizes, setPrizes] = useState(existingPrizes);
+
   const form = useForm<z.infer<typeof TournamentSchema>>({
     resolver: zodResolver(TournamentSchema) as any,
     defaultValues: {
@@ -79,7 +95,6 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       description: tournament?.description || "",
       date: tournament?.date ? new Date(tournament.date).toISOString().slice(0, 16) : "",
       maxPlayers: tournament?.maxPlayers || 16,
-      prizePool: tournament?.prizePool || "",
       active: tournament?.active ?? true,
     },
   });
@@ -153,7 +168,13 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       formData.append("description", data.description || "");
       formData.append("date", data.date);
       formData.append("maxPlayers", String(data.maxPlayers));
-      formData.append("prizePool", data.prizePool || "");
+      // Build prizes JSON
+      const prizesJson = JSON.stringify({
+        first: prizes.first.trim(),
+        second: prizes.second.trim(),
+        third: prizes.third.trim(),
+      });
+      formData.append("prizePool", prizesJson);
       formData.append("active", String(data.active));
       formData.append("games", JSON.stringify(uploadedGames));
 
@@ -176,190 +197,232 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div className="w-full bg-gray-900 border border-gray-800 rounded-xl p-6">
       <h2 className="text-2xl font-bold text-white mb-6">
         {tournament ? "Editar Torneo" : "Crear Nuevo Torneo"}
       </h2>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Tournament Name */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nombre del Torneo</FormLabel>
-                <FormControl>
-                  <Input {...field} className="bg-gray-800 border-gray-700" placeholder="Ej: Copa ChimuCheck" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Two-column layout: Info (left) + Games (right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ===== LEFT COLUMN: Tournament Info ===== */}
+            <div className="space-y-5">
+              <h3 className="text-lg font-bold text-white border-b border-gray-700 pb-2">Datos del Torneo</h3>
 
-          {/* Date + Max Players */}
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fecha y Hora</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="datetime-local" className="bg-gray-800 border-gray-700" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="maxPlayers"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cupo Máximo</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="number" className="bg-gray-800 border-gray-700" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              {/* Tournament Name */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre del Torneo</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="bg-gray-800 border-gray-700" placeholder="Ej: Copa ChimuCheck" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Prize Pool */}
-          <FormField
-            control={form.control}
-            name="prizePool"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Premios (Prize Pool)</FormLabel>
-                <FormControl>
-                  <Input {...field} className="bg-gray-800 border-gray-700" placeholder="Ej: $100.000 + Skins" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              {/* Date + Max Players */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fecha y Hora</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="datetime-local" className="bg-gray-800 border-gray-700" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maxPlayers"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cupo Máximo</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" className="bg-gray-800 border-gray-700" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-          {/* Description */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descripción</FormLabel>
-                <FormControl>
-                  <Textarea {...field} className="bg-gray-800 border-gray-700 min-h-[100px]" placeholder="Detalles del torneo..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              {/* Prizes */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-white">Premios</label>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">
+                    {prizes.second ? "🥇 Primer Puesto" : "🏆 Premio del Evento"}
+                  </label>
+                  <Input
+                    value={prizes.first}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPrizes((p) => ({
+                        first: val,
+                        second: val ? p.second : "",
+                        third: val && p.second ? p.third : "",
+                      }));
+                    }}
+                    className="bg-gray-800 border-gray-700"
+                    placeholder="Ej: $100.000 + Skins"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">🥈 Segundo Puesto (opcional)</label>
+                  <Input
+                    value={prizes.second}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPrizes((p) => ({ ...p, second: val, third: val ? p.third : "" }));
+                    }}
+                    disabled={!prizes.first}
+                    className="bg-gray-800 border-gray-700 disabled:opacity-40"
+                    placeholder={prizes.first ? "Ej: $50.000" : "Completá Primer Puesto primero"}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">🥉 Tercer Puesto (opcional)</label>
+                  <Input
+                    value={prizes.third}
+                    onChange={(e) => setPrizes((p) => ({ ...p, third: e.target.value }))}
+                    disabled={!prizes.first || !prizes.second}
+                    className="bg-gray-800 border-gray-700 disabled:opacity-40"
+                    placeholder={!prizes.first || !prizes.second ? "Completá Primer y Segundo Puesto" : "Ej: $25.000"}
+                  />
+                </div>
+              </div>
 
-          {/* ===== GAMES SECTION ===== */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Gamepad2 className="w-5 h-5 text-primary" />
-                Juegos del Torneo
-              </h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="border-primary/50 text-primary hover:bg-primary/10"
-                onClick={addGame}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Agregar Juego
-              </Button>
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descripción</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} className="bg-gray-800 border-gray-700 min-h-[120px]" placeholder="Detalles del torneo..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {games.length === 0 && (
-              <div className="text-center py-8 bg-gray-800/50 rounded-lg border border-dashed border-gray-700">
-                <Gamepad2 className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm">No hay juegos agregados. Haz click en &quot;Agregar Juego&quot;.</p>
+            {/* ===== RIGHT COLUMN: Games ===== */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-700 pb-2">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Gamepad2 className="w-5 h-5 text-primary" />
+                  Juegos del Torneo
+                </h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={addGame}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Agregar Juego
+                </Button>
               </div>
-            )}
 
-            {games.map((game, index) => (
-              <div
-                key={index}
-                className="relative bg-gray-800/60 border border-gray-700 rounded-lg p-4 space-y-3"
-              >
-                {/* Remove button */}
-                {games.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeGame(index)}
-                    className="absolute top-3 right-3 text-gray-500 hover:text-red-400 transition-colors"
-                    title="Eliminar juego"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-
-                {/* Game number label */}
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Juego {index + 1}
-                </p>
-
-                {/* Game name + format */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2">
-                    <Input
-                      value={game.name}
-                      onChange={(e) => updateGameName(index, e.target.value)}
-                      className="bg-gray-900 border-gray-600"
-                      placeholder="Nombre del juego (ej: Fortnite, CS2...)"
-                    />
-                  </div>
-                  <Input
-                    value={game.format}
-                    onChange={(e) => updateGameFormat(index, e.target.value)}
-                    className="bg-gray-900 border-gray-600"
-                    placeholder="Formato (ej: 1vs1, 2vs2)"
-                  />
+              {games.length === 0 && (
+                <div className="text-center py-8 bg-gray-800/50 rounded-lg border border-dashed border-gray-700">
+                  <Gamepad2 className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">No hay juegos agregados. Haz click en &quot;Agregar Juego&quot;.</p>
                 </div>
+              )}
 
-                {/* Game image preview */}
-                {game.image && (
-                  <div className="relative aspect-video w-full max-w-xs rounded-lg overflow-hidden border border-gray-700 group">
-                    <img src={game.image} alt={game.name || "Preview"} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => updateGameImage(index, "", null)}
-                      className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
-
-                {/* Image upload buttons */}
-                <div className="flex gap-2">
-                  <LocalImageUpload
-                    onFileSelect={(file) => {
-                      const previewUrl = URL.createObjectURL(file);
-                      updateGameImage(index, previewUrl, file);
-                    }}
-                    className="w-auto"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="bg-blue-600 text-white hover:bg-blue-700 border-none text-sm"
-                    onClick={() => setMediaModalIndex(index)}
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                {games.map((game, index) => (
+                  <div
+                    key={index}
+                    className="relative bg-gray-800/60 border border-gray-700 rounded-lg p-4 space-y-3"
                   >
-                    🖼️ Biblioteca
-                  </Button>
-                </div>
+                    {/* Remove button */}
+                    {games.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeGame(index)}
+                        className="absolute top-3 right-3 text-gray-500 hover:text-red-400 transition-colors"
+                        title="Eliminar juego"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {/* Game number label */}
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Juego {index + 1}
+                    </p>
+
+                    {/* Game name + format */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <Input
+                          value={game.name}
+                          onChange={(e) => updateGameName(index, e.target.value)}
+                          className="bg-gray-900 border-gray-600"
+                          placeholder="Nombre del juego (ej: Fortnite, CS2...)"
+                        />
+                      </div>
+                      <Input
+                        value={game.format}
+                        onChange={(e) => updateGameFormat(index, e.target.value)}
+                        className="bg-gray-900 border-gray-600"
+                        placeholder="Formato (ej: 1vs1)"
+                      />
+                    </div>
+
+                    {/* Game image preview */}
+                    {game.image && (
+                      <div className="relative aspect-video w-full max-w-xs rounded-lg overflow-hidden border border-gray-700 group">
+                        <img src={game.image} alt={game.name || "Preview"} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => updateGameImage(index, "", null)}
+                          className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Image upload buttons */}
+                    <div className="flex gap-2">
+                      <LocalImageUpload
+                        onFileSelect={(file) => {
+                          const previewUrl = URL.createObjectURL(file);
+                          updateGameImage(index, previewUrl, file);
+                        }}
+                        className="w-auto"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="bg-blue-600 text-white hover:bg-blue-700 border-none text-sm"
+                        onClick={() => setMediaModalIndex(index)}
+                      >
+                        🖼️ Biblioteca
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
+          {/* ===== FULL-WIDTH BOTTOM ===== */}
           {/* Active checkbox */}
           <FormField
             control={form.control}
