@@ -46,7 +46,7 @@ export default function NewsGrid({ news }: NewsGridProps) {
 
             {/* Details */}
             <div className="p-6">
-              <div className="text-secondary text-sm font-bold mb-2">{new Date(item.date).toLocaleDateString("es-ES")}</div>
+              {/* Date removed as requested */}
               <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
               <p className="text-gray-400 text-sm line-clamp-3">{item.content}</p>
             </div>

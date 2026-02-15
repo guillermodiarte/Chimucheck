@@ -86,6 +86,7 @@ model Player {
   image         String?
   phone         String?
   chimucoins    Int       @default(0)
+  active        Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -113,6 +114,9 @@ model Tournament {
   currentPlayers Int   @default(0)
   prizePool   String?
   image       String?
+  active      Boolean  @default(true)
+  game        String?
+  format      String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

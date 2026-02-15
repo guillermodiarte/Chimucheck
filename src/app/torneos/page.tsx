@@ -1,41 +1,120 @@
-import Image from "next/image";
-import { Construction } from "lucide-react";
 
-export default function TorneosPage() {
+import { getTournaments } from "@/app/actions/tournaments";
+import Link from "next/link";
+import Image from "next/image";
+import { Trophy, Calendar, Users, Gamepad2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export default async function TorneosPage() {
+  const tournaments = await getTournaments(true); // Only active tournaments
+
   return (
-    <main className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+    <div className="relative min-h-screen pt-48 pb-12 px-4 md:px-8">
+
       {/* Background Image */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 select-none pointer-events-none">
         <Image
           src="/images/torneos-hero.png"
           alt="Torneos Background"
           fill
-          className="object-cover opacity-30 select-none pointer-events-none"
+          className="object-cover opacity-20"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.8)_100%)]" />
       </div>
 
-      <div className="relative z-10 text-center px-4 space-y-6 max-w-4xl mx-auto animate-in fade-in zoom-in duration-700">
-
-        <div className="flex justify-center mb-8">
-          <div className="p-6 rounded-full bg-secondary/10 ring-1 ring-secondary/50 shadow-[0_0_30px_-5px_var(--secondary)]">
-            <Construction className="w-16 h-16 text-secondary animate-pulse" />
-          </div>
+      <div className="relative z-10 max-w-7xl mx-auto space-y-12">
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight uppercase drop-shadow-[0_0_25px_rgba(255,215,0,0.4)]">
+            Torneos <span className="text-primary">Oficiales</span>
+          </h1>
+          <p className="text-gray-300 max-w-2xl mx-auto text-lg drop-shadow-md">
+            Compite por premios increíbles, demuestra tu nivel y conviértete en una leyenda de la comunidad.
+          </p>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-          TORNEOS
-        </h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {tournaments.length === 0 ? (
+            <div className="col-span-full text-center py-20 bg-gray-900/50 backdrop-blur-sm rounded-3xl border border-white/5 shadow-2xl">
+              <Trophy className="w-20 h-20 text-gray-600 mx-auto mb-6 opacity-50" />
+              <h3 className="text-2xl font-bold text-white mb-2">No hay torneos activos</h3>
+              <p className="text-gray-400 text-lg">Pronto anunciaremos nuevas competencias. ¡Mantente atento!</p>
+            </div>
+          ) : (
+            // @ts-ignore
+            tournaments.map((tournament) => (
+              <div
+                key={tournament.id}
+                className="group relative bg-gray-900/80 backdrop-blur-md rounded-3xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,215,0,0.15)] hover:-translate-y-2"
+              >
+                {/* Image */}
+                <div className="relative aspect-video overflow-hidden">
+                  {tournament.image ? (
+                    <Image
+                      src={tournament.image}
+                      alt={tournament.name}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                      <Trophy className="w-12 h-12 text-gray-600" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
 
-        <div className="h-1 w-24 bg-secondary mx-auto rounded-full" />
+                  {/* Game Badge */}
+                  {tournament.game && (
+                    <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 shadow-lg">
+                      <Gamepad2 className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">{tournament.game}</span>
+                    </div>
+                  )}
+                </div>
 
-        <p className="text-xl md:text-2xl text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
-          Estamos preparando los mejores torneos para ti. <br />
-          <span className="text-secondary font-semibold">Próximamente disponible.</span>
-        </p>
+                {/* Content */}
+                <div className="p-6 space-y-5">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                        {tournament.format || "COMPETITIVO"}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(tournament.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                      </div>
+                    </div>
+                    <h3 className="text-2xl font-black text-white group-hover:text-primary transition-colors line-clamp-1 uppercase tracking-tight">
+                      {tournament.name}
+                    </h3>
+                  </div>
 
+                  <div className="space-y-3 pt-2 border-t border-white/5">
+                    {tournament.prizePool && (
+                      <div className="flex items-center gap-3 text-sm text-yellow-400 bg-yellow-400/5 p-2 rounded-lg border border-yellow-400/10">
+                        <Trophy className="w-4 h-4 shrink-0" />
+                        <span className="font-bold tracking-wide">{tournament.prizePool}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 text-sm text-gray-400 px-2">
+                      <Users className="w-4 h-4 shrink-0" />
+                      {/* @ts-ignore */}
+                      <span className="font-medium">{tournament.registrations.length} / {tournament.maxPlayers} Jugadores</span>
+                    </div>
+                  </div>
+
+                  <Link href={`/torneos/${tournament.id}`} className="block pt-2">
+                    <Button className="w-full h-12 bg-white text-black border-2 border-white hover:bg-primary hover:text-black hover:border-primary transition-all duration-300 font-black tracking-wider text-sm uppercase shadow-lg group-hover:shadow-[0_0_20px_rgba(255,215,0,0.4)]">
+                      Ver Detalles
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

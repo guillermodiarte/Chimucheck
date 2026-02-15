@@ -197,6 +197,7 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
               <TableHead className="text-gray-400">Nombre</TableHead>
               <TableHead className="text-gray-400">Email</TableHead>
               <TableHead className="text-gray-400">Rol</TableHead>
+              <TableHead className="text-gray-400">Estado</TableHead>
               <TableHead className="text-right text-gray-400">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -206,17 +207,17 @@ export default function UsersManager({ initialUsers }: { initialUsers: User[] })
                 <TableCell className="font-medium text-white">{user.name}</TableCell>
                 <TableCell className="text-gray-300">{user.email}</TableCell>
                 <TableCell>
+                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-primary/20 text-primary border border-primary/20">
+                    {user.role}
+                  </span>
+                </TableCell>
+                <TableCell>
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${user.active !== false
                     ? "bg-green-900/30 text-green-400 border border-green-900"
                     : "bg-gray-800 text-gray-400 border border-gray-700"
                     }`}
                   >
                     {user.active !== false ? "Activo" : "Inactivo"}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-primary/20 text-primary border border-primary/20">
-                    {user.role}
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
