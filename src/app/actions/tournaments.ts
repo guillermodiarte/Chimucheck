@@ -3,20 +3,41 @@
 
 import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth"; // Assuming you have auth setup like this based on other files
 import { z } from "zod";
 
 const TournamentSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().optional(),
   date: z.coerce.date(),
-  game: z.string().optional(),
   format: z.string().optional(),
   maxPlayers: z.coerce.number().min(2, "Mínimo 2 jugadores"),
   prizePool: z.string().optional(),
-  image: z.string().optional(),
   active: z.boolean().optional(),
+  // Legacy fields (kept for backward compat)
+  game: z.string().optional(),
+  image: z.string().optional(),
+  // New multi-game field
+  games: z.string().optional(), // JSON string, parsed below
 });
+
+// Type for a single game entry
+export type GameEntry = {
+  name: string;
+  image: string;
+};
+
+function parseGames(gamesRaw: string | undefined): GameEntry[] {
+  if (!gamesRaw) return [];
+  try {
+    const parsed = JSON.parse(gamesRaw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (g: any) => g && typeof g.name === "string" && g.name.trim() !== ""
+    );
+  } catch {
+    return [];
+  }
+}
 
 export async function getTournaments(onlyActive = true) {
   try {
@@ -55,16 +76,21 @@ export async function getTournamentById(id: string) {
 }
 
 export async function createTournament(prevState: any, formData: FormData) {
+  const gamesRaw = formData.get("games") as string | null;
+  const games = parseGames(gamesRaw || undefined);
+
   const validatedFields = TournamentSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
     date: formData.get("date"),
-    game: formData.get("game"),
     format: formData.get("format"),
     maxPlayers: formData.get("maxPlayers"),
     prizePool: formData.get("prizePool"),
-    image: formData.get("image"),
     active: formData.get("active") === "true" || formData.get("active") === "on",
+    // Legacy: use first game name/image as fallback
+    game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
+    image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
+    games: gamesRaw || "[]",
   });
 
   if (!validatedFields.success) {
@@ -76,8 +102,12 @@ export async function createTournament(prevState: any, formData: FormData) {
   }
 
   try {
+    const { games: gamesJson, ...rest } = validatedFields.data;
     await db.tournament.create({
-      data: validatedFields.data,
+      data: {
+        ...rest,
+        games: games, // Prisma will serialize the array to JSON
+      },
     });
     revalidatePath("/admin/tournaments");
     revalidatePath("/torneos");
@@ -89,16 +119,20 @@ export async function createTournament(prevState: any, formData: FormData) {
 }
 
 export async function updateTournament(id: string, prevState: any, formData: FormData) {
+  const gamesRaw = formData.get("games") as string | null;
+  const games = parseGames(gamesRaw || undefined);
+
   const validatedFields = TournamentSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
     date: formData.get("date"),
-    game: formData.get("game"),
     format: formData.get("format"),
     maxPlayers: formData.get("maxPlayers"),
     prizePool: formData.get("prizePool"),
-    image: formData.get("image"),
     active: formData.get("active") === "true" || formData.get("active") === "on",
+    game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
+    image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
+    games: gamesRaw || "[]",
   });
 
   if (!validatedFields.success) {
@@ -110,9 +144,13 @@ export async function updateTournament(id: string, prevState: any, formData: For
   }
 
   try {
+    const { games: gamesJson, ...rest } = validatedFields.data;
     await db.tournament.update({
       where: { id },
-      data: validatedFields.data,
+      data: {
+        ...rest,
+        games: games,
+      },
     });
     revalidatePath("/admin/tournaments");
     revalidatePath("/torneos");
@@ -184,9 +222,6 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
       }
     });
 
-    // Update current players count? 
-    // Better to rely on count of registrations, but schema has currentPlayers field.
-    // Let's update it to stay consistent.
     await db.tournament.update({
       where: { id: tournamentId },
       data: {

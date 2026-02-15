@@ -22,29 +22,53 @@ import { toast } from "sonner";
 import { createTournament, updateTournament } from "@/app/actions/tournaments";
 import { LocalImageUpload } from "./LocalImageUpload";
 import { MediaSelectorModal } from "./MediaSelectorModal";
+import { Plus, X, Gamepad2 } from "lucide-react";
 
+// --- Types ---
+type GameEntry = {
+  name: string;
+  image: string;
+  pendingFile?: File | null;
+};
+
+// --- Zod Schema (without games, handled separately) ---
 const TournamentSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().optional(),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Fecha inválida",
   }),
-  game: z.string().optional(),
   format: z.string().optional(),
   maxPlayers: z.coerce.number().min(2, "Mínimo 2 jugadores"),
   prizePool: z.string().optional(),
-  image: z.string().optional(),
   active: z.boolean().default(true),
 });
 
 interface TournamentFormProps {
-  tournament?: any; // Replace with proper type from Prisma
+  tournament?: any;
 }
 
 export default function TournamentForm({ tournament }: TournamentFormProps) {
   const router = useRouter();
-  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- Games state ---
+  const existingGames: GameEntry[] = (() => {
+    if (tournament?.games) {
+      const parsed = typeof tournament.games === "string"
+        ? JSON.parse(tournament.games)
+        : tournament.games;
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    // Fallback: if old single-game data exists
+    if (tournament?.game) {
+      return [{ name: tournament.game, image: tournament.image || "" }];
+    }
+    return [{ name: "", image: "" }];
+  })();
+
+  const [games, setGames] = useState<GameEntry[]>(existingGames);
+  const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
 
   const form = useForm<z.infer<typeof TournamentSchema>>({
     resolver: zodResolver(TournamentSchema) as any,
@@ -52,67 +76,98 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       name: tournament?.name || "",
       description: tournament?.description || "",
       date: tournament?.date ? new Date(tournament.date).toISOString().slice(0, 16) : "",
-      game: tournament?.game || "",
       format: tournament?.format || "",
       maxPlayers: tournament?.maxPlayers || 16,
       prizePool: tournament?.prizePool || "",
-      image: tournament?.image || "",
       active: tournament?.active ?? true,
     },
   });
 
+  // --- Game entry helpers ---
+  function addGame() {
+    setGames((prev) => [...prev, { name: "", image: "" }]);
+  }
+
+  function removeGame(index: number) {
+    setGames((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateGameName(index: number, name: string) {
+    setGames((prev) => prev.map((g, i) => (i === index ? { ...g, name } : g)));
+  }
+
+  function updateGameImage(index: number, image: string, pendingFile?: File | null) {
+    setGames((prev) =>
+      prev.map((g, i) =>
+        i === index ? { ...g, image, pendingFile: pendingFile ?? g.pendingFile } : g
+      )
+    );
+  }
+
+  // --- Submit ---
   async function onSubmit(data: z.infer<typeof TournamentSchema>) {
-    let imageUrl = data.image;
+    setIsSubmitting(true);
 
-    // Handle Image Upload if there is a pending file
-    if (pendingFile) {
-      const uploadFormData = new FormData();
-      uploadFormData.append("file", pendingFile);
+    try {
+      // Upload pending images for each game
+      const uploadedGames: { name: string; image: string }[] = [];
 
-      try {
-        const toastId = toast.loading("Subiendo imagen...");
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: uploadFormData,
-        });
-        const uploadResult = await response.json();
+      for (const game of games) {
+        if (!game.name.trim()) continue; // Skip empty entries
 
-        if (response.ok && uploadResult.success) {
-          imageUrl = uploadResult.url;
-          toast.dismiss(toastId);
-        } else {
-          toast.dismiss(toastId);
-          toast.error(uploadResult.message || "Error al subir imagen");
-          return;
+        let imageUrl = game.image;
+
+        if (game.pendingFile) {
+          const uploadFormData = new FormData();
+          uploadFormData.append("file", game.pendingFile);
+
+          const toastId = toast.loading(`Subiendo imagen de ${game.name}...`);
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: uploadFormData,
+          });
+          const uploadResult = await response.json();
+
+          if (response.ok && uploadResult.success) {
+            imageUrl = uploadResult.url;
+            toast.dismiss(toastId);
+          } else {
+            toast.dismiss(toastId);
+            toast.error(`Error al subir imagen de ${game.name}`);
+            setIsSubmitting(false);
+            return;
+          }
         }
-      } catch (error) {
-        toast.dismiss();
-        toast.error("Error de red al subir imagen");
-        return;
-      }
-    }
 
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      // If we have a new image URL (uploaded or from library), use it.
-      // Otherwise use the value from the form (which might be the blob URL if not handled correctly, but we overwrite it here)
-      if (key === "image") {
-        formData.append(key, imageUrl || "");
+        uploadedGames.push({ name: game.name.trim(), image: imageUrl });
+      }
+
+      // Build FormData
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("description", data.description || "");
+      formData.append("date", data.date);
+      formData.append("format", data.format || "");
+      formData.append("maxPlayers", String(data.maxPlayers));
+      formData.append("prizePool", data.prizePool || "");
+      formData.append("active", String(data.active));
+      formData.append("games", JSON.stringify(uploadedGames));
+
+      const result = tournament
+        ? await updateTournament(tournament.id, null, formData)
+        : await createTournament(null, formData);
+
+      if (result?.success) {
+        toast.success(result.message);
+        router.push("/admin/tournaments");
+        router.refresh();
       } else {
-        formData.append(key, String(value));
+        toast.error(result?.message || "Error al guardar torneo");
       }
-    });
-
-    const result = tournament
-      ? await updateTournament(tournament.id, null, formData)
-      : await createTournament(null, formData);
-
-    if (result?.success) {
-      toast.success(result.message);
-      router.push("/admin/tournaments");
-      router.refresh();
-    } else {
-      toast.error(result?.message || "Error al guardar torneo");
+    } catch (error) {
+      toast.error("Error inesperado al guardar");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -124,6 +179,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Tournament Name */}
           <FormField
             control={form.control}
             name="name"
@@ -138,20 +194,8 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="game"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Juego</FormLabel>
-                  <FormControl>
-                    <Input {...field} className="bg-gray-800 border-gray-700" placeholder="Ej: CS2" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Format + Date + Max Players */}
+          <div className="grid grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="format"
@@ -165,9 +209,6 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
                 </FormItem>
               )}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="date"
@@ -196,6 +237,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
             />
           </div>
 
+          {/* Prize Pool */}
           <FormField
             control={form.control}
             name="prizePool"
@@ -210,6 +252,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
             )}
           />
 
+          {/* Description */}
           <FormField
             control={form.control}
             name="description"
@@ -224,55 +267,99 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="image"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Imagen del Torneo</FormLabel>
-                <FormControl>
-                  <div className="space-y-4">
-                    {field.value && (
-                      <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden border border-gray-700 group">
-                        <img src={field.value} alt="Preview" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            field.onChange("");
-                            setPendingFile(null);
-                          }}
-                          className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                        </button>
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <LocalImageUpload
-                        onFileSelect={(file) => {
-                          setPendingFile(file);
-                          const previewUrl = URL.createObjectURL(file);
-                          field.onChange(previewUrl);
-                        }}
-                        className="w-auto"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="bg-blue-600 text-white hover:bg-blue-700 border-none"
-                        onClick={() => setIsMediaModalOpen(true)}
-                      >
-                        🖼️ Biblioteca
-                      </Button>
-                    </div>
-                    <Input type="hidden" {...field} />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* ===== GAMES SECTION ===== */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Gamepad2 className="w-5 h-5 text-primary" />
+                Juegos del Torneo
+              </h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-primary/50 text-primary hover:bg-primary/10"
+                onClick={addGame}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Agregar Juego
+              </Button>
+            </div>
 
+            {games.length === 0 && (
+              <div className="text-center py-8 bg-gray-800/50 rounded-lg border border-dashed border-gray-700">
+                <Gamepad2 className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No hay juegos agregados. Haz click en &quot;Agregar Juego&quot;.</p>
+              </div>
+            )}
+
+            {games.map((game, index) => (
+              <div
+                key={index}
+                className="relative bg-gray-800/60 border border-gray-700 rounded-lg p-4 space-y-3"
+              >
+                {/* Remove button */}
+                {games.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeGame(index)}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-red-400 transition-colors"
+                    title="Eliminar juego"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* Game number label */}
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Juego {index + 1}
+                </p>
+
+                {/* Game name */}
+                <Input
+                  value={game.name}
+                  onChange={(e) => updateGameName(index, e.target.value)}
+                  className="bg-gray-900 border-gray-600"
+                  placeholder="Nombre del juego (ej: Fortnite, CS2...)"
+                />
+
+                {/* Game image preview */}
+                {game.image && (
+                  <div className="relative aspect-video w-full max-w-xs rounded-lg overflow-hidden border border-gray-700 group">
+                    <img src={game.image} alt={game.name || "Preview"} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => updateGameImage(index, "", null)}
+                      className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Image upload buttons */}
+                <div className="flex gap-2">
+                  <LocalImageUpload
+                    onFileSelect={(file) => {
+                      const previewUrl = URL.createObjectURL(file);
+                      updateGameImage(index, previewUrl, file);
+                    }}
+                    className="w-auto"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-blue-600 text-white hover:bg-blue-700 border-none text-sm"
+                    onClick={() => setMediaModalIndex(index)}
+                  >
+                    🖼️ Biblioteca
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Active checkbox */}
           <FormField
             control={form.control}
             name="active"
@@ -296,18 +383,24 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
             )}
           />
 
+          {/* Media modal for game images */}
           <MediaSelectorModal
-            open={isMediaModalOpen}
-            onOpenChange={setIsMediaModalOpen}
+            open={mediaModalIndex !== null}
+            onOpenChange={(open) => { if (!open) setMediaModalIndex(null); }}
             onSelect={(url) => {
-              form.setValue("image", url);
-              setPendingFile(null);
-              setIsMediaModalOpen(false);
+              if (mediaModalIndex !== null) {
+                updateGameImage(mediaModalIndex, url, null);
+                setMediaModalIndex(null);
+              }
             }}
           />
 
-          <Button type="submit" className="w-full bg-primary text-black hover:bg-yellow-400 font-bold">
-            {tournament ? "Guardar Cambios" : "Crear Torneo"}
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-primary text-black hover:bg-yellow-400 font-bold disabled:opacity-50"
+          >
+            {isSubmitting ? "Guardando..." : tournament ? "Guardar Cambios" : "Crear Torneo"}
           </Button>
         </form>
       </Form>

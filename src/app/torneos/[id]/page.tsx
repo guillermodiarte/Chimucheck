@@ -7,6 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Users, Trophy, Gamepad2, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import RegistrationButton from "@/components/tournaments/RegistrationButton";
+import type { GameEntry } from "@/app/actions/tournaments";
+
+function getGames(tournament: any): GameEntry[] {
+  if (tournament.games) {
+    const parsed = typeof tournament.games === "string"
+      ? JSON.parse(tournament.games)
+      : tournament.games;
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  }
+  if (tournament.game) {
+    return [{ name: tournament.game, image: tournament.image || "" }];
+  }
+  return [];
+}
+
+function getHeroImage(tournament: any, games: GameEntry[]): string | null {
+  const gameWithImage = games.find((g) => g.image);
+  return gameWithImage?.image || tournament.image || null;
+}
 
 export default async function TournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,6 +35,9 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   if (!tournament || !tournament.active) {
     notFound();
   }
+
+  const games = getGames(tournament);
+  const heroImage = getHeroImage(tournament, games);
 
   const isRegistered = session?.user?.id
     // @ts-ignore
@@ -45,9 +67,9 @@ export default async function TournamentDetailPage({ params }: { params: Promise
 
           {/* Header Image */}
           <div className="relative aspect-video w-full max-h-[500px]">
-            {tournament.image ? (
+            {heroImage ? (
               <Image
-                src={tournament.image}
+                src={heroImage}
                 alt={tournament.name}
                 fill
                 className="object-cover"
@@ -61,12 +83,16 @@ export default async function TournamentDetailPage({ params }: { params: Promise
 
             <div className="absolute bottom-0 left-0 p-8 w-full">
               <div className="flex flex-wrap gap-2 mb-4">
-                {tournament.game && (
-                  <span className="bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-sm font-bold text-primary uppercase shadow-lg">
+                {/* Game badges */}
+                {games.map((game, i) => (
+                  <span
+                    key={i}
+                    className="bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-sm font-bold text-primary uppercase shadow-lg"
+                  >
                     <Gamepad2 className="w-4 h-4" />
-                    {tournament.game}
+                    {game.name}
                   </span>
-                )}
+                ))}
                 {tournament.format && (
                   <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-sm font-bold text-white uppercase shadow-lg">
                     {tournament.format}
@@ -88,6 +114,38 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                   {tournament.description || "No hay descripción disponible."}
                 </p>
               </div>
+
+              {/* Games Grid (if multiple games with images) */}
+              {games.length > 1 && (
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Juegos</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {games.map((game, i) => (
+                      <div
+                        key={i}
+                        className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/10 group"
+                      >
+                        {game.image ? (
+                          <Image
+                            src={game.image}
+                            alt={game.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                            <Gamepad2 className="w-8 h-8 text-gray-600" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                        <div className="absolute bottom-0 left-0 p-3">
+                          <p className="text-sm font-bold text-white uppercase tracking-wide drop-shadow-md">{game.name}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Premios</h2>

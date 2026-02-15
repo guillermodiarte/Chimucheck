@@ -4,9 +4,30 @@ import Link from "next/link";
 import Image from "next/image";
 import { Trophy, Calendar, Users, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { GameEntry } from "@/app/actions/tournaments";
+
+function getGames(tournament: any): GameEntry[] {
+  if (tournament.games) {
+    const parsed = typeof tournament.games === "string"
+      ? JSON.parse(tournament.games)
+      : tournament.games;
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  }
+  // Fallback to legacy single game
+  if (tournament.game) {
+    return [{ name: tournament.game, image: tournament.image || "" }];
+  }
+  return [];
+}
+
+function getCardImage(tournament: any, games: GameEntry[]): string | null {
+  // Use first game with an image, or fallback to tournament.image
+  const gameWithImage = games.find((g) => g.image);
+  return gameWithImage?.image || tournament.image || null;
+}
 
 export default async function TorneosPage() {
-  const tournaments = await getTournaments(true); // Only active tournaments
+  const tournaments = await getTournaments(true);
 
   return (
     <div className="relative min-h-screen pt-48 pb-12 px-4 md:px-8">
@@ -43,75 +64,87 @@ export default async function TorneosPage() {
             </div>
           ) : (
             // @ts-ignore
-            tournaments.map((tournament) => (
-              <div
-                key={tournament.id}
-                className="group relative bg-gray-900/80 backdrop-blur-md rounded-3xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,215,0,0.15)] hover:-translate-y-2"
-              >
-                {/* Image */}
-                <div className="relative aspect-video overflow-hidden">
-                  {tournament.image ? (
-                    <Image
-                      src={tournament.image}
-                      alt={tournament.name}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                      <Trophy className="w-12 h-12 text-gray-600" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+            tournaments.map((tournament) => {
+              const games = getGames(tournament);
+              const cardImage = getCardImage(tournament, games);
 
-                  {/* Game Badge */}
-                  {tournament.game && (
-                    <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 shadow-lg">
-                      <Gamepad2 className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-xs font-bold text-white uppercase tracking-wider">{tournament.game}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-5">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
-                        {tournament.format || "COMPETITIVO"}
-                      </span>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(tournament.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-black text-white group-hover:text-primary transition-colors line-clamp-1 uppercase tracking-tight">
-                      {tournament.name}
-                    </h3>
-                  </div>
-
-                  <div className="space-y-3 pt-2 border-t border-white/5">
-                    {tournament.prizePool && (
-                      <div className="flex items-center gap-3 text-sm text-yellow-400 bg-yellow-400/5 p-2 rounded-lg border border-yellow-400/10">
-                        <Trophy className="w-4 h-4 shrink-0" />
-                        <span className="font-bold tracking-wide">{tournament.prizePool}</span>
+              return (
+                <div
+                  key={tournament.id}
+                  className="group relative bg-gray-900/80 backdrop-blur-md rounded-3xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,215,0,0.15)] hover:-translate-y-2"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-video overflow-hidden">
+                    {cardImage ? (
+                      <Image
+                        src={cardImage}
+                        alt={tournament.name}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                        <Trophy className="w-12 h-12 text-gray-600" />
                       </div>
                     )}
-                    <div className="flex items-center gap-3 text-sm text-gray-400 px-2">
-                      <Users className="w-4 h-4 shrink-0" />
-                      {/* @ts-ignore */}
-                      <span className="font-medium">{tournament.registrations.length} / {tournament.maxPlayers} Jugadores</span>
-                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+
+                    {/* Game Badges */}
+                    {games.length > 0 && (
+                      <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 justify-end max-w-[70%]">
+                        {games.map((game, i) => (
+                          <div
+                            key={i}
+                            className="bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 shadow-lg"
+                          >
+                            <Gamepad2 className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">{game.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <Link href={`/torneos/${tournament.id}`} className="block pt-2">
-                    <Button className="w-full h-12 bg-white text-black border-2 border-white hover:bg-primary hover:text-black hover:border-primary transition-all duration-300 font-black tracking-wider text-sm uppercase shadow-lg group-hover:shadow-[0_0_20px_rgba(255,215,0,0.4)]">
-                      Ver Detalles
-                    </Button>
-                  </Link>
+                  {/* Content */}
+                  <div className="p-6 space-y-5">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                          {tournament.format || "COMPETITIVO"}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(tournament.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                        </div>
+                      </div>
+                      <h3 className="text-2xl font-black text-white group-hover:text-primary transition-colors line-clamp-1 uppercase tracking-tight">
+                        {tournament.name}
+                      </h3>
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-white/5">
+                      {tournament.prizePool && (
+                        <div className="flex items-center gap-3 text-sm text-yellow-400 bg-yellow-400/5 p-2 rounded-lg border border-yellow-400/10">
+                          <Trophy className="w-4 h-4 shrink-0" />
+                          <span className="font-bold tracking-wide">{tournament.prizePool}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 text-sm text-gray-400 px-2">
+                        <Users className="w-4 h-4 shrink-0" />
+                        {/* @ts-ignore */}
+                        <span className="font-medium">{tournament.registrations.length} / {tournament.maxPlayers} Jugadores</span>
+                      </div>
+                    </div>
+
+                    <Link href={`/torneos/${tournament.id}`} className="block pt-2">
+                      <Button className="w-full h-12 bg-white text-black border-2 border-white hover:bg-primary hover:text-black hover:border-primary transition-all duration-300 font-black tracking-wider text-sm uppercase shadow-lg group-hover:shadow-[0_0_20px_rgba(255,215,0,0.4)]">
+                        Ver Detalles
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
