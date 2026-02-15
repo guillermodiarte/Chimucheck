@@ -96,44 +96,30 @@ export default async function TournamentDetailPage({ params }: { params: Promise
           <div className="p-8 grid gap-8 md:grid-cols-3">
             {/* Left Column: Info */}
             <div className="md:col-span-2 space-y-8">
+              {/* Games list (names only, no images — those are in the carousel) */}
+              {games.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Juegos</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {games.map((game, i) => (
+                      <span
+                        key={i}
+                        className="bg-gray-800/80 border border-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wide"
+                      >
+                        <Gamepad2 className="w-4 h-4 text-primary" />
+                        {game.name}{game.format ? ` · ${game.format}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Sobre el Torneo</h2>
                 <p className="text-gray-300 whitespace-pre-line leading-relaxed text-lg">
                   {tournament.description || "No hay descripción disponible."}
                 </p>
               </div>
-
-              {/* Games Grid (if multiple games with images) */}
-              {games.length > 1 && (
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Juegos</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {games.map((game, i) => (
-                      <div
-                        key={i}
-                        className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/10 group"
-                      >
-                        {game.image ? (
-                          <Image
-                            src={game.image}
-                            alt={game.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                            <Gamepad2 className="w-8 h-8 text-gray-600" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                        <div className="absolute bottom-0 left-0 p-3">
-                          <p className="text-sm font-bold text-white uppercase tracking-wide drop-shadow-md">{game.name}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Premios</h2>
