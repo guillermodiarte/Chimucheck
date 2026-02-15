@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Trophy, Calendar, Users, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { GameEntry } from "@/app/actions/tournaments";
+import TournamentImageCarousel from "@/components/tournaments/TournamentImageCarousel";
 
 function getGames(tournament: any): GameEntry[] {
   if (tournament.games) {
@@ -18,12 +19,6 @@ function getGames(tournament: any): GameEntry[] {
     return [{ name: tournament.game, image: tournament.image || "" }];
   }
   return [];
-}
-
-function getCardImage(tournament: any, games: GameEntry[]): string | null {
-  // Use first game with an image, or fallback to tournament.image
-  const gameWithImage = games.find((g) => g.image);
-  return gameWithImage?.image || tournament.image || null;
 }
 
 export default async function TorneosPage() {
@@ -66,32 +61,25 @@ export default async function TorneosPage() {
             // @ts-ignore
             tournaments.map((tournament) => {
               const games = getGames(tournament);
-              const cardImage = getCardImage(tournament, games);
 
               return (
                 <div
                   key={tournament.id}
                   className="group relative bg-gray-900/80 backdrop-blur-md rounded-3xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,215,0,0.15)] hover:-translate-y-2"
                 >
-                  {/* Image */}
+                  {/* Image Carousel */}
                   <div className="relative aspect-video overflow-hidden">
-                    {cardImage ? (
-                      <Image
-                        src={cardImage}
-                        alt={tournament.name}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                        <Trophy className="w-12 h-12 text-gray-600" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+                    <TournamentImageCarousel
+                      images={games}
+                      fallbackImage={tournament.image}
+                      alt={tournament.name}
+                      autoPlayMs={4000}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent pointer-events-none" />
 
                     {/* Game Badges */}
                     {games.length > 0 && (
-                      <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 justify-end max-w-[70%]">
+                      <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 justify-end max-w-[70%] z-10 pointer-events-none">
                         {games.map((game, i) => (
                           <div
                             key={i}
