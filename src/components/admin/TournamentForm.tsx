@@ -47,7 +47,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const form = useForm<z.infer<typeof TournamentSchema>>({
-    resolver: zodResolver(TournamentSchema),
+    resolver: zodResolver(TournamentSchema) as any,
     defaultValues: {
       name: tournament?.name || "",
       description: tournament?.description || "",

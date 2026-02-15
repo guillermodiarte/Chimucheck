@@ -6,13 +6,16 @@ import { UploadCloud, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { MediaSelectorModal } from "./MediaSelectorModal";
 
+import { cn } from "@/lib/utils";
+
 interface LocalImageUploadProps {
   onFileSelect: (file: File) => void;
   onUrlSelect?: (url: string) => void;
   currentPreview?: string | null;
+  className?: string;
 }
 
-export function LocalImageUpload({ onFileSelect, onUrlSelect }: LocalImageUploadProps) {
+export function LocalImageUpload({ onFileSelect, onUrlSelect, className }: LocalImageUploadProps) {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
 
@@ -32,7 +35,7 @@ export function LocalImageUpload({ onFileSelect, onUrlSelect }: LocalImageUpload
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center gap-2">
         <div className="relative">
           <Button
