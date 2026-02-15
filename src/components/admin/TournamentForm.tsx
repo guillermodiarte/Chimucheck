@@ -28,6 +28,7 @@ import { Plus, X, Gamepad2 } from "lucide-react";
 type GameEntry = {
   name: string;
   image: string;
+  format: string;
   pendingFile?: File | null;
 };
 
@@ -38,7 +39,6 @@ const TournamentSchema = z.object({
   date: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Fecha inválida",
   }),
-  format: z.string().optional(),
   maxPlayers: z.coerce.number().min(2, "Mínimo 2 jugadores"),
   prizePool: z.string().optional(),
   active: z.boolean().default(true),
@@ -58,13 +58,15 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       const parsed = typeof tournament.games === "string"
         ? JSON.parse(tournament.games)
         : tournament.games;
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((g: any) => ({ name: g.name || "", image: g.image || "", format: g.format || "" }));
+      }
     }
     // Fallback: if old single-game data exists
     if (tournament?.game) {
-      return [{ name: tournament.game, image: tournament.image || "" }];
+      return [{ name: tournament.game, image: tournament.image || "", format: tournament.format || "" }];
     }
-    return [{ name: "", image: "" }];
+    return [{ name: "", image: "", format: "" }];
   })();
 
   const [games, setGames] = useState<GameEntry[]>(existingGames);
@@ -76,7 +78,6 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       name: tournament?.name || "",
       description: tournament?.description || "",
       date: tournament?.date ? new Date(tournament.date).toISOString().slice(0, 16) : "",
-      format: tournament?.format || "",
       maxPlayers: tournament?.maxPlayers || 16,
       prizePool: tournament?.prizePool || "",
       active: tournament?.active ?? true,
@@ -85,7 +86,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
 
   // --- Game entry helpers ---
   function addGame() {
-    setGames((prev) => [...prev, { name: "", image: "" }]);
+    setGames((prev) => [...prev, { name: "", image: "", format: "" }]);
   }
 
   function removeGame(index: number) {
@@ -104,13 +105,17 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
     );
   }
 
+  function updateGameFormat(index: number, format: string) {
+    setGames((prev) => prev.map((g, i) => (i === index ? { ...g, format } : g)));
+  }
+
   // --- Submit ---
   async function onSubmit(data: z.infer<typeof TournamentSchema>) {
     setIsSubmitting(true);
 
     try {
       // Upload pending images for each game
-      const uploadedGames: { name: string; image: string }[] = [];
+      const uploadedGames: { name: string; image: string; format: string }[] = [];
 
       for (const game of games) {
         if (!game.name.trim()) continue; // Skip empty entries
@@ -139,7 +144,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
           }
         }
 
-        uploadedGames.push({ name: game.name.trim(), image: imageUrl });
+        uploadedGames.push({ name: game.name.trim(), image: imageUrl, format: game.format || "" });
       }
 
       // Build FormData
@@ -147,7 +152,6 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       formData.append("name", data.name);
       formData.append("description", data.description || "");
       formData.append("date", data.date);
-      formData.append("format", data.format || "");
       formData.append("maxPlayers", String(data.maxPlayers));
       formData.append("prizePool", data.prizePool || "");
       formData.append("active", String(data.active));
@@ -194,21 +198,8 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
             )}
           />
 
-          {/* Format + Date + Max Players */}
-          <div className="grid grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="format"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Formato</FormLabel>
-                  <FormControl>
-                    <Input {...field} className="bg-gray-800 border-gray-700" placeholder="Ej: 5v5" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Date + Max Players */}
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="date"
@@ -315,13 +306,23 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
                   Juego {index + 1}
                 </p>
 
-                {/* Game name */}
-                <Input
-                  value={game.name}
-                  onChange={(e) => updateGameName(index, e.target.value)}
-                  className="bg-gray-900 border-gray-600"
-                  placeholder="Nombre del juego (ej: Fortnite, CS2...)"
-                />
+                {/* Game name + format */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <Input
+                      value={game.name}
+                      onChange={(e) => updateGameName(index, e.target.value)}
+                      className="bg-gray-900 border-gray-600"
+                      placeholder="Nombre del juego (ej: Fortnite, CS2...)"
+                    />
+                  </div>
+                  <Input
+                    value={game.format}
+                    onChange={(e) => updateGameFormat(index, e.target.value)}
+                    className="bg-gray-900 border-gray-600"
+                    placeholder="Formato (ej: 1vs1, 2vs2)"
+                  />
+                </div>
 
                 {/* Game image preview */}
                 {game.image && (

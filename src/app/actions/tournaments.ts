@@ -24,6 +24,7 @@ const TournamentSchema = z.object({
 export type GameEntry = {
   name: string;
   image: string;
+  format: string;
 };
 
 function parseGames(gamesRaw: string | undefined): GameEntry[] {
@@ -83,11 +84,10 @@ export async function createTournament(prevState: any, formData: FormData) {
     name: formData.get("name"),
     description: formData.get("description"),
     date: formData.get("date"),
-    format: formData.get("format"),
+    format: games.length > 0 ? games[0].format : (formData.get("format") as string) || undefined,
     maxPlayers: formData.get("maxPlayers"),
     prizePool: formData.get("prizePool"),
     active: formData.get("active") === "true" || formData.get("active") === "on",
-    // Legacy: use first game name/image as fallback
     game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
     image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
     games: gamesRaw || "[]",
@@ -126,7 +126,7 @@ export async function updateTournament(id: string, prevState: any, formData: For
     name: formData.get("name"),
     description: formData.get("description"),
     date: formData.get("date"),
-    format: formData.get("format"),
+    format: games.length > 0 ? games[0].format : (formData.get("format") as string) || undefined,
     maxPlayers: formData.get("maxPlayers"),
     prizePool: formData.get("prizePool"),
     active: formData.get("active") === "true" || formData.get("active") === "on",

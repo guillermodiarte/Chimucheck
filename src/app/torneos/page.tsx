@@ -12,11 +12,13 @@ function getGames(tournament: any): GameEntry[] {
     const parsed = typeof tournament.games === "string"
       ? JSON.parse(tournament.games)
       : tournament.games;
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((g: any) => ({ name: g.name || "", image: g.image || "", format: g.format || "" }));
+    }
   }
   // Fallback to legacy single game
   if (tournament.game) {
-    return [{ name: tournament.game, image: tournament.image || "" }];
+    return [{ name: tournament.game, image: tournament.image || "", format: tournament.format || "" }];
   }
   return [];
 }
@@ -86,7 +88,9 @@ export default async function TorneosPage() {
                             className="bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 shadow-lg"
                           >
                             <Gamepad2 className="w-3.5 h-3.5 text-primary" />
-                            <span className="text-xs font-bold text-white uppercase tracking-wider">{game.name}</span>
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">
+                              {game.name}{game.format ? ` · ${game.format}` : ""}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -97,9 +101,6 @@ export default async function TorneosPage() {
                   <div className="p-6 space-y-5">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
-                          {tournament.format || "COMPETITIVO"}
-                        </span>
                         <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
                           <Calendar className="w-3.5 h-3.5" />
                           {new Date(tournament.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}

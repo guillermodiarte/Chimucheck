@@ -15,10 +15,12 @@ function getGames(tournament: any): GameEntry[] {
     const parsed = typeof tournament.games === "string"
       ? JSON.parse(tournament.games)
       : tournament.games;
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((g: any) => ({ name: g.name || "", image: g.image || "", format: g.format || "" }));
+    }
   }
   if (tournament.game) {
-    return [{ name: tournament.game, image: tournament.image || "" }];
+    return [{ name: tournament.game, image: tournament.image || "", format: tournament.format || "" }];
   }
   return [];
 }
@@ -81,14 +83,9 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                     className="bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 text-sm font-bold text-primary uppercase shadow-lg"
                   >
                     <Gamepad2 className="w-4 h-4" />
-                    {game.name}
+                    {game.name}{game.format ? ` · ${game.format}` : ""}
                   </span>
                 ))}
-                {tournament.format && (
-                  <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-sm font-bold text-white uppercase shadow-lg">
-                    {tournament.format}
-                  </span>
-                )}
               </div>
               <h1 className="text-4xl md:text-6xl font-black text-white uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] mb-2 leading-tight">
                 {tournament.name}
