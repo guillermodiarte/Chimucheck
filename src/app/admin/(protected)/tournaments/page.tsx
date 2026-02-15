@@ -20,10 +20,12 @@ function getGames(tournament: any): GameEntry[] {
     const parsed = typeof tournament.games === "string"
       ? JSON.parse(tournament.games)
       : tournament.games;
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((g: any) => ({ name: g.name || "", image: g.image || "", format: g.format || "" }));
+    }
   }
   if (tournament.game) {
-    return [{ name: tournament.game, image: tournament.image || "" }];
+    return [{ name: tournament.game, image: tournament.image || "", format: tournament.format || "" }];
   }
   return [];
 }
