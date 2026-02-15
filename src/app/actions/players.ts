@@ -37,9 +37,7 @@ export async function togglePlayerStatus(id: string, currentStatus: boolean) {
       data: { active: !currentStatus },
     });
     revalidatePath("/admin/players");
-    return { success: true };
   } catch (error) {
     console.error("Error toggling player status:", error);
-    return { success: false, message: "Error al cambiar estado del jugador" };
   }
 }
