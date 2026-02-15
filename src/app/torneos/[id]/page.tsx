@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Users, Trophy, Gamepad2, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import RegistrationButton from "@/components/tournaments/RegistrationButton";
+import TournamentImageCarousel from "@/components/tournaments/TournamentImageCarousel";
 import type { GameEntry } from "@/app/actions/tournaments";
 
 function getGames(tournament: any): GameEntry[] {
@@ -22,10 +23,7 @@ function getGames(tournament: any): GameEntry[] {
   return [];
 }
 
-function getHeroImage(tournament: any, games: GameEntry[]): string | null {
-  const gameWithImage = games.find((g) => g.image);
-  return gameWithImage?.image || tournament.image || null;
-}
+
 
 export default async function TournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,7 +35,6 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   }
 
   const games = getGames(tournament);
-  const heroImage = getHeroImage(tournament, games);
 
   const isRegistered = session?.user?.id
     // @ts-ignore
@@ -65,21 +62,15 @@ export default async function TournamentDetailPage({ params }: { params: Promise
       <div className="relative z-10 max-w-5xl mx-auto">
         <div className="bg-gray-900/60 backdrop-blur-md rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
 
-          {/* Header Image */}
-          <div className="relative aspect-video w-full max-h-[500px]">
-            {heroImage ? (
-              <Image
-                src={heroImage}
-                alt={tournament.name}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                <Trophy className="w-20 h-20 text-gray-600" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          {/* Header Image Carousel */}
+          <div className="group relative aspect-video w-full max-h-[500px]">
+            <TournamentImageCarousel
+              images={games}
+              fallbackImage={tournament.image}
+              alt={tournament.name}
+              autoPlayMs={5000}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent pointer-events-none" />
 
             <div className="absolute bottom-0 left-0 p-8 w-full">
               <div className="flex flex-wrap gap-2 mb-4">
