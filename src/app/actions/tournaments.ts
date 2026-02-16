@@ -42,6 +42,15 @@ function parseGames(gamesRaw: string | undefined): GameEntry[] {
 
 export async function getTournaments(onlyActive = true) {
   try {
+    // Auto-finish tournaments whose date has passed
+    await db.tournament.updateMany({
+      where: {
+        date: { lt: new Date() },
+        status: { notIn: ["FINISHED", "CANCELLED"] },
+      },
+      data: { status: "FINISHED" },
+    });
+
     const where = onlyActive ? { active: true } : {};
     const tournaments = await db.tournament.findMany({
       where,
