@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import { MainNav } from "@/components/player/MainNav";
 import { UserNav } from "@/components/player/UserNav";
+import { db } from "@/lib/prisma";
 
 import Link from "next/link";
 
@@ -17,6 +18,17 @@ export default async function DashboardLayout({
     redirect("/player/login");
   }
 
+  let logoUrl = "/images/logo5.png";
+  try {
+    const homeSection = await db.siteSection.findUnique({
+      where: { key: "home_section" },
+    });
+    const customLogo = (homeSection?.content as any)?.logoUrl;
+    if (customLogo) logoUrl = customLogo;
+  } catch (error) {
+    // fallback to default logo
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <div className="border-b border-white/10 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
@@ -25,7 +37,7 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-2 mr-6">
             <Link href="/" className="relative h-10 w-auto aspect-[2/1] hover:opacity-80 transition-opacity">
               <Image
-                src="/images/logo5.png"
+                src={logoUrl}
                 alt="ChimuCheck"
                 fill
                 className="object-contain object-left"
@@ -46,3 +58,4 @@ export default async function DashboardLayout({
     </div>
   );
 }
+
