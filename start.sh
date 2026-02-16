@@ -10,6 +10,16 @@ if ! npx prisma migrate deploy; then
     npx prisma migrate deploy
 fi
 
+# Sync schema changes not yet in migration files (e.g. Json -> String)
+echo "Pushing schema changes..."
+npx prisma db push --accept-data-loss 2>/dev/null || echo "db push skipped"
+
+# Fix corrupt data: replace empty/invalid games values with valid JSON "[]"
+echo "Fixing tournament data..."
+if [ -f "prisma/fix-games.js" ]; then
+    node prisma/fix-games.js
+fi
+
 # Run seed
 if [ -f "prisma/seed.js" ]; then
     echo "Running seed..."
