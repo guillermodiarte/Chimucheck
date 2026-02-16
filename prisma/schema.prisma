@@ -118,6 +118,8 @@ model Tournament {
   game        String?
   format      String?
   games       String?  @default("[]") // JSON string: array of {name, image, format}
+  winners     String?  @default("[]") // JSON string: array of {position, playerId, playerAlias}
+  photos      String?  @default("[]") // JSON string: array of photo URLs
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

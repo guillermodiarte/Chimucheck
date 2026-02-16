@@ -279,3 +279,70 @@ export async function unregisterPlayer(tournamentId: string, playerId: string) {
     return { success: false, message: "Error al cancelar inscripción" };
   }
 }
+
+// --- Past Tournaments (Results) ---
+
+export async function getFinishedTournaments() {
+  try {
+    const tournaments = await db.tournament.findMany({
+      where: { status: "FINISHED" },
+      orderBy: { date: "desc" },
+      include: { registrations: { include: { player: true } } },
+    });
+    return tournaments;
+  } catch (error) {
+    console.error("Error fetching finished tournaments:", error);
+    return [];
+  }
+}
+
+export async function finishTournament(id: string) {
+  try {
+    await db.tournament.update({
+      where: { id },
+      data: { status: "FINISHED" },
+    });
+    revalidatePath("/admin/tournaments");
+    revalidatePath("/torneos");
+    return { success: true };
+  } catch (error) {
+    console.error("Error finishing tournament:", error);
+    return { success: false, message: "Error al finalizar torneo" };
+  }
+}
+
+export type WinnerEntry = {
+  position: number;
+  playerId: string;
+  playerAlias: string;
+};
+
+export async function setTournamentWinners(id: string, winners: WinnerEntry[]) {
+  try {
+    await db.tournament.update({
+      where: { id },
+      data: { winners: JSON.stringify(winners) },
+    });
+    revalidatePath("/admin/tournaments");
+    revalidatePath(`/torneos/${id}`);
+    return { success: true, message: "Ganadores guardados" };
+  } catch (error) {
+    console.error("Error setting winners:", error);
+    return { success: false, message: "Error al guardar ganadores" };
+  }
+}
+
+export async function setTournamentPhotos(id: string, photos: string[]) {
+  try {
+    await db.tournament.update({
+      where: { id },
+      data: { photos: JSON.stringify(photos) },
+    });
+    revalidatePath("/admin/tournaments");
+    revalidatePath(`/torneos/${id}`);
+    return { success: true, message: "Fotos guardadas" };
+  } catch (error) {
+    console.error("Error setting photos:", error);
+    return { success: false, message: "Error al guardar fotos" };
+  }
+}
