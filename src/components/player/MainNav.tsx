@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 export function MainNav({
   className,
@@ -10,29 +9,37 @@ export function MainNav({
 }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
 
+  const links = [
+    { href: "/player/dashboard", label: "Resumen", exact: true },
+    { href: "/player/dashboard/tournaments", label: "Torneos", exact: false },
+    { href: "/", label: "Inicio", exact: true },
+    { href: "/torneos", label: "Torneos Públicos", exact: false },
+  ];
+
   return (
-    <nav
-      className={cn("flex items-center space-x-4 lg:space-x-6", className)}
-      {...props}
-    >
-      <Link
-        href="/player/dashboard"
-        className={cn(
-          "text-sm font-medium transition-colors hover:text-yellow-400",
-          pathname === "/player/dashboard" ? "text-white" : "text-gray-400"
-        )}
-      >
-        Resumen
-      </Link>
-      <Link
-        href="/player/dashboard/tournaments"
-        className={cn(
-          "text-sm font-medium transition-colors hover:text-yellow-400",
-          pathname?.startsWith("/player/dashboard/tournaments") ? "text-white" : "text-gray-400"
-        )}
-      >
-        Torneos
-      </Link>
+    <nav className="flex items-center space-x-6">
+      {links.map((link) => {
+        const isActive = link.exact
+          ? pathname === link.href
+          : pathname?.startsWith(link.href);
+
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`text-base font-bold transition-all duration-300 relative group px-1 py-1 ${isActive
+                ? "text-primary"
+                : "text-gray-300 hover:text-primary hover:scale-110"
+              }`}
+          >
+            {link.label}
+            <span
+              className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${isActive ? "w-full" : "w-0 group-hover:w-full"
+                }`}
+            ></span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }
