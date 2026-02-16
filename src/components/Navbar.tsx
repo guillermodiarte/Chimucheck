@@ -7,7 +7,7 @@ import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut } from "luci
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { Session } from "next-auth";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Navbar({ logoUrl, logoText, session: initialSession }: { logoUrl?: string; logoText?: string; session?: Session | null }) {
   const { data: session } = useSession();
@@ -117,9 +117,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                       Mi Perfil
                     </Link>
                     <button
-                      onClick={() => {
-                        import("@/app/actions/player-auth").then(mod => mod.logoutPlayer());
-                      }}
+                      onClick={() => signOut({ callbackUrl: pathname })}
                       className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-red-400 transition-colors border-t border-white/5 cursor-pointer"
                     >
                       <LogOut size={14} />
@@ -205,7 +203,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                   <button
                     onClick={() => {
                       setIsOpen(false);
-                      import("@/app/actions/player-auth").then(mod => mod.logoutPlayer());
+                      signOut({ callbackUrl: pathname });
                     }}
                     className="hover:text-red-400 block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-400 w-full cursor-pointer"
                   >

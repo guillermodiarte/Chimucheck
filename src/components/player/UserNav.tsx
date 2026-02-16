@@ -2,8 +2,12 @@
 
 import { User, LogOut } from "lucide-react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 export function UserNav({ player }: { player: any }) {
+  const pathname = usePathname();
+
   return (
     <div className="relative group">
       <button className="flex items-center gap-2 text-white hover:text-primary transition-colors cursor-pointer outline-none">
@@ -24,9 +28,7 @@ export function UserNav({ player }: { player: any }) {
           Mi Perfil
         </Link>
         <button
-          onClick={() => {
-            import("@/app/actions/player-auth").then(mod => mod.logoutPlayer());
-          }}
+          onClick={() => signOut({ callbackUrl: pathname })}
           className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-red-400 transition-colors border-t border-white/5 cursor-pointer"
         >
           <LogOut size={14} />
@@ -36,3 +38,4 @@ export function UserNav({ player }: { player: any }) {
     </div>
   );
 }
+
