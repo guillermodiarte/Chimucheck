@@ -91,7 +91,7 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
               className="group relative bg-gray-900 rounded-lg border border-gray-800 overflow-hidden hover:border-secondary transition-colors"
             >
               <div className="aspect-square relative bg-black/50">
-                {file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                {file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i) ? (
                   <Image
                     src={file.url}
                     alt={file.name}

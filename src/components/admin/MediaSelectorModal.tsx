@@ -92,7 +92,7 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
                   )}
                 >
                   <div className="aspect-square relative bg-black/50">
-                    {file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                    {file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i) ? (
                       <Image
                         src={file.url}
                         alt={file.name}
