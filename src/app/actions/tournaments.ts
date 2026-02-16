@@ -106,7 +106,7 @@ export async function createTournament(prevState: any, formData: FormData) {
     await db.tournament.create({
       data: {
         ...rest,
-        games: games, // Prisma will serialize the array to JSON
+        games: JSON.stringify(games), // Store as JSON string
       },
     });
     revalidatePath("/admin/tournaments");
@@ -149,7 +149,7 @@ export async function updateTournament(id: string, prevState: any, formData: For
       where: { id },
       data: {
         ...rest,
-        games: games,
+        games: JSON.stringify(games),
       },
     });
     revalidatePath("/admin/tournaments");

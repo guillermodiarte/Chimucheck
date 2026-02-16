@@ -117,7 +117,7 @@ model Tournament {
   active      Boolean  @default(true)
   game        String?
   format      String?
-  games       Json     @default("[]") // Array of {name: string, image: string}
+  games       String?  @default("[]") // JSON string: array of {name, image, format}
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
