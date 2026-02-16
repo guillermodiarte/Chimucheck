@@ -154,10 +154,13 @@ export async function updateTournament(id: string, prevState: any, formData: For
 
   try {
     const { games: gamesJson, ...rest } = validatedFields.data;
+    // If date is in the future, reset status to OPEN
+    const statusUpdate = rest.date > new Date() ? { status: "OPEN" } : {};
     await db.tournament.update({
       where: { id },
       data: {
         ...rest,
+        ...statusUpdate,
         games: JSON.stringify(games),
       },
     });
