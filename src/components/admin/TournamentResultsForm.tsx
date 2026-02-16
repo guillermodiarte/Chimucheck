@@ -5,7 +5,7 @@ import { setTournamentWinners, setTournamentPhotos } from "@/app/actions/tournam
 import type { WinnerEntry } from "@/app/actions/tournaments";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Trophy, Medal, Camera, Plus, X, Save, Loader2, Upload } from "lucide-react";
+import { Trophy, Camera, X, Save, Loader2, Upload, Coins } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +16,21 @@ interface TournamentResultsFormProps {
   initialPhotos: string[];
 }
 
+const POSITIONS = [
+  { position: 1, label: "1er Puesto", color: "text-yellow-400 border-yellow-500/50 bg-yellow-500/10", icon: "🥇" },
+  { position: 2, label: "2do Puesto", color: "text-gray-300 border-gray-500/50 bg-gray-500/10", icon: "🥈" },
+  { position: 3, label: "3er Puesto", color: "text-amber-600 border-amber-700/50 bg-amber-700/10", icon: "🥉" },
+];
+
+function ensureAllPositions(initial: WinnerEntry[]): WinnerEntry[] {
+  return POSITIONS.map((pos) => {
+    const existing = initial.find((w) => w.position === pos.position);
+    return existing
+      ? { ...existing, chimucoins: existing.chimucoins || 0 }
+      : { position: pos.position, playerId: "", playerAlias: "", chimucoins: 0 };
+  });
+}
+
 export default function TournamentResultsForm({
   tournamentId,
   players,
@@ -23,25 +38,10 @@ export default function TournamentResultsForm({
   initialPhotos,
 }: TournamentResultsFormProps) {
   const router = useRouter();
-  const [winners, setWinners] = useState<WinnerEntry[]>(
-    initialWinners.length > 0
-      ? initialWinners
-      : [
-        { position: 1, playerId: "", playerAlias: "" },
-        { position: 2, playerId: "", playerAlias: "" },
-        { position: 3, playerId: "", playerAlias: "" },
-      ]
-  );
+  const [winners, setWinners] = useState<WinnerEntry[]>(ensureAllPositions(initialWinners));
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
   const [savingWinners, setSavingWinners] = useState(false);
-  const [savingPhotos, setSavingPhotos] = useState(false);
   const [uploading, setUploading] = useState(false);
-
-  const positionLabels: Record<number, { label: string; color: string; icon: string }> = {
-    1: { label: "1er Puesto", color: "text-yellow-400 border-yellow-500/50 bg-yellow-500/10", icon: "🥇" },
-    2: { label: "2do Puesto", color: "text-gray-300 border-gray-500/50 bg-gray-500/10", icon: "🥈" },
-    3: { label: "3er Puesto", color: "text-amber-600 border-amber-700/50 bg-amber-700/10", icon: "🥉" },
-  };
 
   const handleWinnerChange = (position: number, playerId: string) => {
     const player = players.find((p) => p.id === playerId);
@@ -54,12 +54,21 @@ export default function TournamentResultsForm({
     );
   };
 
+  const handleChimucoinsChange = (position: number, value: string) => {
+    const coins = parseInt(value) || 0;
+    setWinners((prev) =>
+      prev.map((w) =>
+        w.position === position ? { ...w, chimucoins: coins } : w
+      )
+    );
+  };
+
   const handleSaveWinners = async () => {
     setSavingWinners(true);
     const validWinners = winners.filter((w) => w.playerId);
     const result = await setTournamentWinners(tournamentId, validWinners);
     if (result.success) {
-      toast.success("Ganadores guardados correctamente");
+      toast.success(result.message);
       router.refresh();
     } else {
       toast.error(result.message || "Error al guardar ganadores");
@@ -92,7 +101,6 @@ export default function TournamentResultsForm({
     if (newPhotos.length > 0) {
       const updated = [...photos, ...newPhotos];
       setPhotos(updated);
-      // Auto-save photos
       const result = await setTournamentPhotos(tournamentId, updated);
       if (result.success) {
         toast.success(`${newPhotos.length} foto(s) subida(s)`);
@@ -100,7 +108,6 @@ export default function TournamentResultsForm({
       }
     }
     setUploading(false);
-    // Reset input
     e.target.value = "";
   };
 
@@ -114,7 +121,6 @@ export default function TournamentResultsForm({
     }
   };
 
-  // Get already-selected player IDs to prevent duplicates
   const selectedPlayerIds = winners.map((w) => w.playerId).filter(Boolean);
 
   return (
@@ -135,23 +141,19 @@ export default function TournamentResultsForm({
           <p className="text-gray-500 text-sm py-4 text-center">No hay jugadores inscriptos en este torneo.</p>
         ) : (
           <div className="space-y-3">
-            {winners.map((winner) => {
-              const pos = positionLabels[winner.position] || {
-                label: `${winner.position}° Puesto`,
-                color: "text-gray-400 border-gray-700 bg-gray-800",
-                icon: "🏅",
-              };
+            {POSITIONS.map((pos) => {
+              const winner = winners.find((w) => w.position === pos.position)!;
               return (
                 <div
-                  key={winner.position}
-                  className={`flex items-center gap-4 p-4 rounded-lg border ${pos.color}`}
+                  key={pos.position}
+                  className={`flex items-center gap-3 p-4 rounded-lg border ${pos.color}`}
                 >
-                  <span className="text-2xl">{pos.icon}</span>
-                  <span className="font-bold text-sm min-w-[80px]">{pos.label}</span>
+                  <span className="text-2xl shrink-0">{pos.icon}</span>
+                  <span className="font-bold text-sm min-w-[80px] shrink-0">{pos.label}</span>
                   <select
                     value={winner.playerId}
-                    onChange={(e) => handleWinnerChange(winner.position, e.target.value)}
-                    className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    onChange={(e) => handleWinnerChange(pos.position, e.target.value)}
+                    className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 min-w-0"
                   >
                     <option value="">Seleccionar jugador...</option>
                     {players.map((player) => (
@@ -164,6 +166,17 @@ export default function TournamentResultsForm({
                       </option>
                     ))}
                   </select>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Coins className="w-4 h-4 text-primary" />
+                    <input
+                      type="number"
+                      min="0"
+                      value={winner.chimucoins || ""}
+                      onChange={(e) => handleChimucoinsChange(pos.position, e.target.value)}
+                      placeholder="0"
+                      className="w-20 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
                 </div>
               );
             })}

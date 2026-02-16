@@ -327,17 +327,30 @@ export type WinnerEntry = {
   position: number;
   playerId: string;
   playerAlias: string;
+  chimucoins: number;
 };
 
 export async function setTournamentWinners(id: string, winners: WinnerEntry[]) {
   try {
+    // Save winners data
     await db.tournament.update({
       where: { id },
       data: { winners: JSON.stringify(winners) },
     });
+
+    // Award chimucoins to winners
+    for (const winner of winners) {
+      if (winner.playerId && winner.chimucoins > 0) {
+        await db.player.update({
+          where: { id: winner.playerId },
+          data: { chimucoins: { increment: winner.chimucoins } },
+        });
+      }
+    }
+
     revalidatePath("/admin/tournaments");
     revalidatePath(`/torneos/${id}`);
-    return { success: true, message: "Ganadores guardados" };
+    return { success: true, message: "Ganadores guardados y chimucoins otorgados" };
   } catch (error) {
     console.error("Error setting winners:", error);
     return { success: false, message: "Error al guardar ganadores" };
