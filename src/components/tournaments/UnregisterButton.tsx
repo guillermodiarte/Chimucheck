@@ -44,8 +44,8 @@ export default function UnregisterButton({ tournamentId, userId }: UnregisterBut
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`w-full py-4 rounded-xl text-center font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 ${isHovered
-            ? "bg-red-500/10 border border-red-500/30 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
-            : "bg-green-500/10 border border-green-500/30 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
+          ? "bg-red-500/10 border border-red-500/30 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+          : "bg-green-500/10 border border-green-500/30 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
           }`}
       >
         {isHovered ? (
@@ -89,7 +89,7 @@ export default function UnregisterButton({ tournamentId, userId }: UnregisterBut
                 onClick={() => setShowModal(false)}
                 disabled={isLoading}
                 variant="outline"
-                className="flex-1 border-white/10 text-white hover:bg-white/5 font-bold"
+                className="flex-1 bg-white text-black hover:bg-gray-200 font-bold"
               >
                 No, quedarme
               </Button>
