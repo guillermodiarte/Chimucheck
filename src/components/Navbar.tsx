@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, X, Instagram, Youtube, Twitch, Monitor, User } from "lucide-react";
+import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { Session } from "next-auth";
@@ -95,14 +95,38 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
 
               {/* Login inside pill */}
               {session?.user ? (
-                <Link
-                  href="/player/dashboard"
-                  className="flex items-center gap-2 text-white hover:text-primary transition-colors group ml-2"
-                >
-                  <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
-                    <User size={16} className="text-primary" />
+                <div className="relative group ml-2">
+                  <Link
+                    href="/player/dashboard"
+                    className="flex items-center gap-2 text-white hover:text-primary transition-colors"
+                  >
+                    <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
+                      <User size={16} className="text-primary" />
+                    </div>
+                    <span className="font-bold text-sm tracking-wide max-w-[120px] truncate">
+                      {(session.user as any).alias || session.user.name || "Jugador"}
+                    </span>
+                  </Link>
+                  {/* Dropdown */}
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
+                    <Link
+                      href="/player/dashboard"
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-primary transition-colors"
+                    >
+                      <User size={14} />
+                      Mi Perfil
+                    </Link>
+                    <button
+                      onClick={() => {
+                        import("@/app/actions/player-auth").then(mod => mod.logoutPlayer());
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-red-400 transition-colors border-t border-white/5 cursor-pointer"
+                    >
+                      <LogOut size={14} />
+                      Cerrar Sesión
+                    </button>
                   </div>
-                </Link>
+                </div>
               ) : (
                 <Link
                   href="/player/login"
@@ -169,14 +193,26 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                 Historia
               </Link>
               {session?.user ? (
-                <Link
-                  href="/player/dashboard"
-                  className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <User size={18} className="text-primary" />
-                  {(session.user as any).alias || session.user.name || "Mi Cuenta"}
-                </Link>
+                <>
+                  <Link
+                    href="/player/dashboard"
+                    className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <User size={18} className="text-primary" />
+                    {(session.user as any).alias || session.user.name || "Mi Cuenta"}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      import("@/app/actions/player-auth").then(mod => mod.logoutPlayer());
+                    }}
+                    className="hover:text-red-400 block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-400 w-full cursor-pointer"
+                  >
+                    <LogOut size={18} />
+                    Cerrar Sesión
+                  </button>
+                </>
               ) : (
                 <Link
                   href="/player/login"
