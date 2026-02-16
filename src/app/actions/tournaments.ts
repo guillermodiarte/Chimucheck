@@ -166,18 +166,57 @@ export async function updateTournament(id: string, prevState: any, formData: For
 
   try {
     const { games: gamesJson, ...rest } = validatedFields.data;
-    // If date is in the future, reset status to OPEN
-    const statusUpdate = rest.date > new Date() ? { status: "OPEN" } : {};
+    const isMovingToFuture = rest.date > new Date();
+
+    // If moving to future, revert all results from this tournament
+    if (isMovingToFuture) {
+      const current = await db.tournament.findUnique({
+        where: { id },
+        include: { registrations: true },
+      });
+
+      if (current && current.status === "FINISHED") {
+        // Revert winners: chimucoins and wins
+        let winners: any[] = [];
+        try { winners = JSON.parse(current.winners as string || "[]"); } catch { }
+
+        for (const w of winners) {
+          if (!w.playerId) continue;
+          // Revert chimucoins
+          if (w.chimucoins > 0) {
+            await db.player.update({
+              where: { id: w.playerId },
+              data: { chimucoins: { decrement: w.chimucoins } },
+            });
+          }
+          // Revert wins
+          await db.playerStats.update({
+            where: { playerId: w.playerId },
+            data: { wins: { decrement: 1 } },
+          }).catch(() => { });
+        }
+
+        // Revert matchesPlayed for all registered players
+        for (const reg of current.registrations) {
+          await db.playerStats.update({
+            where: { playerId: reg.playerId },
+            data: { matchesPlayed: { decrement: 1 } },
+          }).catch(() => { });
+        }
+      }
+    }
+
     await db.tournament.update({
       where: { id },
       data: {
         ...rest,
-        ...statusUpdate,
+        ...(isMovingToFuture ? { status: "OPEN", winners: "[]", photos: "[]" } : {}),
         games: JSON.stringify(games),
       },
     });
     revalidatePath("/admin/tournaments");
     revalidatePath("/torneos");
+    revalidatePath("/player/dashboard");
     return { success: true, message: "Torneo actualizado correctamente" };
   } catch (error) {
     console.error("Error updating tournament:", error);
