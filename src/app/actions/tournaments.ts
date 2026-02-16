@@ -43,13 +43,25 @@ function parseGames(gamesRaw: string | undefined): GameEntry[] {
 export async function getTournaments(onlyActive = true) {
   try {
     // Auto-finish tournaments whose date has passed
-    await db.tournament.updateMany({
+    const expiredTournaments = await db.tournament.findMany({
       where: {
         date: { lt: new Date() },
         status: { notIn: ["FINISHED", "CANCELLED"] },
       },
-      data: { status: "FINISHED" },
+      include: { registrations: true },
     });
+
+    for (const t of expiredTournaments) {
+      await db.tournament.update({ where: { id: t.id }, data: { status: "FINISHED" } });
+      // Increment matchesPlayed for all registered players
+      for (const reg of t.registrations) {
+        await db.playerStats.upsert({
+          where: { playerId: reg.playerId },
+          create: { playerId: reg.playerId, matchesPlayed: 1 },
+          update: { matchesPlayed: { increment: 1 } },
+        });
+      }
+    }
 
     const where = onlyActive ? { active: true } : {};
     const tournaments = await db.tournament.findMany({
@@ -310,10 +322,26 @@ export async function getFinishedTournaments() {
 
 export async function finishTournament(id: string) {
   try {
+    const tournament = await db.tournament.findUnique({
+      where: { id },
+      include: { registrations: true },
+    });
+    if (!tournament) return { success: false, message: "Torneo no encontrado" };
+
     await db.tournament.update({
       where: { id },
       data: { status: "FINISHED" },
     });
+
+    // Increment matchesPlayed for all registered players
+    for (const reg of tournament.registrations) {
+      await db.playerStats.upsert({
+        where: { playerId: reg.playerId },
+        create: { playerId: reg.playerId, matchesPlayed: 1 },
+        update: { matchesPlayed: { increment: 1 } },
+      });
+    }
+
     revalidatePath("/admin/tournaments");
     revalidatePath("/torneos");
     return { success: true };
@@ -332,19 +360,58 @@ export type WinnerEntry = {
 
 export async function setTournamentWinners(id: string, winners: WinnerEntry[]) {
   try {
+    // Get previous winners to avoid double-counting
+    const tournament = await db.tournament.findUnique({ where: { id } });
+    let prevWinners: WinnerEntry[] = [];
+    try {
+      prevWinners = JSON.parse(tournament?.winners || "[]");
+    } catch { prevWinners = []; }
+    const prevWinnerIds = new Set(prevWinners.filter(w => w.playerId).map(w => w.playerId));
+    const prevChimucoins = new Map(prevWinners.map(w => [w.playerId, w.chimucoins || 0]));
+
     // Save winners data
     await db.tournament.update({
       where: { id },
       data: { winners: JSON.stringify(winners) },
     });
 
-    // Award chimucoins to winners
     for (const winner of winners) {
-      if (winner.playerId && winner.chimucoins > 0) {
+      if (!winner.playerId) continue;
+
+      // Award chimucoins (difference from previous)
+      const prevCoins = prevChimucoins.get(winner.playerId) || 0;
+      const coinsDiff = winner.chimucoins - prevCoins;
+      if (coinsDiff !== 0) {
         await db.player.update({
           where: { id: winner.playerId },
-          data: { chimucoins: { increment: winner.chimucoins } },
+          data: { chimucoins: { increment: coinsDiff } },
         });
+      }
+
+      // Increment wins only for NEW winners (not previously saved)
+      if (!prevWinnerIds.has(winner.playerId)) {
+        const stats = await db.playerStats.upsert({
+          where: { playerId: winner.playerId },
+          create: { playerId: winner.playerId, wins: 1, matchesPlayed: 0 },
+          update: { wins: { increment: 1 } },
+        });
+        // Update winRate
+        if (stats.matchesPlayed > 0) {
+          await db.playerStats.update({
+            where: { playerId: winner.playerId },
+            data: { winRate: stats.wins / stats.matchesPlayed },
+          });
+        }
+      }
+    }
+
+    // Handle removed winners: decrement wins
+    for (const prev of prevWinners) {
+      if (prev.playerId && !winners.find(w => w.playerId === prev.playerId)) {
+        await db.playerStats.update({
+          where: { playerId: prev.playerId },
+          data: { wins: { decrement: 1 } },
+        }).catch(() => { }); // ignore if stats don't exist
       }
     }
 
