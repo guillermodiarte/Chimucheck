@@ -265,12 +265,30 @@ export default async function AdminTournamentsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/admin/tournaments/results/${tournament.id}`}>
-                      <Button variant="ghost" size="sm" className="text-primary hover:text-yellow-300 hover:bg-yellow-900/20 text-xs">
-                        <Medal className="w-4 h-4 mr-1" />
-                        Gestionar
-                      </Button>
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <Link href={`/admin/tournaments/results/${tournament.id}`}>
+                        <Button variant="ghost" size="icon" className="text-primary hover:text-yellow-300 hover:bg-yellow-900/20" title="Gestionar resultados">
+                          <Medal className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <form action={toggleTournamentStatus.bind(null, tournament.id, tournament.active)}>
+                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title={tournament.active ? "Ocultar" : "Activar"}>
+                          <Power className={`w-4 h-4 ${tournament.active ? "text-green-500" : "text-gray-500"}`} />
+                        </Button>
+                      </form>
+                      <Link href={`/admin/tournaments/edit/${tournament.id}`}>
+                        <Button variant="ghost" size="icon" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <DeleteButton
+                        id={tournament.id}
+                        // @ts-ignore
+                        deleteAction={deleteTournament}
+                        itemName="Torneo"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               );
