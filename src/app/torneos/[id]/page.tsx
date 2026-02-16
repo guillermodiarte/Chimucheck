@@ -122,6 +122,110 @@ export default async function TournamentDetailPage({ params }: { params: Promise
               </div>
 
               <div className="space-y-4">
+                {/* Winners Section */}
+                {(() => {
+                  if (tournament.status !== "FINISHED") return null;
+
+                  let winners: any[] = [];
+                  try {
+                    winners = JSON.parse(tournament.winners as string || "[]");
+                  } catch { winners = []; }
+
+                  if (winners.length === 0) return null;
+
+                  // Create a map of players for easy lookup
+                  const playerMap = new Map(
+                    tournament.registrations.map((r: any) => [r.playerId, r.player])
+                  );
+
+                  return (
+                    <div className="space-y-4 mb-8">
+                      <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Ganadores</h2>
+                      <div className="grid gap-4">
+                        {winners.map((winner) => {
+                          const player = playerMap.get(winner.playerId);
+                          const isFirst = winner.position === 1;
+                          const isSecond = winner.position === 2;
+                          const isThird = winner.position === 3;
+
+                          let bgColor = "bg-gray-800/50";
+                          let borderColor = "border-gray-700";
+                          let icon = <Trophy className="w-5 h-5 text-gray-400" />;
+                          let textColor = "text-gray-300";
+
+                          if (isFirst) {
+                            bgColor = "bg-yellow-900/20";
+                            borderColor = "border-yellow-500/30";
+                            icon = <Trophy className="w-6 h-6 text-yellow-400" />;
+                            textColor = "text-yellow-400";
+                          } else if (isSecond) {
+                            bgColor = "bg-gray-400/10";
+                            borderColor = "border-gray-400/30";
+                            icon = <span className="text-xl">🥈</span>;
+                            textColor = "text-gray-300";
+                          } else if (isThird) {
+                            bgColor = "bg-orange-900/10";
+                            borderColor = "border-orange-500/30";
+                            icon = <span className="text-xl">🥉</span>;
+                            textColor = "text-orange-400";
+                          }
+
+                          return (
+                            <div
+                              key={winner.position}
+                              className={`flex items-center gap-4 p-4 rounded-xl border ${borderColor} ${bgColor} relative overflow-hidden`}
+                            >
+                              {/* Rank Badge */}
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${borderColor} bg-black/20 text-xl font-bold`}>
+                                {icon}
+                              </div>
+
+                              {/* Player Info */}
+                              <div className="flex items-center gap-3 relative z-10">
+                                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/10">
+                                  {player?.image ? (
+                                    <Image
+                                      src={player.image}
+                                      alt={player.alias || "Jugador"}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                                      <Users className="w-5 h-5 text-gray-500" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className={`font-bold ${textColor} text-lg leading-none`}>
+                                    {winner.playerAlias || player?.alias || "Jugador"}
+                                  </p>
+                                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                                    {isFirst ? "Campeón" : `${winner.position}° Puesto`}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Prize/Reward if any (optional) */}
+                              {winner.chimucoins > 0 && (
+                                <div className="ml-auto flex flex-col items-end">
+                                  <span className="text-yellow-500 font-bold text-sm">+{winner.chimucoins}</span>
+                                  <span className="text-[10px] text-yellow-500/70 uppercase">ChimuCoins</span>
+                                </div>
+                              )}
+
+                              {/* Background Glow for 1st place */}
+                              {isFirst && (
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-3xl pointer-events-none rounded-full translate-x-10 -translate-y-10" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Premios</h2>
                 {(() => {
                   let prizes = { first: "", second: "", third: "" };
