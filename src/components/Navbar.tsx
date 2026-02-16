@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -15,6 +15,13 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
   const [isOpen, setIsOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const pathname = usePathname();
+
+  // Listen for custom event from other components (e.g. tournament page)
+  useEffect(() => {
+    const handler = () => setShowLoginModal(true);
+    window.addEventListener("open-login-modal", handler);
+    return () => window.removeEventListener("open-login-modal", handler);
+  }, []);
 
   const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (pathname === '/') {

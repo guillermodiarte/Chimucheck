@@ -66,12 +66,22 @@ export async function getTournaments(onlyActive = true) {
     const where = onlyActive ? { active: true } : {};
     const tournaments = await db.tournament.findMany({
       where,
-      orderBy: { date: "asc" },
       include: {
         registrations: true,
       },
     });
-    return tournaments;
+
+    // Custom sorting: Upcoming (ASC) then Past (DESC)
+    const now = new Date();
+    const upcoming = tournaments
+      .filter(t => t.date >= now)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    const past = tournaments
+      .filter(t => t.date < now)
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    return [...upcoming, ...past];
   } catch (error) {
     console.error("Error fetching tournaments:", error);
     return [];

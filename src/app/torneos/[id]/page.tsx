@@ -3,9 +3,8 @@ import { getTournamentById } from "@/app/actions/tournaments";
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Calendar, Users, Trophy, Gamepad2, AlertCircle, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import TournamentLoginButton from "@/components/tournaments/TournamentLoginButton";
 import RegistrationButton from "@/components/tournaments/RegistrationButton";
 import UnregisterButton from "@/components/tournaments/UnregisterButton";
 import TournamentImageCarousel from "@/components/tournaments/TournamentImageCarousel";
@@ -231,11 +230,19 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                       <p className="text-sm text-gray-400">
                         Debes iniciar sesión para inscribirte.
                       </p>
-                      <Link href={`/player/login?callbackUrl=${encodeURIComponent(`/torneos/${tournament.id}`)}`} className="block">
-                        <Button className="w-full h-12 bg-white text-black hover:bg-gray-200 font-bold">
-                          Iniciar Sesión
-                        </Button>
-                      </Link>
+                      {(tournament.status === "FINISHED" || new Date(tournament.date) < new Date()) ? (
+                        <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-500 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
+                          <AlertCircle className="w-5 h-5" />
+                          FINALIZADO
+                        </div>
+                      ) : (
+                        <TournamentLoginButton />
+                      )}
+                    </div>
+                  ) : (tournament.status === "FINISHED" || new Date(tournament.date) < new Date()) ? (
+                    <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-500 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
+                      <AlertCircle className="w-5 h-5" />
+                      FINALIZADO
                     </div>
                   ) : isRegistered ? (
                     // @ts-ignore
