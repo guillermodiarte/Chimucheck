@@ -15,9 +15,10 @@ const RegisterSchema = z.object({
 
 export async function loginPlayer(prevState: string | undefined, formData: FormData) {
   try {
+    const callbackUrl = formData.get("callbackUrl") as string | null;
     await signIn("credentials", {
       ...Object.fromEntries(formData),
-      redirectTo: "/player/dashboard",
+      redirectTo: callbackUrl || "/player/dashboard",
     });
   } catch (error) {
     if (error instanceof AuthError) {

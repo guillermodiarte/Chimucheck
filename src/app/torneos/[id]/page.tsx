@@ -230,7 +230,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                       <p className="text-sm text-gray-400">
                         Debes iniciar sesión para inscribirte.
                       </p>
-                      <Link href="/login" className="block">
+                      <Link href={`/player/login?callbackUrl=${encodeURIComponent(`/torneos/${tournament.id}`)}`} className="block">
                         <Button className="w-full h-12 bg-white text-black hover:bg-gray-200 font-bold">
                           Iniciar Sesión
                         </Button>

@@ -10,15 +10,18 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function RegisterPage() {
   const [state, action, isPending] = useActionState(registerPlayer, null);
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "";
 
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message);
       setTimeout(() => {
-        window.location.href = "/player/login";
+        window.location.href = `/player/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`;
       }, 1500);
     } else if (state?.message) {
       toast.error(state.message);
@@ -65,7 +68,7 @@ export default function RegisterPage() {
           </Button>
 
           <p className="text-center text-sm text-gray-500">
-            ¿Ya tienes cuenta? <Link href="/player/login" className="text-yellow-500 hover:underline">Inicia Sesión</Link>
+            ¿Ya tienes cuenta? <Link href={`/player/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="text-yellow-500 hover:underline">Inicia Sesión</Link>
           </p>
         </form>
       </div>

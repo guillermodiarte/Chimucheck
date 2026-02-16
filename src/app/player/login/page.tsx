@@ -10,9 +10,12 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [state, action, isPending] = useActionState(loginPlayer, undefined);
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "";
 
   useEffect(() => {
     if (state && typeof state === 'string') {
@@ -32,6 +35,7 @@ export default function LoginPage() {
         </div>
 
         <form action={action} className="space-y-6">
+          {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-300">Email</Label>
@@ -53,7 +57,7 @@ export default function LoginPage() {
           </Button>
 
           <p className="text-center text-sm text-gray-500">
-            ¿No tienes cuenta? <Link href="/player/register" className="text-yellow-500 hover:underline">Regístrate</Link>
+            ¿No tienes cuenta? <Link href={`/player/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="text-yellow-500 hover:underline">Regístrate</Link>
           </p>
         </form>
       </div>
