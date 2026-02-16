@@ -28,7 +28,7 @@ export function UserNav({ player }: { player: any }) {
           Mi Perfil
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: pathname })}
+          onClick={() => signOut({ callbackUrl: pathname.startsWith("/player/dashboard") ? "/" : pathname })}
           className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-red-400 transition-colors border-t border-white/5 cursor-pointer"
         >
           <LogOut size={14} />
