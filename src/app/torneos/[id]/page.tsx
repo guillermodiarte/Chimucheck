@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Users, Trophy, Gamepad2, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import RegistrationButton from "@/components/tournaments/RegistrationButton";
+import UnregisterButton from "@/components/tournaments/UnregisterButton";
 import TournamentImageCarousel from "@/components/tournaments/TournamentImageCarousel";
 import type { GameEntry } from "@/app/actions/tournaments";
 
@@ -237,10 +238,8 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                       </Link>
                     </div>
                   ) : isRegistered ? (
-                    <div className="w-full py-4 bg-green-500/10 border border-green-500/30 rounded-xl text-center text-green-400 font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,197,94,0.1)]">
-                      <CheckCircle2 className="w-5 h-5" />
-                      YA ESTÁS INSCRITO
-                    </div>
+                    // @ts-ignore
+                    <UnregisterButton tournamentId={tournament.id} userId={session.user.id} />
                   ) : isFull ? (
                     <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-400 font-bold flex items-center justify-center gap-2">
                       <AlertCircle className="w-5 h-5" />

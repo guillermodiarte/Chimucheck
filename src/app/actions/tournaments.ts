@@ -238,3 +238,44 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
     return { success: false, message: "Error al inscribirse" };
   }
 }
+
+export async function unregisterPlayer(tournamentId: string, playerId: string) {
+  try {
+    const registration = await db.tournamentRegistration.findUnique({
+      where: {
+        playerId_tournamentId: {
+          playerId,
+          tournamentId,
+        },
+      },
+    });
+
+    if (!registration) {
+      return { success: false, message: "No estás inscrito en este torneo" };
+    }
+
+    await db.tournamentRegistration.delete({
+      where: {
+        playerId_tournamentId: {
+          playerId,
+          tournamentId,
+        },
+      },
+    });
+
+    await db.tournament.update({
+      where: { id: tournamentId },
+      data: {
+        currentPlayers: { decrement: 1 },
+      },
+    });
+
+    revalidatePath(`/torneos/${tournamentId}`);
+    revalidatePath("/torneos");
+    return { success: true, message: "Inscripción cancelada" };
+
+  } catch (error) {
+    console.error("Error unregistering player:", error);
+    return { success: false, message: "Error al cancelar inscripción" };
+  }
+}
