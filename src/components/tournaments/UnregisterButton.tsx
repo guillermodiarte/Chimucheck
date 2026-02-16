@@ -14,7 +14,8 @@ interface UnregisterButtonProps {
 
 export default function UnregisterButton({ tournamentId, userId }: UnregisterButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
 
   async function handleUnregister() {
@@ -31,54 +32,71 @@ export default function UnregisterButton({ tournamentId, userId }: UnregisterBut
       toast.error("Ocurrió un error inesperado");
     } finally {
       setIsLoading(false);
-      setShowConfirm(false);
+      setShowModal(false);
     }
   }
 
-  if (showConfirm) {
-    return (
-      <div className="space-y-3">
-        <p className="text-sm text-center text-gray-400">
-          ¿Seguro que querés cancelar tu inscripción?
-        </p>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleUnregister}
-            disabled={isLoading}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <XCircle className="w-4 h-4 mr-2" />
-            )}
-            Sí, cancelar
-          </Button>
-          <Button
-            onClick={() => setShowConfirm(false)}
-            disabled={isLoading}
-            variant="outline"
-            className="flex-1 border-white/10 text-white hover:bg-white/5 font-bold"
-          >
-            No, quedarme
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-3">
-      <div className="w-full py-4 bg-green-500/10 border border-green-500/30 rounded-xl text-center text-green-400 font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,197,94,0.1)]">
-        <CheckCircle2 className="w-5 h-5" />
-        YA ESTÁS INSCRITO
-      </div>
-      <button
-        onClick={() => setShowConfirm(true)}
-        className="w-full text-xs text-gray-500 hover:text-red-400 transition-colors py-1 cursor-pointer"
+    <>
+      {/* Badge with hover effect */}
+      <div
+        onClick={() => setShowModal(true)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`w-full py-4 rounded-xl text-center font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 ${isHovered
+            ? "bg-red-500/10 border border-red-500/30 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+            : "bg-green-500/10 border border-green-500/30 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
+          }`}
       >
-        Cancelar inscripción
-      </button>
-    </div>
+        {isHovered ? (
+          <>
+            <XCircle className="w-5 h-5" />
+            CANCELAR INSCRIPCIÓN
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="w-5 h-5" />
+            YA ESTÁS INSCRITO
+          </>
+        )}
+      </div>
+
+      {/* Modal overlay */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl space-y-5">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 mx-auto rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                <XCircle className="w-7 h-7 text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-white">¿Cancelar inscripción?</h3>
+              <p className="text-sm text-gray-400">
+                Vas a perder tu lugar en este torneo. Podés volver a inscribirte si hay cupo disponible.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleUnregister}
+                disabled={isLoading}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Sí, cancelar
+              </Button>
+              <Button
+                onClick={() => setShowModal(false)}
+                disabled={isLoading}
+                variant="outline"
+                className="flex-1 border-white/10 text-white hover:bg-white/5 font-bold"
+              >
+                No, quedarme
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
