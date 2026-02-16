@@ -176,32 +176,28 @@ export async function updateTournament(id: string, prevState: any, formData: For
       });
 
       if (current) {
-        const wasPreviouslyFinished = current.status === "FINISHED";
         // Revert winners: chimucoins and wins
         let winners: any[] = [];
         try { winners = JSON.parse(current.winners as string || "[]"); } catch { }
-        const hasWinners = winners.some((w: any) => w.playerId);
 
-        if (hasWinners) {
-          for (const w of winners) {
-            if (!w.playerId) continue;
-            // Revert chimucoins
-            if (w.chimucoins > 0) {
-              await db.player.update({
-                where: { id: w.playerId },
-                data: { chimucoins: { decrement: w.chimucoins } },
-              });
-            }
-            // Revert wins
-            await db.playerStats.update({
-              where: { playerId: w.playerId },
-              data: { wins: { decrement: 1 } },
-            }).catch(() => { });
+        for (const w of winners) {
+          if (!w.playerId) continue;
+          // Revert chimucoins
+          if (w.chimucoins > 0) {
+            await db.player.update({
+              where: { id: w.playerId },
+              data: { chimucoins: { decrement: w.chimucoins } },
+            });
           }
+          // Revert wins
+          await db.playerStats.update({
+            where: { playerId: w.playerId },
+            data: { wins: { decrement: 1 } },
+          }).catch(() => { });
         }
 
-        // Revert matchesPlayed only if tournament was actually finished
-        if (wasPreviouslyFinished || hasWinners) {
+        // Revert matchesPlayed for all registered players (only if was FINISHED)
+        if (current.status === "FINISHED") {
           for (const reg of current.registrations) {
             await db.playerStats.update({
               where: { playerId: reg.playerId },
