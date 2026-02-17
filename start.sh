@@ -13,6 +13,30 @@ if [ ! -d "/app/public/avatars" ]; then
     mkdir -p /app/public/avatars
 fi
 
+# Create symlinks for standalone mode (Nixpacks/Docker)
+# This bridges the gap between /app/public (where we write) and /app/.next/standalone/public (where Next.js reads)
+if [ -d "/app/.next/standalone/public" ]; then
+    echo "Creating symlinks for standalone public directory..."
+    mkdir -p /app/.next/standalone/public/avatars
+    mkdir -p /app/.next/standalone/public/uploads
+    
+    # We remove the directory if it's empty to replace with symlink, or link inside it?
+    # Safer: bind mount logic via symlink. 
+    # Actually, if we write to /app/public/avatars, we want .next/standalone/public/avatars to POINT to it.
+    
+    if [ ! -L "/app/.next/standalone/public/avatars" ]; then
+        rm -rf /app/.next/standalone/public/avatars
+        ln -s /app/public/avatars /app/.next/standalone/public/avatars
+        echo "Symlinked avatars directory"
+    fi
+    
+    if [ ! -L "/app/.next/standalone/public/uploads" ]; then
+        rm -rf /app/.next/standalone/public/uploads
+        ln -s /app/public/uploads /app/.next/standalone/public/uploads
+        echo "Symlinked uploads directory"
+    fi
+fi
+
 # Ensure user can write to data and images
 # Trying to fix permissions at runtime (might need root, but we are running as nextjs user?)
 # If running as non-root, this might fail, but let's try or skip
