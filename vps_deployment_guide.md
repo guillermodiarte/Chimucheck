@@ -35,7 +35,16 @@ El script de inicio (`start.sh`) ejecutará automáticamente:
 **Si necesitas conservar datos previos:**
 Tendrás que descargar el archivo `.db` antiguo de tu contenedor anterior (si aún existe) y colocarlo manualmente en la carpeta `./data` del host, renombrándolo a `prod.db`.
 
-### 4. Verificación
+### 4. Reiniciar en Dokploy
+Para aplicar los cambios (equivalente a `docker compose down && up`):
+1.  Ve a tu dashboard de Dokploy.
+2.  Entra en tu aplicación.
+3.  Haz clic en el botón **"Deploy"**.
+    *   Esto descargará el nuevo `docker-compose.yml` y recreará los contenedores con los nuevos volúmenes.
+
+**Nota:** Si prefieres hacerlo por consola en la VPS, puedes usar los comandos de Docker habituales, pero el botón "Deploy" es lo más sencillo.
+
+### 5. Verificación
 1.  Ingresa a la web.
 2.  Crea una cuenta o inicia sesión.
 3.  Sube una foto de perfil.
