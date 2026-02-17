@@ -12,10 +12,24 @@ export function MainNav({
   return (
     <nav className="flex items-center space-x-6">
       <Link
+        href="/"
+        className={`text-base font-bold transition-all duration-300 relative group px-1 py-1 ${pathname === "/"
+          ? "text-primary"
+          : "text-gray-300 hover:text-primary hover:scale-110"
+          }`}
+      >
+        Inicio
+        <span
+          className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/" ? "w-full" : "w-0 group-hover:w-full"
+            }`}
+        ></span>
+      </Link>
+
+      <Link
         href="/player/dashboard"
         className={`text-base font-bold transition-all duration-300 relative group px-1 py-1 ${pathname === "/player/dashboard"
-            ? "text-primary"
-            : "text-gray-300 hover:text-primary hover:scale-110"
+          ? "text-primary"
+          : "text-gray-300 hover:text-primary hover:scale-110"
           }`}
       >
         Resumen
@@ -28,8 +42,8 @@ export function MainNav({
       <div className="relative group">
         <button
           className={`flex items-center gap-1 text-base font-bold transition-all duration-300 px-1 py-1 outline-none ${pathname?.startsWith("/player/dashboard/tournaments")
-              ? "text-primary"
-              : "text-gray-300 hover:text-primary hover:scale-110"
+            ? "text-primary"
+            : "text-gray-300 hover:text-primary hover:scale-110"
             }`}
         >
           Torneos
@@ -69,11 +83,11 @@ export function MainNav({
       <Link
         href="/player/dashboard/profile"
         className={`text-base font-bold transition-all duration-300 relative group px-1 py-1 ${pathname === "/player/dashboard/profile"
-            ? "text-primary"
-            : "text-gray-300 hover:text-primary hover:scale-110"
+          ? "text-primary"
+          : "text-gray-300 hover:text-primary hover:scale-110"
           }`}
       >
-        Mi Cuenta
+        Mi Perfil
         <span
           className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/player/dashboard/profile" ? "w-full" : "w-0 group-hover:w-full"
             }`}

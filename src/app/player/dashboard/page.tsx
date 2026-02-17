@@ -22,8 +22,23 @@ export default async function DashboardPage() {
       stats: true,
       registrations: {
         include: { tournament: true },
-        take: 3,
+        take: 5,
         orderBy: { registeredAt: 'desc' }
+      }
+    }
+  });
+
+  // Fetch Top 5 Players by Wins
+  const topPlayers = await db.playerStats.findMany({
+    orderBy: { wins: 'desc' },
+    take: 5,
+    include: {
+      player: {
+        select: {
+          alias: true,
+          name: true,
+          image: true
+        }
       }
     }
   });
@@ -108,9 +123,27 @@ export default async function DashboardPage() {
             <CardTitle className="text-white">Tu Actividad</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-400 text-sm flex items-center justify-center h-40 border border-dashed border-zinc-800 rounded">
-              Aún no tienes actividad reciente.
-            </div>
+            {playerData?.registrations && playerData.registrations.length > 0 ? (
+              <div className="space-y-4">
+                {playerData.registrations.map((reg: any) => (
+                  <div key={reg.id} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-white">{reg.tournament.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(reg.tournament.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-xs font-medium px-2 py-1 rounded bg-white/5 text-gray-300">
+                      {reg.status === "CONFIRMED" ? "Inscrito" : "Pendiente"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-400 text-sm flex items-center justify-center h-40 border border-dashed border-zinc-800 rounded">
+                Aún no tienes actividad reciente.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -119,9 +152,33 @@ export default async function DashboardPage() {
             <CardTitle className="text-white">Top 5 Players</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-400 text-sm flex items-center justify-center h-40 border border-dashed border-zinc-800 rounded">
-              Ranking disponible pronto.
-            </div>
+            {topPlayers.length > 0 ? (
+              <div className="space-y-4">
+                {topPlayers.map((stat, index) => (
+                  <div key={stat.id} className="flex items-center gap-4">
+                    <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${index === 0 ? "bg-yellow-500/20 text-yellow-500" :
+                      index === 1 ? "bg-gray-400/20 text-gray-400" :
+                        index === 2 ? "bg-orange-500/20 text-orange-500" :
+                          "bg-white/5 text-gray-500"
+                      }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-white">
+                        {stat.player.alias || stat.player.name || "Jugador"}
+                      </p>
+                    </div>
+                    <div className="text-sm font-bold text-primary flex items-center gap-1">
+                      {stat.wins} <Trophy size={12} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-400 text-sm flex items-center justify-center h-40 border border-dashed border-zinc-800 rounded">
+                Ranking disponible pronto.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

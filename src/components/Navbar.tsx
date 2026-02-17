@@ -67,33 +67,33 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
               <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-8 py-3 flex items-center space-x-8 shadow-2xl mt-12">
                 <Link
                   href="/"
-                  className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
+                  className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/" ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
                   onClick={handleHomeClick}
                 >
                   Inicio
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
                 </Link>
                 <Link
                   href="/premios"
-                  className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
+                  className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/premios" ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
                 >
                   Premios
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/premios" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
                 </Link>
                 <Link
                   href="/torneos"
-                  className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
+                  className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/torneos" ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
                 >
                   Torneos
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/torneos" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
                 </Link>
                 <Link
                   href="/acerca-de"
-                  className="text-gray-300 hover:text-primary hover:scale-110 px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group"
+                  className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/acerca-de" ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
                   onClick={() => window.scrollTo(0, 0)}
                 >
                   Historia
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/acerca-de" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
                 </Link>
 
                 {/* Separator inside pill */}
@@ -143,7 +143,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                     {/* Dropdown */}
                     <div className="absolute right-0 top-full mt-2 w-44 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
                       <Link
-                        href="/player/dashboard"
+                        href="/player/dashboard/profile"
                         className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-primary transition-colors"
                       >
                         <User size={14} />
@@ -199,28 +199,28 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <Link
                   href="/"
-                  className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === "/" ? "text-primary" : "text-white hover:text-primary"}`}
                   onClick={handleHomeClick}
                 >
                   Inicio
                 </Link>
                 <Link
                   href="/premios"
-                  className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === "/premios" ? "text-primary" : "text-white hover:text-primary"}`}
                   onClick={() => setIsOpen(false)}
                 >
                   Premios
                 </Link>
                 <Link
                   href="/torneos"
-                  className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === "/torneos" ? "text-primary" : "text-white hover:text-primary"}`}
                   onClick={() => setIsOpen(false)}
                 >
                   Torneos
                 </Link>
                 <Link
                   href="/acerca-de"
-                  className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === "/acerca-de" ? "text-primary" : "text-white hover:text-primary"}`}
                   onClick={() => {
                     setIsOpen(false);
                     window.scrollTo(0, 0);
@@ -231,7 +231,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                 {session?.user ? (
                   <>
                     <Link
-                      href="/player/dashboard"
+                      href="/player/dashboard/profile"
                       className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"
                       onClick={() => setIsOpen(false)}
                     >
@@ -247,7 +247,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                       ) : (
                         <User size={18} className="text-primary" />
                       )}
-                      {(session.user as any).alias || session.user.name || "Mi Cuenta"}
+                      {(session.user as any).alias || session.user.name || "Mi Perfil"}
                     </Link>
                     <button
                       onClick={async () => {
