@@ -18,14 +18,28 @@ export async function POST(request: NextRequest) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // Ensure uploads directory exists
-  const folder = (data.get("folder") as string) || "uploads";
-  // Sanitize folder name to prevent directory traversal
-  const sanitizedFolder = folder.replace(/[^a-zA-Z0-9-_]/g, "");
+  // Determine upload path
+  // Force absolute path in production to avoid process.cwd() ambiguity
+  const isProd = process.env.NODE_ENV === "production";
+  const baseDir = isProd ? "/app/public" : join(process.cwd(), "public");
 
-  const uploadDir = join(process.cwd(), "public", sanitizedFolder);
+  const uploadDir = join(baseDir, sanitizedFolder);
+
+  console.log("Upload Debug Info:", {
+    processCwd: process.cwd(),
+    isProd,
+    baseDir,
+    uploadDir,
+    exists: existsSync(uploadDir)
+  });
+
   if (!existsSync(uploadDir)) {
-    await mkdir(uploadDir, { recursive: true });
+    try {
+      await mkdir(uploadDir, { recursive: true });
+    } catch (err) {
+      console.error("Error creating directory:", err);
+      return NextResponse.json({ success: false, message: "Error configurando directorio" }, { status: 500 });
+    }
   }
 
   // Create unique filename
@@ -47,11 +61,17 @@ export async function POST(request: NextRequest) {
   const filepath = join(uploadDir, filename);
 
   try {
+    console.log("Attempting to write file to:", filepath);
     await writeFile(filepath, buffer);
+    console.log("File written successfully");
     const url = `/${sanitizedFolder}/${filename}`;
     return NextResponse.json({ success: true, url });
   } catch (error) {
     console.error("Error saving file:", error);
-    return NextResponse.json({ success: false, message: "Error saving file" }, { status: 500 });
+    // Return specific permission error if applicable
+    return NextResponse.json({
+      success: false,
+      message: `Error al guardar archivo: ${(error as any)?.message || 'Unknown error'}`
+    }, { status: 500 });
   }
 }

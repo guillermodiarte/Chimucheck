@@ -7,6 +7,12 @@ if [ ! -d "/app/data" ]; then
     mkdir -p /app/data
 fi
 
+# Ensure avatar directory exists
+if [ ! -d "/app/public/avatars" ]; then
+    echo "Creating /app/public/avatars..."
+    mkdir -p /app/public/avatars
+fi
+
 # Ensure user can write to data and images
 # Trying to fix permissions at runtime (might need root, but we are running as nextjs user?)
 # If running as non-root, this might fail, but let's try or skip
