@@ -77,7 +77,7 @@ export default async function DashboardLayout({
       </nav>
 
       {/* Content with top padding to account for fixed navbar */}
-      <main className="flex-1 space-y-4 p-8 pt-28 max-w-7xl mx-auto w-full">
+      <main className="flex-1 space-y-4 p-8 pt-36 max-w-7xl mx-auto w-full">
         {children}
       </main>
     </div>

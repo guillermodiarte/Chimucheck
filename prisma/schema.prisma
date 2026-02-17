@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,7 +10,7 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String   // Hashed
+  password  String
   name      String?
   role      String   @default("ADMIN")
   createdAt DateTime @default(now())
@@ -21,46 +18,46 @@ model User {
 }
 
 model Banner {
-  id          String   @id @default(uuid())
-  title       String
-  subtitle    String?
-  imageUrl    String
-  link        String?
-  active      Boolean  @default(true)
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  title     String
+  subtitle  String?
+  imageUrl  String
+  link      String?
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model News {
-  id          String   @id @default(uuid())
-  title       String
-  slug        String   @unique
-  content     String
-  imageUrl    String?
-  published   Boolean  @default(false)
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  title     String
+  slug      String   @unique
+  content   String
+  imageUrl  String?
+  published Boolean  @default(false)
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Event {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   description String?
   date        DateTime?
   location    String?
   imageUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  active      Boolean  @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  active      Boolean   @default(true)
 }
 
 model SiteSection {
-  id          String   @id @default(uuid())
-  key         String   @unique // e.g., "about_us", "contact_info"
-  content     Json     // Flexible structure for different sections
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  key       String   @unique
+  content   Json
+  updatedAt DateTime @updatedAt
 }
 
 model Prize {
@@ -68,72 +65,67 @@ model Prize {
   title       String
   price       String
   description String
-  images      Json     // Array of image URLs
+  images      Json
   active      Boolean  @default(true)
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-// --- Player System Models (Isolated from User/Admin) ---
-
 model Player {
-  id            String    @id @default(uuid())
+  id            String                   @id @default(uuid())
   name          String?
-  email         String    @unique
+  email         String                   @unique
   password      String
-  alias         String?   @unique
+  alias         String?                  @unique
   image         String?
   phone         String?
-  chimucoins    Int       @default(0)
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  // Relations
+  chimucoins    Int                      @default(0)
+  active        Boolean                  @default(true)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
   stats         PlayerStats?
   registrations TournamentRegistration[]
 }
 
 model PlayerStats {
-  id            String   @id @default(uuid())
-  playerId      String   @unique
-  player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  wins          Int      @default(0)
-  matchesPlayed Int      @default(0)
-  winRate       Float    @default(0.0)
+  id            String @id @default(uuid())
+  playerId      String @unique
+  wins          Int    @default(0)
+  matchesPlayed Int    @default(0)
+  winRate       Float  @default(0.0)
+  player        Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 }
 
 model Tournament {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  date        DateTime
-  status      String   @default("OPEN") // OPEN, IN_PROGRESS, FINISHED, CANCELLED
-  maxPlayers  Int      @default(16)
-  currentPlayers Int   @default(0)
-  prizePool   String?
-  image       String?
-  active      Boolean  @default(true)
-  game        String?
-  format      String?
-  games       String?  @default("[]") // JSON string: array of {name, image, format}
-  winners     String?  @default("[]") // JSON string: array of {position, playerId, playerAlias}
-  photos      String?  @default("[]") // JSON string: array of photo URLs
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  registrations TournamentRegistration[]
+  id             String                   @id @default(uuid())
+  name           String
+  description    String?
+  date           DateTime
+  status         String                   @default("OPEN")
+  maxPlayers     Int                      @default(16)
+  currentPlayers Int                      @default(0)
+  prizePool      String?
+  image          String?
+  active         Boolean                  @default(true)
+  game           String?
+  format         String?
+  games          String?                  @default("[]")
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  photos         String?                  @default("[]")
+  winners        String?                  @default("[]")
+  registrations  TournamentRegistration[]
 }
 
 model TournamentRegistration {
-  id            String     @id @default(uuid())
-  playerId      String
-  player        Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  tournamentId  String
-  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  status        String     @default("PENDING") // PENDING, CONFIRMED, ELIMINATED, WINNER
-  registeredAt  DateTime   @default(now())
+  id           String     @id @default(uuid())
+  playerId     String
+  tournamentId String
+  status       String     @default("PENDING")
+  registeredAt DateTime   @default(now())
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player       Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, tournamentId])
 }
