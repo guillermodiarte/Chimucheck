@@ -11,7 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import Image from "next/image";
-import { Power } from "lucide-react";
+import { Power, Pencil } from "lucide-react";
+import Link from "next/link";
 
 export default async function AdminPlayersPage() {
   const players = await getPlayers();
@@ -92,6 +93,11 @@ export default async function AdminPlayersPage() {
                           <Power className={`w-4 h-4 ${player.active ? "text-green-500" : "text-gray-500"}`} />
                         </Button>
                       </form>
+                      <Link href={`/admin/players/${player.id}`}>
+                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title="Editar">
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </Link>
                       <DeleteButton
                         id={player.id}
                         // @ts-ignore

@@ -41,3 +41,91 @@ export async function togglePlayerStatus(id: string, currentStatus: boolean) {
     console.error("Error toggling player status:", error);
   }
 }
+
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
+
+const PlayerSchema = z.object({
+  alias: z.string().min(2, "El alias es requerido"),
+  name: z.string().optional(),
+  email: z.string().email("Email inválido"),
+  password: z.string().optional(),
+  phone: z.string().optional(),
+  chimucoins: z.coerce.number().min(0, "No puede ser negativo"),
+  active: z.boolean().optional(),
+  image: z.string().optional().or(z.literal("")),
+});
+
+export async function updatePlayer(id: string, prevState: any, formData: FormData) {
+  const validatedFields = PlayerSchema.safeParse({
+    alias: formData.get("alias"),
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password") || undefined, // undefined to ignore if empty
+    phone: formData.get("phone"),
+    chimucoins: formData.get("chimucoins"),
+    active: formData.get("active") === "on",
+    image: formData.get("image"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Error en los campos del formulario",
+    };
+  }
+
+  const { alias, name, email, password, phone, chimucoins, active, image } = validatedFields.data;
+
+  try {
+    // Check for unique email/alias (excluding current player)
+    const existingEmail = await db.player.findFirst({
+      where: {
+        email,
+        NOT: { id }
+      }
+    });
+    if (existingEmail) {
+      return { message: "El email ya está en uso por otro jugador." };
+    }
+
+    const existingAlias = await db.player.findFirst({
+      where: {
+        alias,
+        NOT: { id }
+      }
+    });
+    if (existingAlias) {
+      return { message: "El alias ya está en uso por otro jugador." };
+    }
+
+    const data: any = {
+      alias,
+      name,
+      email,
+      phone,
+      chimucoins,
+      active,
+      image: image || null,
+    };
+
+    if (password && password.trim() !== "") {
+      data.password = await bcrypt.hash(password, 10);
+    }
+
+    await db.player.update({
+      where: { id },
+      data,
+    });
+
+  } catch (error) {
+    console.error("Error updating player:", error);
+    return {
+      message: "Error de base de datos al actualizar jugador.",
+    };
+  }
+
+  revalidatePath("/admin/players");
+  redirect("/admin/players");
+}
