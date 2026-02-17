@@ -127,7 +127,12 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                         Mi Perfil
                       </Link>
                       <button
-                        onClick={() => signOut({ callbackUrl: pathname })}
+                        onClick={async () => {
+                          const callbackUrl = pathname.startsWith("/player/dashboard") ? "/" : pathname;
+                          const targetUrl = `${window.location.origin}${callbackUrl}`;
+                          await signOut({ redirect: false });
+                          window.location.href = targetUrl;
+                        }}
                         className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-red-400 transition-colors border-t border-white/5 cursor-pointer"
                       >
                         <LogOut size={14} />
@@ -211,9 +216,12 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                       {(session.user as any).alias || session.user.name || "Mi Cuenta"}
                     </Link>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         setIsOpen(false);
-                        signOut({ callbackUrl: pathname });
+                        const callbackUrl = pathname.startsWith("/player/dashboard") ? "/" : pathname;
+                        const targetUrl = `${window.location.origin}${callbackUrl}`;
+                        await signOut({ redirect: false });
+                        window.location.href = targetUrl;
                       }}
                       className="hover:text-red-400 block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-400 w-full cursor-pointer"
                     >
