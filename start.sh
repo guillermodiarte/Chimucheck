@@ -1,6 +1,12 @@
 #!/bin/sh
 set -e
 
+# Ensure data directory exists for SQLite
+if [ ! -d "/app/data" ]; then
+    echo "Creating /app/data directory..."
+    mkdir -p /app/data
+fi
+
 # Run migrations
 echo "Running migrations..."
 if ! npx prisma migrate deploy; then
