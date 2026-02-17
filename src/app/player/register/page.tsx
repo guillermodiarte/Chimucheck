@@ -43,22 +43,59 @@ export default function RegisterPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="alias" className="text-gray-300">Alias (Usuario)</Label>
-              <Input id="alias" name="alias" required className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50" placeholder="Ej: Slayer99" />
+              <Input
+                id="alias"
+                name="alias"
+                defaultValue={state?.payload?.alias as string}
+                required
+                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 ${state?.errors?.alias ? "border-red-500" : ""}`}
+                placeholder="Ej: Slayer99"
+              />
+              {state?.errors?.alias && (
+                <p className="text-sm text-red-500">{state.errors.alias[0]}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-300">Email</Label>
-              <Input id="email" name="email" type="email" required className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50" placeholder="tu@email.com" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                defaultValue={state?.payload?.email as string}
+                required
+                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 ${state?.errors?.email ? "border-red-500" : ""}`}
+                placeholder="tu@email.com"
+              />
+              {state?.errors?.email && (
+                <p className="text-sm text-red-500">{state.errors.email[0]}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-gray-300">Teléfono (Opcional)</Label>
-              <Input id="phone" name="phone" type="tel" className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50" placeholder="+54 9 ..." />
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                defaultValue={state?.payload?.phone as string}
+                className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50"
+                placeholder="+54 9 ..."
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-300">Contraseña</Label>
-              <PasswordInput id="password" name="password" required className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50" placeholder="******" />
+              <PasswordInput
+                id="password"
+                name="password"
+                required
+                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 ${state?.errors?.password ? "border-red-500" : ""}`}
+                placeholder="******"
+              />
+              {state?.errors?.password && (
+                <p className="text-sm text-red-500">{state.errors.password[0]}</p>
+              )}
             </div>
           </div>
 

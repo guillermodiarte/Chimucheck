@@ -9,16 +9,28 @@ import { usePathname } from "next/navigation";
 import { Session } from "next-auth";
 import { useSession, signOut } from "next-auth/react";
 import LoginModal from "@/components/LoginModal";
+import RegisterModal from "@/components/RegisterModal";
 
 export default function Navbar({ logoUrl, logoText, session: initialSession }: { logoUrl?: string; logoText?: string; session?: Session | null }) {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const pathname = usePathname();
+
+  const openLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
+  };
+
+  const openRegister = () => {
+    setShowLoginModal(false);
+    setShowRegisterModal(true);
+  };
 
   // Listen for custom event from other components (e.g. tournament page)
   useEffect(() => {
-    const handler = () => setShowLoginModal(true);
+    const handler = () => openLogin();
     window.addEventListener("open-login-modal", handler);
     return () => window.removeEventListener("open-login-modal", handler);
   }, []);
@@ -142,7 +154,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                   </div>
                 ) : (
                   <button
-                    onClick={() => setShowLoginModal(true)}
+                    onClick={openLogin}
                     className="flex items-center gap-2 text-primary hover:text-white transition-colors group ml-2 cursor-pointer"
                   >
                     <div className="p-1.5 rounded-full border border-primary/30 group-hover:border-primary/80 group-hover:bg-primary/10 transition-all">
@@ -233,7 +245,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                   <button
                     onClick={() => {
                       setIsOpen(false);
-                      setShowLoginModal(true);
+                      openLogin();
                     }}
                     className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300 w-full cursor-pointer"
                   >
@@ -247,7 +259,16 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
         </AnimatePresence>
       </nav>
 
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSwitchToRegister={openRegister}
+      />
+      <RegisterModal
+        isOpen={showRegisterModal}
+        onClose={() => setShowRegisterModal(false)}
+        onSwitchToLogin={openLogin}
+      />
     </>
   );
 }

@@ -14,9 +14,10 @@ import { toast } from "sonner";
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSwitchToRegister: () => void;
 }
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -116,13 +117,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
           <p className="text-center text-sm text-gray-500 pt-1">
             ¿No tienes cuenta?{" "}
-            <Link
-              href="/player/register"
-              className="text-yellow-500 hover:underline font-medium"
-              onClick={onClose}
+            <button
+              type="button"
+              className="text-yellow-500 hover:underline font-medium cursor-pointer"
+              onClick={onSwitchToRegister}
             >
               Regístrate
-            </Link>
+            </button>
           </p>
         </form>
       </div>

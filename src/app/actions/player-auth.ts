@@ -50,6 +50,11 @@ export async function registerPlayer(prevState: any, formData: FormData) {
       success: false,
       message: "Campos inválidos",
       errors: validatedFields.error.flatten().fieldErrors,
+      payload: {
+        alias: formData.get("alias"),
+        email: formData.get("email"),
+        phone: formData.get("phone"),
+      }
     };
   }
 
@@ -58,12 +63,20 @@ export async function registerPlayer(prevState: any, formData: FormData) {
   try {
     const existingEmail = await db.player.findUnique({ where: { email } });
     if (existingEmail) {
-      return { success: false, message: "El email ya está registrado." };
+      return {
+        success: false,
+        message: "El email ya está registrado.",
+        payload: { alias, email, phone }
+      };
     }
 
     const existingAlias = await db.player.findUnique({ where: { alias } });
     if (existingAlias) {
-      return { success: false, message: "El alias ya está en uso." };
+      return {
+        success: false,
+        message: "El alias ya está en uso.",
+        payload: { alias, email, phone }
+      };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -89,6 +102,10 @@ export async function registerPlayer(prevState: any, formData: FormData) {
 
   } catch (error) {
     console.error("Player Registration error:", error);
-    return { success: false, message: "Error al crear la cuenta." };
+    return {
+      success: false,
+      message: "Error al crear la cuenta.",
+      payload: { alias, email, phone }
+    };
   }
 }
