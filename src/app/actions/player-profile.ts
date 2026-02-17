@@ -4,12 +4,15 @@ import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { unlink } from "fs/promises";
+import { join } from "path";
 
 export async function updateProfile(data: {
   alias: string;
   name?: string;
   phone?: string;
   password?: string;
+  image?: string;
 }) {
   const session = await auth();
 
@@ -30,11 +33,32 @@ export async function updateProfile(data: {
       return { success: false, message: "El alias ya está en uso" };
     }
 
+    const currentPlayer = await db.player.findUnique({
+      where: { id: session.user.id }
+    });
+
     const updateData: any = {
       alias: data.alias,
       name: data.name,
       phone: data.phone,
     };
+
+    // Handle image update and cleanup
+    if (data.image) {
+      updateData.image = data.image;
+
+      // If there was an old image and it's a local file (in avatars folder), delete it
+      if (currentPlayer?.image && currentPlayer.image.startsWith("/avatars/") && currentPlayer.image !== data.image) {
+        try {
+          const oldImagePath = join(process.cwd(), "public", currentPlayer.image);
+          await unlink(oldImagePath);
+          console.log("Deleted old avatar:", oldImagePath);
+        } catch (err) {
+          console.error("Error deleting old avatar:", err);
+          // Continue even if delete fails
+        }
+      }
+    }
 
     if (data.password) {
       const hashedPassword = await bcrypt.hash(data.password, 10);

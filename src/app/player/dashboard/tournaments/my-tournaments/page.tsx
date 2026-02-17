@@ -57,12 +57,23 @@ export default async function MyTournamentsPage() {
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                {/* Finished Label */}
+                {(reg.tournament.status === "FINISHED" || new Date(reg.tournament.date) < new Date()) && (
+                  <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-20 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-[150px] h-[150px]">
+                      <div className="absolute top-[30px] left-[-40px] w-[180px] bg-red-600/90 text-white font-bold text-xs uppercase tracking-widest text-center py-2 -rotate-45 shadow-lg border-y border-white/20 backdrop-blur-sm">
+                        FINALIZADO
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-4 left-4">
                   <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase mb-2 inline-block ${reg.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
-                      reg.status === 'CONFIRMED' ? 'bg-green-500/20 text-green-400' :
-                        reg.status === 'ELIMINATED' ? 'bg-red-500/20 text-red-400' :
-                          'bg-zinc-800 text-gray-400'
+                    reg.status === 'CONFIRMED' ? 'bg-green-500/20 text-green-400' :
+                      reg.status === 'ELIMINATED' ? 'bg-red-500/20 text-red-400' :
+                        'bg-zinc-800 text-gray-400'
                     }`}>
                     {reg.status === 'PENDING' ? 'Pendiente' :
                       reg.status === 'CONFIRMED' ? 'Confirmado' :
