@@ -19,7 +19,11 @@ export async function POST(request: NextRequest) {
   const buffer = Buffer.from(bytes);
 
   // Ensure uploads directory exists
-  const uploadDir = join(process.cwd(), "public", "uploads");
+  const folder = (data.get("folder") as string) || "uploads";
+  // Sanitize folder name to prevent directory traversal
+  const sanitizedFolder = folder.replace(/[^a-zA-Z0-9-_]/g, "");
+
+  const uploadDir = join(process.cwd(), "public", sanitizedFolder);
   if (!existsSync(uploadDir)) {
     await mkdir(uploadDir, { recursive: true });
   }
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await writeFile(filepath, buffer);
-    const url = `/uploads/${filename}`;
+    const url = `/${sanitizedFolder}/${filename}`;
     return NextResponse.json({ success: true, url });
   } catch (error) {
     console.error("Error saving file:", error);

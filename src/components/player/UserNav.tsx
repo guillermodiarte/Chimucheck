@@ -2,6 +2,7 @@
 
 import { User, LogOut } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
@@ -11,9 +12,20 @@ export function UserNav({ player }: { player: any }) {
   return (
     <div className="relative group">
       <button className="flex items-center gap-2 text-white hover:text-primary transition-colors cursor-pointer outline-none">
-        <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
-          <User size={16} className="text-primary" />
-        </div>
+        {player.image ? (
+          <div className="relative w-8 h-8 rounded-full overflow-hidden border border-primary/50 group-hover:border-primary transition-all">
+            <Image
+              src={player.image}
+              alt="Avatar"
+              fill
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
+            <User size={16} className="text-primary" />
+          </div>
+        )}
         <span className="font-bold text-sm tracking-wide max-w-[120px] truncate">
           {player.alias || player.name || "Jugador"}
         </span>

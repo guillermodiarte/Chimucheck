@@ -14,6 +14,8 @@ import Image from "next/image";
 import { Power, Pencil } from "lucide-react";
 import Link from "next/link";
 
+import { PlayerActions } from "@/components/admin/PlayerActions";
+
 export default async function AdminPlayersPage() {
   const players = await getPlayers();
 
@@ -23,6 +25,9 @@ export default async function AdminPlayersPage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-white">Jugadores</h2>
           <p className="text-gray-400">Gestión de usuarios registrados en la plataforma.</p>
+        </div>
+        <div>
+          <PlayerActions />
         </div>
       </div>
 

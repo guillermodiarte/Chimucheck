@@ -30,11 +30,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-white capitalize">
-          Hola, {playerData?.alias || "Jugador"} <span className="text-2xl">⚡️</span>
-        </h2>
-      </div>
+      <h2 className="text-3xl font-bold tracking-tight text-white capitalize">
+        Hola, {playerData?.alias || "Jugador"} <span className="text-2xl">⚡️</span>
+      </h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Chimucoins Card */}

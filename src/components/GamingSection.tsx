@@ -29,7 +29,6 @@ interface GamingSectionContent {
 }
 
 export default function GamingSection({ content }: { content?: GamingSectionContent | null }) {
-  console.log("GAMING SECTION RENDER PROP:", JSON.stringify(content, null, 2));
   // Safe defaults - Targeted ChimuCoin Design (CS2/Valorant)
   const defaultData = {
     title: "¿TIENES LO QUE SE NECESITA?",

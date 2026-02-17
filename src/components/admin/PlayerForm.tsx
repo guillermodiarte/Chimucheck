@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
+import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 import { startTransition } from "react";
 
@@ -41,6 +42,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
       const uploadFormData = new FormData();
       uploadFormData.append("file", pendingFile);
       uploadFormData.append("customName", `avatar-${initialData.alias || "player"}`);
+      uploadFormData.append("folder", "avatars");
 
       try {
         const response = await fetch("/api/upload", {
@@ -173,12 +175,13 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
           {(state as any)?.errors?.chimucoins && <p className="text-red-500 text-sm">{(state as any).errors.chimucoins}</p>}
         </div>
 
+
+
         <div className="space-y-2">
           <Label htmlFor="password" className="text-white">Nueva Contraseña</Label>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             className="bg-gray-800 border-gray-700 text-white"
             placeholder="Dejar en blanco para no cambiar"
           />

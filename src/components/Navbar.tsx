@@ -122,9 +122,20 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                       href="/player/dashboard"
                       className="flex items-center gap-2 text-white hover:text-primary transition-colors"
                     >
-                      <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
-                        <User size={16} className="text-primary" />
-                      </div>
+                      {(session.user as any).image ? (
+                        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-primary/50 group-hover:border-primary transition-all">
+                          <Image
+                            src={(session.user as any).image}
+                            alt="Avatar"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-1.5 rounded-full border border-primary/50 bg-primary/10 group-hover:bg-primary/20 transition-all">
+                          <User size={16} className="text-primary" />
+                        </div>
+                      )}
                       <span className="font-bold text-sm tracking-wide max-w-[120px] truncate">
                         {(session.user as any).alias || session.user.name || "Jugador"}
                       </span>
@@ -224,7 +235,18 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                       className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"
                       onClick={() => setIsOpen(false)}
                     >
-                      <User size={18} className="text-primary" />
+                      {(session.user as any).image ? (
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden border border-primary/50">
+                          <Image
+                            src={(session.user as any).image}
+                            alt="Avatar"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <User size={18} className="text-primary" />
+                      )}
                       {(session.user as any).alias || session.user.name || "Mi Cuenta"}
                     </Link>
                     <button

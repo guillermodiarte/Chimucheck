@@ -21,6 +21,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ChimuCheck",
   description: "Web oficial de ChimuCheck - Gaming, Noticias y Diversión",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default async function RootLayout({

@@ -8,10 +8,10 @@ export default function Footer() {
         <div className="mb-4 md:mb-0">
           <div className="flex items-center gap-2">
             <Image
-              src="/images/logo6.png"
+              src="/images/chimu-logo.png"
               alt="ChimuCheck Logo"
-              width={50}
-              height={50}
+              width={60}
+              height={60}
               className="object-contain"
             />
             <span className="text-2xl font-bold tracking-tighter">

@@ -55,7 +55,6 @@ export default async function Home() {
 
   const gamingSection = await db.siteSection.findUnique({ where: { key: "gaming_section" } });
   const gamingContent = (gamingSection?.content as any) || null;
-  console.dir({ msg: "DEBUG GAMING FETCH", content: gamingContent, rawSection: gamingSection }, { depth: null });
 
   return (
     <div className="bg-black text-white">
