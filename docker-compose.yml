@@ -12,3 +12,5 @@ services:
     environment:
       - NODE_ENV=production
     # Add other environment variables here if needed
+    volumes:
+      - ./public/uploads:/app/public/uploads
