@@ -18,5 +18,3 @@ services:
       - ./public/uploads:/app/public/uploads
       - ./public/uploads:/app/.next/standalone/public/uploads
       - ./data:/app/data
-      - ./data:/app/data
-      - ./data:/app/data

@@ -7,6 +7,13 @@ if [ ! -d "/app/data" ]; then
     mkdir -p /app/data
 fi
 
+# Ensure user can write to data and images
+# Trying to fix permissions at runtime (might need root, but we are running as nextjs user?)
+# If running as non-root, this might fail, but let's try or skip
+echo "Checking directory permissions..."
+ls -ld /app/data || echo "Cannot list /app/data"
+ls -ld /app/public/avatars || echo "Cannot list /app/public/avatars"
+
 # Run migrations
 echo "Running migrations..."
 if ! npx prisma migrate deploy; then
