@@ -12,18 +12,34 @@ Esta guía detalla los pasos para actualizar tu despliegue en la VPS asegurando 
 2.  **Persistencia de Archivos (Imágenes)**:
     -   Se mantiene el volumen `./public/uploads:/app/public/uploads` para que las imágenes de perfil y torneos se guarden en el disco de la VPS y no en el contenedor volátil.
 
-## Instrucciones para Dokploy
+## Configuración Crítica en Dokploy (Modo Nixpacks)
 
-### 1. Configuración del Proyecto
-Asegúrate de que en el panel de Dokploy, en la sección de **Environment** o **Docker Compose**, se reflejen los cambios.
+Dado que Dokploy está usando Nixpacks (construcción automática) y **NO** lee el archivo `docker-compose.yml`, es **OBLIGATORIO** configurar los volúmenes manualmente en la sección **"Volumes"** de tu aplicación en Dokploy.
 
-Si usas **Docker Compose** directamente en Dokploy:
-Simplemente haz un "Pull" o "Deploy" de los últimos cambios del repositorio. El archivo `docker-compose.yml` actualizado se encargará de todo.
+### 1. Configurar Volúmenes (Persistencia)
+Ve a la pestaña **Volumes** de tu aplicación y añade estos 3 volúmenes:
 
-### 2. Verificar Volúmenes
-Después del despliegue, verifica que en tu servidor VPS existan las siguientes carpetas en la ruta de tu aplicación (normalmente `/etc/dokploy/applications/[nombre-app]/files` o similar):
--   `data/`: Aquí estará el archivo `prod.db`.
--   `public/uploads/`: Aquí se guardarán las imágenes.
+| Volume Name (Nombre) | Mount Path (Ruta Interna) | Descripción |
+| :--- | :--- | :--- |
+| `avatars-data` | `/app/public/avatars` | **CRÍTICO:** Aquí se guardan las fotos de perfil. |
+| `uploads-data` | `/app/public/uploads` | Aquí se guardan otras imágenes subidas. |
+| `db-data` | `/app/data` | **CRÍTICO:** Aquí vive tu base de datos SQLite. |
+
+*   **Nota:** El "Volume Name" puede ser cualquier nombre que quieras (ej: `mis-avatars`), pero el **Mount Path** debe ser EXACTAMENTE el indicado arriba.
+
+### 2. Variables de Entorno
+Asegúrate de tener estas variables en la sección **Environment**:
+-   `DATABASE_URL`: `file:/app/data/prod.db`
+-   `AUTH_SECRET`: (Tu secreto generado)
+-   `AUTH_TRUST_HOST`: `true`
+
+### 3. Despliegue
+Una vez configurados los volúmenes y las variables, haz clic en **Deploy**.
+
+El script `start.sh` se encargará automáticamente de:
+1.  Crear las carpetas si no existen.
+2.  Crear "enlaces simbólicos" (atajos) para que el servidor encuentre las imágenes en esas carpetas persistentes.
+3.  Iniciar la base de datos y la aplicación.
 
 ### 3. Migración de Datos (Importante)
 Como hemos cambiado la ubicación de la base de datos (de `/app/prisma/dev.db` o `/app/build.db` a `/app/data/prod.db`), **la base de datos empezará vacía** en este despliegue si es la primera vez que se aplica este cambio.
