@@ -18,6 +18,11 @@ export async function POST(request: NextRequest) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
+  // Ensure uploads directory exists
+  const folder = (data.get("folder") as string) || "uploads";
+  // Sanitize folder name to prevent directory traversal
+  const sanitizedFolder = folder.replace(/[^a-zA-Z0-9-_]/g, "");
+
   // Determine upload path
   // Force absolute path in production to avoid process.cwd() ambiguity
   const isProd = process.env.NODE_ENV === "production";
