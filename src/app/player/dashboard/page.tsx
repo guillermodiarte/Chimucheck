@@ -8,6 +8,14 @@ export default async function DashboardPage() {
   const player = session?.user;
 
   // Fetch actual stats from PLAYER table
+  if (!player?.id) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <p className="text-gray-400">Cargando...</p>
+      </div>
+    );
+  }
+
   const playerData = await db.player.findUnique({
     where: { id: player?.id },
     include: {
