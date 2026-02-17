@@ -14,4 +14,6 @@ services:
       - DATABASE_URL=file:/app/data/prod.db
     volumes:
       - ./public/uploads:/app/public/uploads
+      - ./public/avatars:/app/public/avatars
+      - ./data:/app/data
       - ./data:/app/data
