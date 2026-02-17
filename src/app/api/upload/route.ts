@@ -68,7 +68,16 @@ export async function POST(request: NextRequest) {
   try {
     console.log("Attempting to write file to:", filepath);
     await writeFile(filepath, buffer);
-    console.log("File written successfully");
+    console.log("File written successfully to:", filepath);
+
+    // Verify visibility in standalone public directory
+    const standalonePath = join(process.cwd(), "public", sanitizedFolder, filename);
+    const isVisibleInStandalone = existsSync(standalonePath);
+    console.log("Verification - File visible in standalone path?", {
+      standalonePath,
+      isVisible: isVisibleInStandalone
+    });
+
     const url = `/${sanitizedFolder}/${filename}`;
     return NextResponse.json({ success: true, url });
   } catch (error) {
