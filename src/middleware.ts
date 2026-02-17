@@ -41,5 +41,5 @@ export default auth((req) => {
 
 export const config = {
   // Matcher for both admin and player routes
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|avatars|uploads).*)"],
 };
