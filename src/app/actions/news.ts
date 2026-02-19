@@ -9,14 +9,17 @@ const NewsSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   content: z.string().min(10, "El contenido debe tener al menos 10 caracteres"),
   imageUrl: z.string().optional().or(z.literal("")),
+  url: z.string().url("Debe ser una URL válida").optional().or(z.literal("")),
   published: z.boolean().optional(),
 });
 
+// CREATE NEWS
 export async function createNews(prevState: any, formData: FormData) {
   const validatedFields = NewsSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content"),
     imageUrl: formData.get("imageUrl"),
+    url: formData.get("url"),
     published: formData.get("published") === "on",
   });
 
@@ -27,7 +30,7 @@ export async function createNews(prevState: any, formData: FormData) {
     };
   }
 
-  const { title, content, imageUrl, published } = validatedFields.data;
+  const { title, content, imageUrl, url, published } = validatedFields.data;
   const slug = title.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "") + "-" + Date.now();
 
   try {
@@ -37,6 +40,7 @@ export async function createNews(prevState: any, formData: FormData) {
         slug,
         content,
         imageUrl: imageUrl || null,
+        url: url || null,
         published: published || false,
       },
     });
@@ -50,11 +54,13 @@ export async function createNews(prevState: any, formData: FormData) {
   redirect("/admin/news");
 }
 
+// UPDATE NEWS
 export async function updateNews(id: string, prevState: any, formData: FormData) {
   const validatedFields = NewsSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content"),
     imageUrl: formData.get("imageUrl"),
+    url: formData.get("url"),
     published: formData.get("published") === "on",
   });
 
@@ -66,12 +72,13 @@ export async function updateNews(id: string, prevState: any, formData: FormData)
         title: formData.get("title") as string,
         content: formData.get("content") as string,
         imageUrl: formData.get("imageUrl") as string,
+        url: formData.get("url") as string,
         published: formData.get("published") === "on",
       }
     };
   }
 
-  const { title, content, imageUrl, published } = validatedFields.data;
+  const { title, content, imageUrl, url, published } = validatedFields.data;
   // Don't update slug to preserve SEO URLs
 
   try {
@@ -81,6 +88,7 @@ export async function updateNews(id: string, prevState: any, formData: FormData)
         title,
         content,
         imageUrl: imageUrl || null,
+        url: url || null,
         published: published || false,
       },
     });

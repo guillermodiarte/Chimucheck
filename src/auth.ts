@@ -17,7 +17,21 @@ async function getPlayer(email: string) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  ...authConfig,
   trustHost: true,
+  // Fix for VPS/HTTP: Only use secure cookies if URL starts with https
+  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith("https") ?? false,
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NEXTAUTH_URL?.startsWith("https") ?? false,
+      },
+    },
+  },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {

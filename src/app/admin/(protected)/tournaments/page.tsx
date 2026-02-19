@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { FinishTournamentButton } from "@/components/admin/FinishTournamentButton";
+import { StatusBadge } from "@/components/admin/StatusBadge";
 import TournamentTabs from "@/components/admin/TournamentTabs";
 import Link from "next/link";
 import { Plus, Pencil, Trophy, Power, Gamepad2, Medal, Camera } from "lucide-react";
@@ -131,14 +132,7 @@ export default async function AdminTournamentsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${tournament.active
-                        ? "bg-green-900/30 text-green-400 border border-green-900"
-                        : "bg-gray-800 text-gray-400 border border-gray-700"
-                        }`}
-                    >
-                      {tournament.active ? "Activo" : "Oculto"}
-                    </span>
+                    <StatusBadge id={tournament.id} status={tournament.status} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

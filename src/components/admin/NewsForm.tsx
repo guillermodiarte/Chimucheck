@@ -17,6 +17,7 @@ interface NewsFormProps {
     title: string;
     content: string;
     imageUrl: string | null;
+    url?: string | null;
     published: boolean;
     date: Date;
   } | null;
@@ -107,6 +108,18 @@ export function NewsForm({ initialData }: NewsFormProps) {
           className="bg-gray-800 border-gray-700 text-white"
         />
         {(state as any)?.errors?.title && <p className="text-red-500 text-sm">{(state as any).errors.title}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="url" className="text-white">URL Externa (Opcional)</Label>
+        <Input
+          id="url"
+          name="url"
+          defaultValue={payload?.url as string || initialData?.url || ""}
+          placeholder="https://ejemplo.com/noticia"
+          className="bg-gray-800 border-gray-700 text-white"
+        />
+        <p className="text-xs text-gray-500">Si se completa, la noticia redirigirá a este enlace.</p>
       </div>
 
       <div className="space-y-2">

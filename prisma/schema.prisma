@@ -35,6 +35,7 @@ model News {
   slug      String   @unique
   content   String
   imageUrl  String?
+  url       String?
   published Boolean  @default(false)
   date      DateTime @default(now())
   createdAt DateTime @default(now())
@@ -123,6 +124,8 @@ model TournamentRegistration {
   playerId     String
   tournamentId String
   status       String     @default("PENDING")
+  score        Int        @default(0)
+  scoreHistory String     @default("[]")
   registeredAt DateTime   @default(now())
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   player       Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)

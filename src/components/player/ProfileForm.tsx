@@ -46,6 +46,7 @@ export function ProfileForm({ player }: { player: any }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageError, setImageError] = useState(false);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof profileSchema>>({
@@ -69,6 +70,7 @@ export function ProfileForm({ player }: { player: any }) {
       setAvatarFile(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+      setImageError(false);
     }
   };
 
@@ -145,12 +147,13 @@ export function ProfileForm({ player }: { player: any }) {
             onClick={() => fileInputRef.current?.click()}
           >
             <div className="relative w-full h-full rounded-full overflow-hidden bg-zinc-950 border-4 border-black">
-              {previewUrl ? (
+              {previewUrl && !imageError ? (
                 <Image
                   src={previewUrl}
                   alt="Profile"
                   fill
                   className="object-cover"
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-5xl font-bold text-zinc-700">

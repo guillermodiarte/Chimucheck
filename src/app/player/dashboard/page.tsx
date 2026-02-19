@@ -1,13 +1,14 @@
 import { auth } from "@/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, Trophy, Calendar, Gamepad2 } from "lucide-react";
+import { Coins, Trophy, Gamepad2, ChevronRight } from "lucide-react";
 import { db } from "@/lib/prisma";
+import Link from "next/link";
+import { formatDate } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await auth();
   const player = session?.user;
 
-  // Fetch actual stats from PLAYER table
   if (!player?.id) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -17,31 +18,18 @@ export default async function DashboardPage() {
   }
 
   const playerData = await db.player.findUnique({
-    where: { id: player?.id },
+    where: { id: player.id },
     include: {
       stats: true,
       registrations: {
         include: { tournament: true },
-        take: 5,
-        orderBy: { registeredAt: 'desc' }
-      }
-    }
+        orderBy: { registeredAt: "desc" },
+      },
+    },
   });
 
-  // Fetch Top 5 Players by Wins
-  const topPlayers = await db.playerStats.findMany({
-    orderBy: { wins: 'desc' },
-    take: 5,
-    include: {
-      player: {
-        select: {
-          alias: true,
-          name: true,
-          image: true
-        }
-      }
-    }
-  });
+  const totalTournaments = playerData?.registrations.length || 0;
+  const latestTournament = playerData?.registrations[0]?.tournament;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -49,139 +37,98 @@ export default async function DashboardPage() {
         Hola, {playerData?.alias || "Jugador"} <span className="text-2xl">⚡️</span>
       </h2>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Chimucoins Card */}
         <Card className="bg-zinc-900/50 border-yellow-500/20 hover:border-yellow-500/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
-              Chimucoins
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-200">Chimucoins</CardTitle>
             <Coins className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-400">{playerData?.chimucoins || 0} 🟡</div>
-            <p className="text-xs text-gray-400">
-              Monedas disponibles
-            </p>
+            <p className="text-xs text-gray-400">Monedas disponibles</p>
           </CardContent>
         </Card>
 
-        {/* Wins Card */}
+        {/* Victorias */}
         <Card className="bg-zinc-900/50 border-white/10 hover:border-primary/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
-              Victorias
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-200">Victorias</CardTitle>
             <Trophy className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{playerData?.stats?.wins || 0}</div>
-            <p className="text-xs text-gray-400">
-              Torneos ganados
-            </p>
+            <p className="text-xs text-gray-400">Torneos ganados</p>
           </CardContent>
         </Card>
 
-        {/* Matches Card */}
-        <Card className="bg-zinc-900/50 border-white/10 hover:border-blue-500/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
-              Partidas
-            </CardTitle>
-            <Gamepad2 className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{playerData?.stats?.matchesPlayed || 0}</div>
-            <p className="text-xs text-gray-400">
-              Jugadas en total
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Active Tournaments Card */}
-        <Card className="bg-zinc-900/50 border-white/10 hover:border-green-500/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
-              Próximo Torneo
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold text-white truncate">
-              {playerData?.registrations[0]?.tournament.name || "Ninguno"}
-            </div>
-            <p className="text-xs text-gray-400">
-              {playerData?.registrations[0] ? new Date(playerData.registrations[0].tournament.date).toLocaleDateString() : "Inscríbete ahora"}
-            </p>
-          </CardContent>
-        </Card>
+        {/* Torneos Participados — link al historial */}
+        <Link href="/player/dashboard/tournaments" className="block">
+          <Card className="bg-zinc-900/50 border-white/10 hover:border-blue-500/50 transition-colors h-full group cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-200">Torneos Participados</CardTitle>
+              <Gamepad2 className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{totalTournaments}</div>
+              <p className="text-xs text-gray-400 flex items-center gap-1 group-hover:text-blue-400 transition-colors">
+                Ver historial <ChevronRight size={12} />
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 bg-zinc-900 border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white">Tu Actividad</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {playerData?.registrations && playerData.registrations.length > 0 ? (
-              <div className="space-y-4">
-                {playerData.registrations.map((reg: any) => (
-                  <div key={reg.id} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-white">{reg.tournament.name}</p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(reg.tournament.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-xs font-medium px-2 py-1 rounded bg-white/5 text-gray-300">
-                      {reg.status === "CONFIRMED" ? "Inscrito" : "Pendiente"}
-                    </div>
+      {/* Actividad Reciente */}
+      <Card className="bg-zinc-900 border-white/10">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-white">Tu Actividad Reciente</CardTitle>
+          <Link
+            href="/player/dashboard/tournaments"
+            className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1"
+          >
+            Ver todos <ChevronRight size={12} />
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {playerData?.registrations && playerData.registrations.length > 0 ? (
+            <div className="space-y-3">
+              {playerData.registrations.slice(0, 5).map((reg: any) => (
+                <Link
+                  key={reg.id}
+                  href={`/torneos/${reg.tournament.id}`}
+                  className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0 hover:bg-white/2 -mx-2 px-2 rounded transition-colors group"
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-white group-hover:text-primary transition-colors">{reg.tournament.name}</p>
+                    <p className="text-xs text-gray-400">{formatDate(reg.tournament.date)}</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-400 text-sm flex items-center justify-center h-40 border border-dashed border-zinc-800 rounded">
-                Aún no tienes actividad reciente.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-3 bg-zinc-900 border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white">Top 5 Players</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {topPlayers.length > 0 ? (
-              <div className="space-y-4">
-                {topPlayers.map((stat, index) => (
-                  <div key={stat.id} className="flex items-center gap-4">
-                    <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${index === 0 ? "bg-yellow-500/20 text-yellow-500" :
-                      index === 1 ? "bg-gray-400/20 text-gray-400" :
-                        index === 2 ? "bg-orange-500/20 text-orange-500" :
-                          "bg-white/5 text-gray-500"
+                  <div className="flex items-center gap-2">
+                    {(reg.tournament.status === "IN_PROGRESS" || reg.tournament.status === "FINISHED") && (
+                      <span className="text-xs font-bold text-primary">{reg.score ?? 0} pts</span>
+                    )}
+                    <div className={`text-xs font-medium px-2 py-1 rounded ${reg.status === "CONFIRMED" ? "bg-green-500/20 text-green-400" :
+                        reg.status === "ELIMINATED" ? "bg-red-500/20 text-red-400" :
+                          "bg-white/5 text-gray-300"
                       }`}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">
-                        {stat.player.alias || stat.player.name || "Jugador"}
-                      </p>
-                    </div>
-                    <div className="text-sm font-bold text-primary flex items-center gap-1">
-                      {stat.wins} <Trophy size={12} />
+                      {reg.status === "CONFIRMED" ? "Inscrito" :
+                        reg.status === "ELIMINATED" ? "Eliminado" : "Pendiente"}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-400 text-sm flex items-center justify-center h-40 border border-dashed border-zinc-800 rounded">
-                Ranking disponible pronto.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-400 text-sm flex flex-col items-center justify-center h-36 border border-dashed border-zinc-800 rounded gap-3">
+              <Gamepad2 className="w-8 h-8 text-zinc-700" />
+              <span>Aún no tienes actividad.</span>
+              <Link href="/player/dashboard/tournaments" className="text-primary text-xs hover:underline">
+                Explorar torneos →
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

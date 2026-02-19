@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { registerPlayer } from "@/app/actions/player-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,25 +13,39 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 export default function RegisterPage() {
+  // Enforcing fresh build for Confirm Password field
   const [state, action, isPending] = useActionState(registerPlayer, null);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "";
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmError, setConfirmError] = useState("");
 
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message);
       setTimeout(() => {
-        window.location.href = `/player/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`;
+        // Don't pass callbackUrl to avoid triggering the login loop when user logs in after registration
+        window.location.href = `/player/login`;
       }, 1500);
-    } else if (state?.message) {
+    } else if (state?.message && !state?.success) {
       toast.error(state.message);
     }
   }, [state]);
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (password !== confirmPassword) {
+      e.preventDefault();
+      setConfirmError("Las contraseñas no coinciden.");
+      return;
+    }
+    setConfirmError("");
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
       {/* Background decorations */}
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-yellow-900/20 via-black to-black opacity-50 z-0pointer-events-none"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-yellow-900/20 via-black to-black opacity-50 z-0 pointer-events-none"></div>
 
       <div className="w-full max-w-md space-y-8 bg-zinc-950 p-8 rounded-2xl border border-white/10 backdrop-blur-sm relative z-10 shadow-2xl shadow-yellow-900/10">
         <div className="text-center">
@@ -39,7 +53,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-sm text-gray-400">Crea tu perfil de jugador en ChimuCheck</p>
         </div>
 
-        <form action={action} className="space-y-6">
+        <form action={action} onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="alias" className="text-gray-300">Alias (Usuario)</Label>
@@ -90,6 +104,8 @@ export default function RegisterPage() {
                 id="password"
                 name="password"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 ${state?.errors?.password ? "border-red-500" : ""}`}
                 placeholder="******"
               />
@@ -97,15 +113,42 @@ export default function RegisterPage() {
                 <p className="text-sm text-red-500">{state.errors.password[0]}</p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-gray-300">Confirmar Contraseña</Label>
+              <PasswordInput
+                id="confirmPassword"
+                name="confirmPassword"
+                required
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (e.target.value !== password) {
+                    setConfirmError("Las contraseñas no coinciden.");
+                  } else {
+                    setConfirmError("");
+                  }
+                }}
+                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 ${confirmError ? "border-red-500" : ""}`}
+                placeholder="******"
+              />
+              {confirmError && (
+                <p className="text-sm text-red-500">{confirmError}</p>
+              )}
+            </div>
           </div>
 
-          <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold h-11" disabled={isPending}>
+          <Button
+            type="submit"
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold h-11"
+            disabled={isPending || !!confirmError}
+          >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Registrarme
           </Button>
 
           <p className="text-center text-sm text-gray-500">
-            ¿Ya tienes cuenta? <Link href={`/player/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="text-yellow-500 hover:underline">Inicia Sesión</Link>
+            ¿Ya tienes cuenta? <Link href="/player/login" className="text-yellow-500 hover:underline">Inicia Sesión</Link>
           </p>
         </form>
       </div>

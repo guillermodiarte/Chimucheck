@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { News } from "@prisma/client";
+import { ExternalLink } from "lucide-react";
 
 interface NewsGridProps {
   news: News[];
@@ -20,14 +21,16 @@ export default function NewsGrid({ news }: NewsGridProps) {
         {news.map((item) => (
           <div
             key={item.id}
-            className="bg-gray-900/50 rounded-2xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all hover:transform hover:-translate-y-2 group"
+            className="bg-gray-900/50 rounded-2xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all hover:transform hover:-translate-y-2 group flex flex-col h-full"
           >
-            {/* Image Container - Clickable */}
+            {/* Image Container */}
             <div
-              className="aspect-video relative overflow-hidden cursor-pointer"
-              onClick={() => setSelectedNews(item)}
+              className={`aspect-video relative overflow-hidden ${item.imageUrl ? "cursor-pointer" : ""}`}
+              onClick={() => {
+                if (item.imageUrl) setSelectedNews(item);
+              }}
             >
-              {item.imageUrl && (
+              {item.imageUrl ? (
                 <>
                   <Image
                     src={item.imageUrl}
@@ -41,14 +44,34 @@ export default function NewsGrid({ news }: NewsGridProps) {
                     </span>
                   </div>
                 </>
+              ) : (
+                <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-600">
+                  Sin Imagen
+                </div>
               )}
             </div>
 
             {/* Details */}
-            <div className="p-6">
-              {/* Date removed as requested */}
-              <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
-              <p className="text-gray-400 text-sm line-clamp-3">{item.content}</p>
+            <div className="p-6 flex flex-col flex-grow">
+              <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                {item.title}
+              </h3>
+              <p className="text-gray-400 text-sm line-clamp-3 mb-4 flex-grow">
+                {item.content}
+              </p>
+
+              {(item as any).url && (
+                <div className="mt-auto pt-4 border-t border-white/5">
+                  <a
+                    href={(item as any).url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:text-white transition-colors text-sm font-bold uppercase tracking-wide"
+                  >
+                    Ver Más <ExternalLink size={16} />
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         ))}

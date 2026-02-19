@@ -13,6 +13,7 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import Image from "next/image";
 import { Power, Pencil } from "lucide-react";
 import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { PlayerActions } from "@/components/admin/PlayerActions";
 
@@ -56,15 +57,14 @@ export default async function AdminPlayersPage() {
               players.map((player) => (
                 <TableRow key={player.id} className="border-gray-800 hover:bg-gray-900/50">
                   <TableCell>
-                    {player.image ? (
-                      <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-700">
-                        <Image src={player.image} alt={player.alias || "Avatar"} fill className="object-cover" />
-                      </div>
-                    ) : (
-                      <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-500 text-xs border border-gray-700">
-                        N/A
-                      </div>
-                    )}
+                    <TableCell>
+                      <Avatar className="w-10 h-10 border border-gray-700">
+                        <AvatarImage src={player.image || ""} alt={player.alias || "Avatar"} className="object-cover" />
+                        <AvatarFallback className="bg-gray-800 text-gray-500 text-xs">
+                          {player.alias?.[0]?.toUpperCase() || "P"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">

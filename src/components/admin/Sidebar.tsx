@@ -16,6 +16,9 @@ import {
   Gift,
   Trophy,
   Users,
+  Share2,
+  Radio,
+  LayoutTemplate,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -53,12 +56,22 @@ export const sidebarData = [
   {
     title: "Secciones",
     href: "/admin/sections",
-    icon: Library,
+    icon: LayoutTemplate,
   },
   {
     title: "Premios",
     href: "/admin/prizes",
     icon: Gift,
+  },
+  {
+    title: "Redes Sociales",
+    href: "/admin/social-links",
+    icon: Share2,
+  },
+  {
+    title: "Streaming",
+    href: "/admin/streaming",
+    icon: Radio,
   },
   {
     title: "Biblioteca",
