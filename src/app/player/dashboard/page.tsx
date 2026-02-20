@@ -50,17 +50,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Victorias */}
-        <Card className="bg-zinc-900/50 border-white/10 hover:border-primary/50 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">Victorias</CardTitle>
-            <Trophy className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{playerData?.stats?.wins || 0}</div>
-            <p className="text-xs text-gray-400">Torneos ganados</p>
-          </CardContent>
-        </Card>
+
 
         {/* Torneos Participados — link al historial */}
         <Link href="/player/dashboard/tournaments" className="block">
@@ -108,8 +98,8 @@ export default async function DashboardPage() {
                       <span className="text-xs font-bold text-primary">{reg.score ?? 0} pts</span>
                     )}
                     <div className={`text-xs font-medium px-2 py-1 rounded ${reg.status === "CONFIRMED" ? "bg-green-500/20 text-green-400" :
-                        reg.status === "ELIMINATED" ? "bg-red-500/20 text-red-400" :
-                          "bg-white/5 text-gray-300"
+                      reg.status === "ELIMINATED" ? "bg-red-500/20 text-red-400" :
+                        "bg-white/5 text-gray-300"
                       }`}>
                       {reg.status === "CONFIRMED" ? "Inscrito" :
                         reg.status === "ELIMINATED" ? "Eliminado" : "Pendiente"}

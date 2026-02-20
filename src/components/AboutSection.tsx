@@ -36,7 +36,7 @@ export default function AboutSection({ initialData }: { initialData: any }) {
 
   return (
     <section className="pb-24 pt-0 bg-black relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
 
           {/* Image Side */}

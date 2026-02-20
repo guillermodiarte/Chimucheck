@@ -125,7 +125,7 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
           <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30">MODO EDICIÓN</span>
         </div>
 
-        <div className="max-w-7xl mx-auto space-y-12 md:space-y-24 py-8 md:py-12 px-2 md:px-4">
+        <div className="max-w-[1400px] mx-auto space-y-12 md:space-y-24 py-8 md:py-12 px-2 md:px-4">
 
           {/* Header Title */}
           <div className="text-center">

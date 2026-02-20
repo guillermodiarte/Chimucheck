@@ -14,9 +14,9 @@ interface NavbarWrapperProps {
 export default function NavbarWrapper({ logoUrl, logoText, session }: NavbarWrapperProps) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
-  const isPlayer = pathname?.startsWith("/player");
+  const isAuthPage = pathname?.startsWith("/player/login") || pathname?.startsWith("/player/register");
 
-  if (isAdmin || isPlayer) {
+  if (isAdmin || isAuthPage) {
     return null;
   }
 

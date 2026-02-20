@@ -13,6 +13,7 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import Link from "next/link";
 import { deleteNews, toggleNewsStatus } from "@/app/actions/news";
 import { SectionToggle } from "@/components/admin/SectionToggle";
+import { formatDate } from "@/lib/utils";
 
 export default async function NewsPage() {
   const news = await db.news.findMany({
@@ -72,7 +73,7 @@ export default async function NewsPage() {
                   </TableCell>
                   <TableCell className="font-medium text-white">{item.title}</TableCell>
                   <TableCell className="text-gray-400">
-                    {new Date(item.date).toLocaleDateString()}
+                    {formatDate(item.date)}
                   </TableCell>
                   <TableCell>
                     <span
@@ -132,7 +133,7 @@ export default async function NewsPage() {
                 <div className="space-y-2 flex-1 min-w-0">
                   <h3 className="font-bold text-white text-lg">{item.title}</h3>
                   <div className="flex flex-wrap gap-2 items-center text-sm">
-                    <span className="text-gray-400">{new Date(item.date).toLocaleDateString()}</span>
+                    <span className="text-gray-400">{formatDate(item.date)}</span>
                     <span className="text-gray-600">•</span>
                     <span
                       className={`px-2 py-0.5 rounded text-xs font-semibold ${item.published

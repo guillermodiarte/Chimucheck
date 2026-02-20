@@ -117,7 +117,7 @@ export function AboutSectionForm({ initialContent }: { initialContent: any }) {
           <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30">MODO EDICIÓN</span>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 py-8 md:py-12 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
 
             {/* Image Side */}

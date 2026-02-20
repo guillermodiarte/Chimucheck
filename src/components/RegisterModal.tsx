@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, startTransition } from "react";
 import { registerPlayer } from "@/app/actions/player-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,20 +19,39 @@ interface RegisterModalProps {
 export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModalProps) {
   const [state, action, isPending] = useActionState(registerPlayer, null);
   const router = useRouter();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmError, setConfirmError] = useState("");
 
   useEffect(() => {
-    if (state?.success) {
+    // Only trigger redirect if success AND the modal is currently open.
+    // This prevents the "stale state" bug where an unseen RegisterModal re-opens the 
+    // LoginModal when the parent Navbar re-renders.
+    if (state?.success && isOpen) {
       toast.success(state.message);
-      // Wait a bit and then switch to login or just close and let user login
+      // Wait a bit and then switch to login
       setTimeout(() => {
         onSwitchToLogin();
       }, 1500);
-    } else if (state?.message) {
+    } else if (state?.message && isOpen) {
+      // Only show errors if open too
       toast.error(state.message);
     }
-  }, [state, onSwitchToLogin]);
+  }, [state, onSwitchToLogin, isOpen]);
 
   if (!isOpen) return null;
+
+  const handleSubmit = (formData: FormData) => {
+    if (password !== confirmPassword) {
+      setConfirmError("Las contraseñas no coinciden");
+      return;
+    }
+    setConfirmError("");
+    startTransition(() => {
+      // @ts-ignore
+      action(formData);
+    });
+  };
 
   return (
     <div
@@ -58,7 +77,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
         </div>
 
         {/* Form */}
-        <form action={action} className="px-6 pb-6 space-y-4">
+        <form action={handleSubmit} className="px-6 pb-6 space-y-4">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reg-alias" className="text-gray-300 text-sm">Alias (Usuario)</Label>
@@ -91,7 +110,6 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
               )}
             </div>
 
-            {/* Phone removed to keep modal short, or keep it if desired? Kept for consistency */}
             <div className="space-y-2">
               <Label htmlFor="reg-phone" className="text-gray-300 text-sm">Teléfono (Opcional)</Label>
               <Input
@@ -110,6 +128,8 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                 id="reg-password"
                 name="password"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.password ? "border-red-500" : ""}`}
                 placeholder="******"
               />
@@ -117,9 +137,32 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                 <p className="text-xs text-red-500">{state.errors.password[0]}</p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reg-confirm-password" className="text-gray-300 text-sm">Confirmar Contraseña</Label>
+              <PasswordInput
+                id="reg-confirm-password"
+                name="confirmPassword"
+                required
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (password && e.target.value !== password) {
+                    setConfirmError("Las contraseñas no coinciden");
+                  } else {
+                    setConfirmError("");
+                  }
+                }}
+                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${confirmError ? "border-red-500" : ""}`}
+                placeholder="******"
+              />
+              {confirmError && (
+                <p className="text-xs text-red-500">{confirmError}</p>
+              )}
+            </div>
           </div>
 
-          <Button type="submit" className="w-full bg-primary text-black hover:bg-yellow-400 font-bold h-11 shadow-[0_0_20px_rgba(255,215,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all mt-2" disabled={isPending}>
+          <Button type="submit" className="w-full bg-primary text-black hover:bg-yellow-400 font-bold h-11 shadow-[0_0_20px_rgba(255,215,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all mt-2" disabled={isPending || !!confirmError}>
             {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Registrarme
           </Button>

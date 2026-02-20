@@ -11,7 +11,7 @@ export default function ChimuCoinSection() {
       <div className="absolute top-1/4 left-0 w-96 h-96 bg-primary/10 rounded-full blur-[150px]" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-secondary/10 rounded-full blur-[150px]" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* ChimuCoins Intro */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">

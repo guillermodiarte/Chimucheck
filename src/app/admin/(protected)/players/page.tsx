@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { PlayerActions } from "@/components/admin/PlayerActions";
+import { formatDate } from "@/lib/utils";
 
 export default async function AdminPlayersPage() {
   const players = await getPlayers();
@@ -89,7 +90,7 @@ export default async function AdminPlayersPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-gray-400">
-                    {new Date(player.createdAt).toLocaleDateString()}
+                    {formatDate(player.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

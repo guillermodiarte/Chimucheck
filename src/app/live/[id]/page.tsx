@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import PointsTable from "@/components/tournament/PointsTable";
 import { PodiumModal } from "@/components/tournament/PodiumModal";
+import { formatDate } from "@/lib/utils";
 
 interface LiveTournamentPageProps {
   params: Promise<{
@@ -77,7 +78,7 @@ export default function LiveTournamentPage({ params }: LiveTournamentPageProps) 
       {/* Background Ambient */}
       <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-[1400px] mx-auto relative z-10">
         <header className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-4">
             <Link href="/torneos">
@@ -107,7 +108,7 @@ export default function LiveTournamentPage({ params }: LiveTournamentPageProps) 
                   )}
                 </h1>
                 <p className="text-zinc-400 font-mono text-sm">
-                  {new Date(tournament.date).toLocaleDateString()} • {tournament.format || "General"}
+                  {formatDate(tournament.date)} • {tournament.format || "General"}
                 </p>
               </div>
             </div>

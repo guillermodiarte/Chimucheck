@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -18,15 +18,15 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const pathname = usePathname();
 
-  const openLogin = () => {
+  const openLogin = useCallback(() => {
     setShowRegisterModal(false);
     setShowLoginModal(true);
-  };
+  }, []);
 
-  const openRegister = () => {
+  const openRegister = useCallback(() => {
     setShowLoginModal(false);
     setShowRegisterModal(true);
-  };
+  }, []);
 
   // Listen for custom event from other components (e.g. tournament page)
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
   return (
     <>
       <nav className="fixed top-0 w-full z-50 transition-all duration-300 pointer-events-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-24">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative h-24">
           <div className="flex items-center justify-between h-full">
             {/* LOGO - Breaks out of container */}
             <div className="absolute top-2 left-4 z-50 pointer-events-auto filter drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
@@ -95,6 +95,16 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                   Historia
                   <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/acerca-de" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
                 </Link>
+
+                {session?.user && (
+                  <Link
+                    href="/player/dashboard"
+                    className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/player/dashboard" ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
+                  >
+                    Mi Cuenta
+                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/player/dashboard" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
+                  </Link>
+                )}
 
                 {/* Separator inside pill */}
                 <div className="h-6 w-px bg-white/20"></div>
@@ -147,7 +157,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                         className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-primary transition-colors"
                       >
                         <User size={14} />
-                        Mi Perfil
+                        Datos Personales
                       </Link>
                       <button
                         onClick={async () => {
@@ -247,7 +257,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
                       ) : (
                         <User size={18} className="text-primary" />
                       )}
-                      {(session.user as any).alias || session.user.name || "Mi Perfil"}
+                      {(session.user as any).alias || session.user.name || "Datos Personales"}
                     </Link>
                     <button
                       onClick={async () => {

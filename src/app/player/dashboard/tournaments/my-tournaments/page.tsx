@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, Trophy, Users } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 export default async function MyTournamentsPage() {
   const session = await auth();
@@ -90,7 +91,7 @@ export default async function MyTournamentsPage() {
                 <div className="flex items-center justify-between text-sm text-gray-400">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-primary" />
-                    <span>{new Date(reg.tournament.date).toLocaleDateString()}</span>
+                    <span>{formatDate(reg.tournament.date)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users size={16} className="text-primary" />

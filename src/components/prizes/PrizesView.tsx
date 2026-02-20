@@ -37,7 +37,7 @@ export default function PrizesView({ prizes, config }: PrizesViewProps) {
 
   return (
     <div className="min-h-screen bg-black text-white pt-28 pb-20 px-4">
-      <div className="max-w-7xl mx-auto space-y-24">
+      <div className="max-w-[1400px] mx-auto space-y-24">
 
         {/* Header Title */}
         <motion.div

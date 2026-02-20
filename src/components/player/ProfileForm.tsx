@@ -21,6 +21,7 @@ import { updateProfile } from "@/app/actions/player-profile";
 import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { formatDate } from "@/lib/utils";
 
 const profileSchema = z.object({
   alias: z.string().min(2, "El alias debe tener al menos 2 caracteres"),
@@ -193,7 +194,7 @@ export function ProfileForm({ player }: { player: any }) {
           <span className="text-sm">{player.email}</span>
           <span className="mx-2 text-zinc-700">|</span>
           <Calendar size={14} />
-          <span className="text-sm">Miembro desde {new Date(player.createdAt).toLocaleDateString()}</span>
+          <span className="text-sm">Miembro desde {formatDate(player.createdAt)}</span>
         </div>
       </div>
 

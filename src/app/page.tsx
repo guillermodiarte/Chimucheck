@@ -1,4 +1,5 @@
 import HeroCarousel from "@/components/HeroCarousel";
+import StreamingSection from "@/components/StreamingSection";
 import GamingSection from "@/components/GamingSection";
 import EventsGrid from "@/components/EventsGrid";
 import NewsGrid from "@/components/NewsGrid";
@@ -56,10 +57,16 @@ export default async function Home() {
   const gamingSection = await db.siteSection.findUnique({ where: { key: "gaming_section" } });
   const gamingContent = (gamingSection?.content as any) || null;
 
+  const streamingSection = await db.siteSection.findUnique({ where: { key: "streaming_section" } });
+  const streamingContent = (streamingSection?.content as any) || null;
+
   return (
     <div className="bg-black text-white">
       {/* Hero Carousel */}
       <HeroCarousel slides={banners} />
+
+      {/* Streaming Section */}
+      <StreamingSection config={streamingContent} />
 
       {/* Intro / Bio Section */}
       <section className="py-20 px-4 text-center bg-black relative z-10">
@@ -85,7 +92,7 @@ export default async function Home() {
 
       {/* News Section */}
       {showNews && (
-        <section id="news" className="py-24 px-4 max-w-7xl mx-auto">
+        <section id="news" className="py-24 px-4 max-w-[1400px] mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
             <span className="text-primary">Últimas</span> Novedades
           </h2>
@@ -96,7 +103,7 @@ export default async function Home() {
 
       {/* Events Section */}
       {showEvents && events.length > 0 && (
-        <section id="events" className="py-24 px-4 max-w-7xl mx-auto bg-gray-900/20">
+        <section id="events" className="py-24 px-4 max-w-[1400px] mx-auto bg-gray-900/20">
           <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
             Próximos <span className="text-secondary">Eventos</span>
           </h2>

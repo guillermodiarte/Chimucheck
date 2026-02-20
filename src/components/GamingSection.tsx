@@ -3,24 +3,22 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Gamepad2 } from "lucide-react";
+
+interface GamingCard {
+  id: string;
+  title: string;
+  description?: string;
+  link: string;
+  imageUrl: string;
+}
 
 interface GamingSectionContent {
   title: string;
   description: string;
-  card1: {
-    title: string;
-    description?: string;
-    link: string;
-    imageUrl: string;
-    tag?: string;
-  };
-  card2: {
-    title: string;
-    description?: string;
-    link: string;
-    imageUrl: string;
-    tag?: string;
-  };
+  cards?: GamingCard[];
+  card1?: any; // Legacy
+  card2?: any; // Legacy
   ctaButton: {
     text: string;
     link: string;
@@ -29,24 +27,26 @@ interface GamingSectionContent {
 }
 
 export default function GamingSection({ content }: { content?: GamingSectionContent | null }) {
-  // Safe defaults - Targeted ChimuCoin Design (CS2/Valorant)
-  const defaultData = {
+  // Safe defaults
+  const defaultData: GamingSectionContent = {
     title: "¿TIENES LO QUE SE NECESITA?",
     description: "Participa en nuestros torneos y demuestra tu habilidad.",
-    card1: {
-      title: "CS2 Competitivo",
-      description: "",
-      link: "/torneos/cs2",
-      imageUrl: "/images/chimucoin/game-1.jpg",
-      tag: "FPS"
-    },
-    card2: {
-      title: "Valorant Cups",
-      description: "",
-      link: "/torneos/valorant",
-      imageUrl: "/images/chimucoin/game-2.jpg",
-      tag: "TACTICAL"
-    },
+    cards: [
+      {
+        id: "1",
+        title: "CS2 Competitivo",
+        description: "",
+        link: "/torneos/cs2",
+        imageUrl: "/images/chimucoin/game-1.jpg",
+      },
+      {
+        id: "2",
+        title: "Valorant Cups",
+        description: "",
+        link: "/torneos/valorant",
+        imageUrl: "/images/chimucoin/game-2.jpg",
+      }
+    ],
     ctaButton: {
       text: "INSCRIBIRSE AL TORNEO",
       link: "/registro",
@@ -54,94 +54,85 @@ export default function GamingSection({ content }: { content?: GamingSectionCont
     }
   };
 
-  // Deep merge strategy: Use content values if they exist, otherwise default.
-  // Specifically for images, if content.imageUrl is empty string "", we want default.
-  // For text, if content.title is present (even if empty, but here we expect user text), use it.
+  // Resolve Title & Description
+  const title = content?.title || defaultData.title;
 
-  const mergedCard1 = {
-    ...defaultData.card1,
-    ...(content?.card1 || {}),
-    imageUrl: content?.card1?.imageUrl || defaultData.card1.imageUrl // Fallback on empty string
-  };
-
-  const mergedCard2 = {
-    ...defaultData.card2,
-    ...(content?.card2 || {}),
-    imageUrl: content?.card2?.imageUrl || defaultData.card2.imageUrl
-  };
-
-  const mergedCta = {
+  // Resolve CTA
+  const ctaButton = {
     ...defaultData.ctaButton,
     ...(content?.ctaButton || {})
   };
 
-  const data = {
-    title: content?.title || defaultData.title,
-    description: content?.description || defaultData.description,
-    card1: mergedCard1,
-    card2: mergedCard2,
-    ctaButton: mergedCta
+  // Resolve Cards (Migration Strategy)
+  let cards: GamingCard[] = [];
+  if (content?.cards && Array.isArray(content.cards) && content.cards.length > 0) {
+    cards = content.cards;
+  } else if (content?.card1 || content?.card2) {
+    if (content.card1) cards.push({ ...content.card1, id: "legacy-1" });
+    if (content.card2) cards.push({ ...content.card2, id: "legacy-2" });
+  } else {
+    // Both missing (e.g. initial launch)
+    cards = defaultData.cards!;
+  }
+
+  // Calculate dynamic grid classes
+  const getGridClass = (length: number) => {
+    switch (length) {
+      case 1: return "grid-cols-1 max-w-2xl mx-auto";
+      case 2: return "grid-cols-1 md:grid-cols-2";
+      case 3: return "grid-cols-1 md:grid-cols-3";
+      case 4: return "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
+      case 5: return "grid-cols-1 md:grid-cols-3 lg:grid-cols-5";
+      default: return "grid-cols-1 md:grid-cols-3";
+    }
   };
 
   return (
-    <section className="py-20 bg-black" data-version="v2-merged">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 bg-black">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gray-900/50 p-8 md:p-12">
           {/* Background Pattern - Use fallback to ensure image always shows */}
           <div
             className="absolute inset-0 bg-cover bg-center opacity-10 pointer-events-none"
-            style={{ backgroundImage: `url('${data.card1.imageUrl}')` }}
+            style={{ backgroundImage: `url('${cards[0]?.imageUrl || ""}')` }}
           />
 
-          <div className="relative z-10 text-center max-w-4xl mx-auto">
+          <div className="relative z-10 text-center max-w-[1200px] mx-auto">
             <motion.h3
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-6xl font-black text-white mb-8 uppercase"
+              className="text-4xl md:text-6xl font-black text-white mb-12 uppercase"
             >
-              {data.title}
+              {title}
             </motion.h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-              {/* Card 1 */}
-              <Link href={data.card1.link} className="block group w-full">
-                <div className="relative aspect-video rounded-xl overflow-hidden border border-primary/30 shadow-[0_0_20px_rgba(0,240,255,0.1)] group">
-                  <Image
-                    src={data.card1.imageUrl}
-                    alt={data.card1.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <h4 className="text-2xl font-bold text-white text-left">{data.card1.title}</h4>
+            <div className={`grid gap-6 mb-12 ${getGridClass(cards.length)}`}>
+              {cards.map((card, index) => (
+                <Link key={card.id} href={card.link} className="block group w-full">
+                  <div className={`relative aspect-video rounded-xl overflow-hidden border shadow-[0_0_20px_rgba(255,255,255,0.05)] group ${index % 2 === 0 ? 'border-primary/30 group-hover:shadow-[0_0_20px_rgba(0,240,255,0.2)]' : 'border-secondary/30 group-hover:shadow-[0_0_20px_rgba(255,215,0,0.2)]'
+                    }`}>
+                    <Image
+                      src={card.imageUrl}
+                      alt={card.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
+                      <h4 className="text-xl md:text-2xl font-bold text-white text-left drop-shadow-md">{card.title}</h4>
+                    </div>
                   </div>
-                </div>
-              </Link>
-
-              {/* Card 2 */}
-              <Link href={data.card2.link} className="block group w-full">
-                <div className="relative aspect-video rounded-xl overflow-hidden border border-secondary/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] group">
-                  <Image
-                    src={data.card2.imageUrl}
-                    alt={data.card2.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <h4 className="text-2xl font-bold text-white text-left">{data.card2.title}</h4>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              ))}
             </div>
 
             {/* CTA Button */}
-            {data.ctaButton?.enabled && (
+            {ctaButton.enabled && (
               <Link
-                href={data.ctaButton.link}
+                href={ctaButton.link}
                 className="inline-block px-12 py-4 bg-white text-black font-black text-xl rounded-full hover:bg-primary hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               >
-                {data.ctaButton.text}
+                {ctaButton.text}
               </Link>
             )}
           </div>

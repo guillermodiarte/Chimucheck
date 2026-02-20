@@ -1,39 +1,72 @@
-import { getGamingItems } from "@/app/actions/gaming";
-import GamingZoneForm from "@/components/admin/GamingZoneForm";
-import LogoForm from "@/components/admin/LogoForm";
 import { db } from "@/lib/prisma";
+import { SectionsDashboard } from "@/components/admin/sections/SectionsDashboard";
 
 export default async function SectionsPage() {
-  const gamingItems = await getGamingItems();
-
-  // Fetch home section for logo
-  const homeSection = await db.siteSection.findUnique({
-    where: { key: "home_section" }
+  // Fetch existing content or default to null
+  const aboutSection = await db.siteSection.findUnique({
+    where: { key: "about_us" },
   });
-  const homeData = homeSection?.content || {};
+
+  const homeSection = await db.siteSection.findUnique({
+    where: { key: "home_section" },
+  });
+
+  const socialsSection = await db.siteSection.findUnique({
+    where: { key: "social_links" },
+  });
+
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const aboutData = (aboutSection?.content as any) || {};
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const homeData = (homeSection?.content as any) || {};
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const socialsData = (socialsSection?.content as any) || null;
+
+  const gamingSection = await db.siteSection.findUnique({
+    where: { key: "gaming_section" },
+  });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const gamingData = (gamingSection?.content as any) || null;
+
+  const streamingSection = await db.siteSection.findUnique({
+    where: { key: "streaming_section" },
+  });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const streamingData = (streamingSection?.content as any) || null;
+
+  // Fetch Prizes Data
+  const prizes = await db.prize.findMany({ orderBy: { order: "asc" } });
+  const prizesSection = await db.siteSection.findUnique({ where: { key: "prizes_section" } });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const prizesConfig = (prizesSection?.content as any) || {};
+
+  const aboutContent = {
+    title: aboutData.title || "Nuestra Historia",
+    bio: aboutData.bio || "",
+    instagram: aboutData.instagram || "chimucheck",
+    imageUrl: aboutData.imageUrl || aboutData.image || "/images/about/dario.jpg", // Default image
+  };
+
+  const homeContent = {
+    logoUrl: homeData.logoUrl || "/images/logo5.png",
+    logoText: homeData.logoText || "",
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Gestión de Secciones</h1>
-          <p className="text-gray-400">Configura el contenido dinámico de la página principal.</p>
-        </div>
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Panel de Secciones</h1>
+        <p className="text-gray-400">Selecciona una sección para editar su contenido.</p>
       </div>
 
-      <div className="max-w-4xl space-y-12">
-        {/* LOGO SECTION */}
-        <section>
-          <h2 className="text-xl font-bold text-white mb-4 border-l-4 border-primary pl-4">Identidad & Logo</h2>
-          <LogoForm initialData={homeData} />
-        </section>
-
-        {/* GAMING ZONE SECTION */}
-        <section>
-          <h2 className="text-xl font-bold text-white mb-4 border-l-4 border-primary pl-4">Zona Gaming</h2>
-          <GamingZoneForm initialItems={gamingItems} />
-        </section>
-      </div>
+      <SectionsDashboard
+        homeContent={homeContent}
+        aboutContent={aboutContent}
+        gamingContent={gamingData}
+        socialsContent={socialsData}
+        streamingContent={streamingData}
+        prizesData={{ initialPrizes: prizes, initialConfig: prizesConfig }}
+      />
     </div>
   );
 }
