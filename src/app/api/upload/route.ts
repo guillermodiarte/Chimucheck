@@ -19,16 +19,16 @@ export async function POST(request: NextRequest) {
   const buffer = Buffer.from(bytes);
 
   // Ensure uploads directory exists
-  const folder = (data.get("folder") as string) || "uploads";
-  // Sanitize folder name to prevent directory traversal
+  const folder = (data.get("folder") as string) || "images";
+  // Sanitize folder name (only alphanumeric and hyphens/underscores)
   const sanitizedFolder = folder.replace(/[^a-zA-Z0-9-_]/g, "");
 
   // Determine upload path
-  // Force absolute path in production to avoid process.cwd() ambiguity
   const isProd = process.env.NODE_ENV === "production";
   const baseDir = isProd ? "/app/public" : join(process.cwd(), "public");
 
-  const uploadDir = join(baseDir, sanitizedFolder);
+  // Force all uploads inside public/uploads/...
+  const uploadDir = join(baseDir, "uploads", sanitizedFolder);
 
   console.log("Upload Debug Info:", {
     processCwd: process.cwd(),
@@ -71,14 +71,14 @@ export async function POST(request: NextRequest) {
     console.log("File written successfully to:", filepath);
 
     // Verify visibility in standalone public directory
-    const standalonePath = join(process.cwd(), "public", sanitizedFolder, filename);
+    const standalonePath = join(process.cwd(), "public", "uploads", sanitizedFolder, filename);
     const isVisibleInStandalone = existsSync(standalonePath);
     console.log("Verification - File visible in standalone path?", {
       standalonePath,
       isVisible: isVisibleInStandalone
     });
 
-    const url = `/${sanitizedFolder}/${filename}`;
+    const url = `/uploads/${sanitizedFolder}/${filename}`;
     return NextResponse.json({ success: true, url });
   } catch (error) {
     console.error("Error saving file:", error);

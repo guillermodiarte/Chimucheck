@@ -54,7 +54,7 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-4xl max-h-[80vh] flex flex-col p-0 gap-0">
+      <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-4xl max-h-[80vh] flex flex-col p-0 gap-0 z-[110]">
         <DialogHeader className="p-6 pb-4 border-b border-gray-800">
           <DialogTitle>Seleccionar Multimedia</DialogTitle>
           <div className="mt-4 relative">

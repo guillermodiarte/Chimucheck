@@ -37,7 +37,7 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] h-[90vh] bg-black/90 border-none flex flex-col items-center justify-center overflow-hidden">
+      <DialogContent className="max-w-[90vw] h-[90vh] bg-black/90 border-none flex flex-col items-center justify-center overflow-hidden z-[110]">
         {isOpen && <Confetti width={windowSize.width} height={windowSize.height} numberOfPieces={500} recycle={false} />}
 
         <motion.div
@@ -73,8 +73,8 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
                 {/* Avatar */}
                 <div className={`relative mb-4 ${isFirst ? "mb-8 scale-125" : ""}`}>
                   <Avatar className={`w-24 h-24 border-4 ${isFirst ? "border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.5)]" :
-                      isSecond ? "border-zinc-300" :
-                        "border-orange-600"
+                    isSecond ? "border-zinc-300" :
+                      "border-orange-600"
                     }`}>
                     <AvatarImage src={winner.image || ""} />
                     <AvatarFallback>{winner.alias[0]}</AvatarFallback>
@@ -88,8 +88,8 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
 
                 {/* Bar */}
                 <div className={`w-32 rounded-t-lg flex flex-col items-center justify-start pt-4 text-black font-bold uppercase tracking-widest ${isFirst ? "h-64 bg-gradient-to-b from-yellow-400 to-yellow-600" :
-                    isSecond ? "h-48 bg-gradient-to-b from-zinc-300 to-zinc-500" :
-                      "h-32 bg-gradient-to-b from-orange-400 to-orange-700"
+                  isSecond ? "h-48 bg-gradient-to-b from-zinc-300 to-zinc-500" :
+                    "h-32 bg-gradient-to-b from-orange-400 to-orange-700"
                   }`}>
                   <span className="text-4xl opacity-50 mb-2">{winner.position}°</span>
                   <span className="text-sm px-2 text-center line-clamp-1 w-full">{winner.alias}</span>

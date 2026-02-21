@@ -144,24 +144,25 @@ export default async function AdminTournamentsPage() {
                           </Button>
                         </Link>
                       )}
-                      <FinishTournamentButton id={tournament.id} name={tournament.name} />
                       <form action={toggleTournamentStatus.bind(null, tournament.id, tournament.active)}>
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title={tournament.active ? "Ocultar" : "Activar"}>
+                        <Button disabled={tournament.status === "EN_JUEGO"} variant="ghost" size="icon" className={`text-gray-400 hover:text-white ${tournament.status === "EN_JUEGO" ? "opacity-50 pointer-events-none" : ""}`} title={tournament.active ? "Ocultar" : "Activar"}>
                           <Power className={`w-4 h-4 ${tournament.active ? "text-green-500" : "text-gray-500"}`} />
                         </Button>
                       </form>
-                      <Link href={`/admin/tournaments/edit/${tournament.id}`}>
-                        <Button variant="ghost" size="icon" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
+                      <Link href={tournament.status === "EN_JUEGO" ? "#" : `/admin/tournaments/edit/${tournament.id}`} className={tournament.status === "EN_JUEGO" ? "pointer-events-none opacity-50" : ""}>
+                        <Button disabled={tournament.status === "EN_JUEGO"} variant="ghost" size="icon" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
                           <Pencil className="w-4 h-4" />
                         </Button>
                       </Link>
-                      <DeleteButton
-                        id={tournament.id}
-                        // @ts-ignore
-                        deleteAction={deleteTournament}
-                        itemName="Torneo"
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                      />
+                      <div className={tournament.status === "EN_JUEGO" ? "pointer-events-none opacity-50" : ""}>
+                        <DeleteButton
+                          id={tournament.id}
+                          // @ts-ignore
+                          deleteAction={deleteTournament}
+                          itemName="Torneo"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                        />
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>

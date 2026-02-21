@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Copy, Trash2, Search, FileIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type MediaFile } from "@/app/actions/media";
 import { deleteMediaFile } from "@/app/actions/media";
 import { Button } from "@/components/ui/button";
@@ -27,10 +28,12 @@ interface MediaGalleryProps {
 export function MediaGallery({ initialFiles }: MediaGalleryProps) {
   const [files, setFiles] = useState<MediaFile[]>(initialFiles);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState<string>("images");
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
 
   const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchTerm.toLowerCase())
+    file.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    file.url.startsWith(`/uploads/${selectedFolder}`)
   );
 
   const copyToClipboard = (url: string) => {
@@ -66,14 +69,24 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
 
   return (
     <div className="space-y-6">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          placeholder="Buscar archivos..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 bg-gray-900/50 border-gray-800 text-white w-full md:w-80"
-        />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar archivos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-gray-900/50 border-gray-800 text-white w-full md:w-80"
+          />
+        </div>
+        <Tabs value={selectedFolder} onValueChange={setSelectedFolder} className="w-full sm:w-auto">
+          <TabsList className="bg-gray-900/50 border border-gray-800">
+            <TabsTrigger value="images" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Imágenes</TabsTrigger>
+            <TabsTrigger value="wallpapers" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Fondos</TabsTrigger>
+            <TabsTrigger value="avatars" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Avatares</TabsTrigger>
+            <TabsTrigger value="videos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Videos</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {filteredFiles.length === 0 ? (

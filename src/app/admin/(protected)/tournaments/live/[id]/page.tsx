@@ -33,7 +33,7 @@ export default async function AdminLiveTournamentPage({ params }: { params: Prom
         </p>
       </div>
 
-      <LiveScoreTable tournamentId={tournament.id} initialData={initialData} />
+      <LiveScoreTable tournamentId={tournament.id} tournamentName={tournament.name} initialStatus={tournament.status} initialData={initialData} />
     </div>
   );
 }
