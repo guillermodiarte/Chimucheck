@@ -21,7 +21,7 @@ export default async function AvailableTournamentsPage() {
   // Fetch available OPEN tournaments excluding those already registered
   const tournaments = await db.tournament.findMany({
     where: {
-      status: "INSCRIPCION",
+      status: { in: ["INSCRIPCION", "EN_JUEGO"] },
       id: { notIn: registeredIds }
     },
     orderBy: {
@@ -68,9 +68,16 @@ export default async function AvailableTournamentsPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-4 left-4">
-                  <span className="px-2 py-1 rounded-md bg-primary text-black text-xs font-bold uppercase mb-2 inline-block">
-                    Inscripción Abierta
-                  </span>
+                  {tournament.status === "EN_JUEGO" ? (
+                    <span className="flex items-center gap-2 px-2 py-1 rounded-md bg-green-500/20 text-green-400 border border-green-500/50 text-xs font-bold uppercase mb-2 w-fit">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      En Juego
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 rounded-md bg-primary text-black text-xs font-bold uppercase mb-2 inline-block">
+                      Inscripción Abierta
+                    </span>
+                  )}
                   <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors">
                     {tournament.name}
                   </h3>
@@ -94,10 +101,10 @@ export default async function AvailableTournamentsPage() {
                 </div>
 
                 <Link
-                  href={`/player/dashboard/tournaments/${tournament.id}`}
+                  href={`/torneos/${tournament.id}`}
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-primary text-black font-bold hover:bg-primary/90 transition-all group-hover:shadow-[0_0_15px_rgba(255,215,0,0.3)]"
                 >
-                  Inscribirse <ArrowRight size={16} />
+                  {tournament.status === "EN_JUEGO" ? "Ver Detalles" : "Inscribirse"} <ArrowRight size={16} />
                 </Link>
               </div>
             </div>

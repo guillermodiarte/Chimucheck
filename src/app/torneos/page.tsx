@@ -62,13 +62,23 @@ function PublicTournamentCard({ tournament, isFinished = false }: { tournament: 
         )}
 
         {/* Finished Label */}
-        {(tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) && (
+        {(tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) && tournament.status !== "EN_JUEGO" && (
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-30 overflow-hidden">
             <div className="absolute top-0 left-0 w-[150px] h-[150px]">
               <div className="absolute top-[30px] left-[-40px] w-[180px] bg-red-600/90 text-white font-bold text-xs uppercase tracking-widest text-center py-2 -rotate-45 shadow-lg border-y border-white/20 backdrop-blur-sm">
                 FINALIZADO
               </div>
             </div>
+          </div>
+        )}
+
+        {/* En Juego Label */}
+        {tournament.status === "EN_JUEGO" && (
+          <div className="absolute top-4 left-4 z-30">
+            <span className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 text-green-400 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-widest shadow-lg backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              EN JUEGO
+            </span>
           </div>
         )}
       </div>
@@ -141,7 +151,7 @@ export default async function TorneosPage() {
   const allTournaments = await getTournaments(true);
 
   // Filter lists
-  const available = allTournaments.filter(t => t.status === "INSCRIPCION");
+  const available = allTournaments.filter(t => t.status === "INSCRIPCION" || t.status === "EN_JUEGO");
   const finished = allTournaments.filter(t => t.status === "FINALIZADO").slice(0, 6);
 
   return (

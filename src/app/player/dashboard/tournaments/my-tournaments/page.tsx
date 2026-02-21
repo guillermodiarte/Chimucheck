@@ -68,6 +68,15 @@ export default async function MyTournamentsPage() {
                     </div>
                   </div>
                 )}
+                {/* En Juego Label */}
+                {reg.tournament.status === "EN_JUEGO" && (
+                  <div className="absolute top-4 left-4 z-30">
+                    <span className="flex items-center gap-2 bg-green-500/20 border border-green-500/50 text-green-400 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-widest shadow-lg backdrop-blur-md">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      EN JUEGO
+                    </span>
+                  </div>
+                )}
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-4 left-4">
@@ -100,7 +109,7 @@ export default async function MyTournamentsPage() {
                 </div>
 
                 <Link
-                  href={`/player/dashboard/tournaments/${reg.tournament.id}`}
+                  href={`/torneos/${reg.tournament.id}`}
                   className="block w-full text-center py-2 rounded-lg border border-white/10 hover:bg-white/5 text-sm font-medium transition-colors"
                 >
                   Ver Detalles

@@ -266,6 +266,9 @@ export default async function AdminTournamentsPage() {
                       <span className="text-gray-400 text-xs">{photos.length}</span>
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <StatusBadge id={tournament.id} status={tournament.status as any} />
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link href={`/admin/tournaments/results/${tournament.id}`}>

@@ -62,11 +62,11 @@ export default async function TournamentDetailPage({ params }: { params: Promise
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.8)_100%)]" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto">
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto">
         <div className="bg-gray-900/60 backdrop-blur-md rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
 
           {/* Header Image Carousel */}
-          <div className="group relative aspect-video w-full max-h-[500px]">
+          <div className="group relative w-full h-[400px] md:h-[600px]">
             <TournamentImageCarousel
               images={games}
               fallbackImage={tournament.image}
@@ -289,19 +289,6 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                 })()}
               </div>
 
-              {/* Public Scoreboard */}
-              <div className="space-y-4 pt-4 border-t border-gray-800">
-                <h2 className="text-2xl font-bold text-white pb-2 flex items-center justify-between">
-                  {tournament.status === "INSCRIPCION" ? "Jugadores Inscriptos" : "Tabla de Posiciones"}
-                  {tournament.status === "EN_JUEGO" && (
-                    <span className="flex items-center gap-2 text-sm text-green-400 bg-green-900/20 px-3 py-1 rounded-full border border-green-500/30 font-bold tracking-widest">
-                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      EN VIVO
-                    </span>
-                  )}
-                </h2>
-                <PublicScoreboard registrations={tournament.registrations} status={tournament.status} tournamentId={tournament.id} />
-              </div>
             </div>
 
             {/* Right Column: Status & Action */}
@@ -344,24 +331,22 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                 </div>
 
                 <div className="pt-4 border-t border-white/10">
-                  {!session ? (
+                  {(tournament.status === "FINISHED" || tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date() && tournament.status !== "EN_JUEGO") ? (
+                    <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-500 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
+                      <AlertCircle className="w-5 h-5" />
+                      FINALIZADO
+                    </div>
+                  ) : tournament.status === "EN_JUEGO" ? (
+                    <div className="w-full py-4 bg-green-500/10 border border-green-500/30 rounded-xl text-center text-green-400 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+                      EN JUEGO
+                    </div>
+                  ) : !session ? (
                     <div className="text-center space-y-3">
                       <p className="text-sm text-gray-400">
                         Debes iniciar sesión para inscribirte.
                       </p>
-                      {(tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) ? (
-                        <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-500 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
-                          <AlertCircle className="w-5 h-5" />
-                          FINALIZADO
-                        </div>
-                      ) : (
-                        <TournamentLoginButton />
-                      )}
-                    </div>
-                  ) : (tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) ? (
-                    <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-500 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
-                      <AlertCircle className="w-5 h-5" />
-                      FINALIZADO
+                      <TournamentLoginButton />
                     </div>
                   ) : isRegistered ? (
                     // @ts-ignore
@@ -375,6 +360,20 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                     // @ts-ignore
                     <RegistrationButton tournamentId={tournament.id} userId={session.user.id} />
                   )}
+                </div>
+
+                {/* Scoreboard moved here */}
+                <div className="pt-6 border-t border-white/10">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
+                    {tournament.status === "INSCRIPCION" ? "Inscriptos" : "Posiciones"}
+                    {tournament.status === "EN_JUEGO" && (
+                      <span className="flex items-center gap-2 text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full border border-green-500/30 font-bold tracking-widest uppercase">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        En Vivo
+                      </span>
+                    )}
+                  </h3>
+                  <PublicScoreboard registrations={tournament.registrations} status={tournament.status} tournamentId={tournament.id} />
                 </div>
               </div>
             </div>

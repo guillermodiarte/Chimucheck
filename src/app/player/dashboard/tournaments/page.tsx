@@ -122,7 +122,7 @@ export default async function TournamentsPage() {
                   )}
 
                   <Link
-                    href={`/player/dashboard/tournaments/${reg.tournament.id}`}
+                    href={`/torneos/${reg.tournament.id}`}
                     className="block w-full text-center py-2 rounded-lg border border-white/10 hover:bg-white/5 text-sm font-medium transition-colors"
                   >
                     Ver Detalles
@@ -196,7 +196,7 @@ export default async function TournamentsPage() {
                   </div>
 
                   <Link
-                    href={`/player/dashboard/tournaments/${tournament.id}`}
+                    href={`/torneos/${tournament.id}`}
                     className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-primary text-black font-bold hover:bg-primary/90 transition-all group-hover:shadow-[0_0_15px_rgba(255,215,0,0.3)]"
                   >
                     Inscribirse <ArrowRight size={16} />
