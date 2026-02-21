@@ -54,7 +54,7 @@ export default function LiveTournamentPage({ params }: LiveTournamentPageProps) 
 
         setRankingData(ranking);
 
-        if (data.status === "FINISHED" && !showPodium) {
+        if (data.status === "FINALIZADO" && !showPodium) {
           setShowPodium(true);
         }
       }
@@ -100,10 +100,10 @@ export default function LiveTournamentPage({ params }: LiveTournamentPageProps) 
               <div>
                 <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-2">
                   {tournament.name}
-                  {tournament.status === "IN_PROGRESS" && (
+                  {tournament.status === "EN_JUEGO" && (
                     <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded animate-pulse">EN VIVO</span>
                   )}
-                  {tournament.status === "FINISHED" && (
+                  {tournament.status === "FINALIZADO" && (
                     <span className="text-xs bg-yellow-500 text-black px-2 py-0.5 rounded font-bold">FINALIZADO</span>
                   )}
                 </h1>
@@ -149,7 +149,7 @@ export default function LiveTournamentPage({ params }: LiveTournamentPageProps) 
                 {rankingData[0]?.alias || "Nadie"}
               </p>
               <p className="text-sm text-zinc-400 mt-1">
-                {tournament.status === "FINISHED" ? "Ganador del Torneo" : "Liderando la competencia"}
+                {tournament.status === "FINALIZADO" ? "Ganador del Torneo" : "Liderando la competencia"}
               </p>
             </div>
           </div>

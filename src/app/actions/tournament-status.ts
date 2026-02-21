@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { TournamentStatus } from "@prisma/client";
+type TournamentStatus = "INSCRIPCION" | "EN_JUEGO" | "FINALIZADO";
 
 export async function updateTournamentStatus(id: string, newStatus: TournamentStatus) {
   try {

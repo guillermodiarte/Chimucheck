@@ -100,3 +100,13 @@ export async function updateGamingConfig(data: GamingZoneData) {
     return { success: false, message: "Error al guardar zona gaming" };
   }
 }
+
+export async function updateGamingItems(items: GamingItem[]) {
+  try {
+    const current = await getGamingConfig();
+    return updateGamingConfig({ ...current, items });
+  } catch (error) {
+    console.error("Error updating gaming items:", error);
+    return { success: false, message: "Error al actualizar artículos gaming" };
+  }
+}

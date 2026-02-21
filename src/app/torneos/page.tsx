@@ -62,7 +62,7 @@ function PublicTournamentCard({ tournament, isFinished = false }: { tournament: 
         )}
 
         {/* Finished Label */}
-        {(tournament.status === "FINISHED" || new Date(tournament.date) < new Date()) && (
+        {(tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) && (
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-30 overflow-hidden">
             <div className="absolute top-0 left-0 w-[150px] h-[150px]">
               <div className="absolute top-[30px] left-[-40px] w-[180px] bg-red-600/90 text-white font-bold text-xs uppercase tracking-widest text-center py-2 -rotate-45 shadow-lg border-y border-white/20 backdrop-blur-sm">
@@ -141,8 +141,8 @@ export default async function TorneosPage() {
   const allTournaments = await getTournaments(true);
 
   // Filter lists
-  const available = allTournaments.filter(t => t.status === "OPEN" || t.status === "REGISTRATION");
-  const finished = allTournaments.filter(t => t.status === "FINISHED").slice(0, 6);
+  const available = allTournaments.filter(t => t.status === "INSCRIPCION");
+  const finished = allTournaments.filter(t => t.status === "FINALIZADO").slice(0, 6);
 
   return (
     <div className="relative min-h-screen pt-48 pb-12 px-4 md:px-8">

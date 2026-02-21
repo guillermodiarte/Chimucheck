@@ -58,14 +58,12 @@ export default async function AdminPlayersPage() {
               players.map((player) => (
                 <TableRow key={player.id} className="border-gray-800 hover:bg-gray-900/50">
                   <TableCell>
-                    <TableCell>
-                      <Avatar className="w-10 h-10 border border-gray-700">
-                        <AvatarImage src={player.image || ""} alt={player.alias || "Avatar"} className="object-cover" />
-                        <AvatarFallback className="bg-gray-800 text-gray-500 text-xs">
-                          {player.alias?.[0]?.toUpperCase() || "P"}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
+                    <Avatar className="w-10 h-10 border border-gray-700">
+                      <AvatarImage src={player.image || ""} alt={player.alias || "Avatar"} className="object-cover" />
+                      <AvatarFallback className="bg-gray-800 text-gray-500 text-xs">
+                        {player.alias?.[0]?.toUpperCase() || "P"}
+                      </AvatarFallback>
+                    </Avatar>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">

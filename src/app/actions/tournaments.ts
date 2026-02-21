@@ -46,13 +46,13 @@ export async function getTournaments(onlyActive = true) {
     const expiredTournaments = await db.tournament.findMany({
       where: {
         date: { lt: new Date() },
-        status: { notIn: ["FINISHED", "CANCELLED"] },
+        status: { notIn: ["FINALIZADO", "CANCELADO"] },
       },
       include: { registrations: true },
     });
 
     for (const t of expiredTournaments) {
-      await db.tournament.update({ where: { id: t.id }, data: { status: "FINISHED" } });
+      await db.tournament.update({ where: { id: t.id }, data: { status: "FINALIZADO" } });
       // Increment matchesPlayed for all registered players
       for (const reg of t.registrations) {
         await db.playerStats.upsert({
@@ -206,8 +206,8 @@ export async function updateTournament(id: string, prevState: any, formData: For
           }).catch(() => { });
         }
 
-        // Revert matchesPlayed for all registered players (only if was FINISHED)
-        if (current.status === "FINISHED") {
+        // Revert matchesPlayed for all registered players (only if was FINALIZADO)
+        if (current.status === "FINALIZADO") {
           for (const reg of current.registrations) {
             await db.playerStats.update({
               where: { playerId: reg.playerId },
@@ -222,7 +222,7 @@ export async function updateTournament(id: string, prevState: any, formData: For
       where: { id },
       data: {
         ...rest,
-        ...(isMovingToFuture ? { status: "OPEN", winners: "[]", photos: "[]" } : {}),
+        ...(isMovingToFuture ? { status: "INSCRIPCION", winners: "[]", photos: "[]" } : {}),
         games: JSON.stringify(games),
       },
     });
@@ -360,7 +360,7 @@ export async function unregisterPlayer(tournamentId: string, playerId: string) {
 export async function getFinishedTournaments() {
   try {
     const tournaments = await db.tournament.findMany({
-      where: { status: "FINISHED" },
+      where: { status: "FINALIZADO" },
       orderBy: { date: "desc" },
       include: { registrations: { include: { player: true } } },
     });
@@ -381,7 +381,7 @@ export async function finishTournament(id: string) {
 
     await db.tournament.update({
       where: { id },
-      data: { status: "FINISHED" },
+      data: { status: "FINALIZADO" },
     });
 
     // Increment matchesPlayed for all registered players

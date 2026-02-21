@@ -45,6 +45,8 @@ export async function updatePlayerScore({ playerId, tournamentId, newScore }: Sc
     });
 
     revalidatePath(`/admin/tournaments/results/${tournamentId}`);
+    revalidatePath(`/admin/tournaments/live/${tournamentId}`);
+    revalidatePath(`/live/${tournamentId}`);
     return { success: true };
   } catch (error) {
     console.error("Error updating score:", error);
@@ -74,6 +76,8 @@ export async function undoLastScoreUpdate(playerId: string, tournamentId: string
     });
 
     revalidatePath(`/admin/tournaments/results/${tournamentId}`);
+    revalidatePath(`/admin/tournaments/live/${tournamentId}`);
+    revalidatePath(`/live/${tournamentId}`);
     return { success: true };
   } catch (error) {
     console.error("Error undoing score:", error);

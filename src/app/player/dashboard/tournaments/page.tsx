@@ -26,7 +26,7 @@ export default async function TournamentsPage() {
   // 2. Disponibles
   const available = await db.tournament.findMany({
     where: {
-      status: { in: ["OPEN", "REGISTRATION"] },
+      status: "INSCRIPCION",
       id: { notIn: registeredIds }
     },
     orderBy: { date: "asc" },
@@ -35,7 +35,7 @@ export default async function TournamentsPage() {
   // 3. Finalizados (últimos 6)
   const finished = await db.tournament.findMany({
     where: {
-      status: "FINISHED"
+      status: "FINALIZADO"
     },
     orderBy: { date: "desc" },
     take: 6,
@@ -74,7 +74,7 @@ export default async function TournamentsPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   {/* Finished Label inside My Tournaments */}
-                  {(reg.tournament.status === "FINISHED" || new Date(reg.tournament.date) < new Date()) && (
+                  {(reg.tournament.status === "FINALIZADO" || new Date(reg.tournament.date) < new Date()) && (
                     <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-20 overflow-hidden">
                       <div className="absolute top-0 left-0 w-[150px] h-[150px]">
                         <div className="absolute top-[30px] left-[-40px] w-[180px] bg-red-600/90 text-white font-bold text-xs uppercase tracking-widest text-center py-2 -rotate-45 shadow-lg border-y border-white/20 backdrop-blur-sm">
@@ -115,7 +115,7 @@ export default async function TournamentsPage() {
                   </div>
 
                   {/* Score if tournament has started */}
-                  {(reg.tournament.status === "IN_PROGRESS" || reg.tournament.status === "FINISHED") && (
+                  {(reg.tournament.status === "EN_JUEGO" || reg.tournament.status === "FINALIZADO") && (
                     <div className="text-sm font-bold text-primary text-center">
                       Puntaje: {(reg as any).score ?? 0} pts
                     </div>
@@ -171,7 +171,7 @@ export default async function TournamentsPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-4 left-4">
                     <span className="px-2 py-1 rounded-md bg-primary text-black text-xs font-bold uppercase mb-2 inline-block">
-                      {tournament.status === "REGISTRATION" ? "Inscripción Abierta" : "Abierto"}
+                      {tournament.status === "INSCRIPCION" ? "Inscripción Abierta" : "Abierto"}
                     </span>
                     <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors">
                       {tournament.name}

@@ -9,6 +9,7 @@ import RegistrationButton from "@/components/tournaments/RegistrationButton";
 import UnregisterButton from "@/components/tournaments/UnregisterButton";
 import TournamentImageCarousel from "@/components/tournaments/TournamentImageCarousel";
 import type { GameEntry } from "@/app/actions/tournaments";
+import { PublicScoreboard } from "@/components/tournaments/PublicScoreboard";
 
 function getGames(tournament: any): GameEntry[] {
   if (tournament.games) {
@@ -124,7 +125,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
               <div className="space-y-4">
                 {/* Winners Section */}
                 {(() => {
-                  if (tournament.status !== "FINISHED") return null;
+                  if (tournament.status !== "FINALIZADO") return null;
 
                   let winners: any[] = [];
                   try {
@@ -287,6 +288,20 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                   );
                 })()}
               </div>
+
+              {/* Public Scoreboard */}
+              <div className="space-y-4 pt-4 border-t border-gray-800">
+                <h2 className="text-2xl font-bold text-white pb-2 flex items-center justify-between">
+                  {tournament.status === "INSCRIPCION" ? "Jugadores Inscriptos" : "Tabla de Posiciones"}
+                  {tournament.status === "EN_JUEGO" && (
+                    <span className="flex items-center gap-2 text-sm text-green-400 bg-green-900/20 px-3 py-1 rounded-full border border-green-500/30 font-bold tracking-widest">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      EN VIVO
+                    </span>
+                  )}
+                </h2>
+                <PublicScoreboard registrations={tournament.registrations} status={tournament.status} tournamentId={tournament.id} />
+              </div>
             </div>
 
             {/* Right Column: Status & Action */}
@@ -334,7 +349,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                       <p className="text-sm text-gray-400">
                         Debes iniciar sesión para inscribirte.
                       </p>
-                      {(tournament.status === "FINISHED" || new Date(tournament.date) < new Date()) ? (
+                      {(tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) ? (
                         <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-500 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
                           <AlertCircle className="w-5 h-5" />
                           FINALIZADO
@@ -343,7 +358,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                         <TournamentLoginButton />
                       )}
                     </div>
-                  ) : (tournament.status === "FINISHED" || new Date(tournament.date) < new Date()) ? (
+                  ) : (tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) ? (
                     <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-500 font-bold flex items-center justify-center gap-2 uppercase tracking-wider">
                       <AlertCircle className="w-5 h-5" />
                       FINALIZADO

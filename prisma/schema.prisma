@@ -103,7 +103,7 @@ model Tournament {
   name           String
   description    String?
   date           DateTime
-  status         String                   @default("OPEN")
+  status         String                   @default("INSCRIPCION")
   maxPlayers     Int                      @default(16)
   currentPlayers Int                      @default(0)
   prizePool      String?

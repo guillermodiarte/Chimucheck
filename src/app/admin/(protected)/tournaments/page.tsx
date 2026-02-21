@@ -53,7 +53,7 @@ export default async function AdminTournamentsPage() {
   const finishedTournaments = await getFinishedTournaments();
 
   // Filter out FINISHED from the active list
-  const activeTournaments = tournaments.filter((t: any) => t.status !== "FINISHED");
+  const activeTournaments = tournaments.filter((t: any) => t.status !== "FINALIZADO");
 
   const activeContent = (
     <div className="bg-black/40 border border-white/10 rounded-lg overflow-hidden">
@@ -133,10 +133,17 @@ export default async function AdminTournamentsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <StatusBadge id={tournament.id} status={tournament.status} />
+                    <StatusBadge id={tournament.id} status={tournament.status as any} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {tournament.status === "EN_JUEGO" && (
+                        <Link href={`/admin/tournaments/live/${tournament.id}`}>
+                          <Button variant="ghost" size="icon" className="text-green-400 hover:text-green-300 hover:bg-green-900/20" title="Panel en Vivo">
+                            <Medal className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      )}
                       <FinishTournamentButton id={tournament.id} name={tournament.name} />
                       <form action={toggleTournamentStatus.bind(null, tournament.id, tournament.active)}>
                         <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title={tournament.active ? "Ocultar" : "Activar"}>

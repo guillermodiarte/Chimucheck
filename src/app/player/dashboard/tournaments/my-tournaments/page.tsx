@@ -59,7 +59,7 @@ export default async function MyTournamentsPage() {
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 {/* Finished Label */}
-                {(reg.tournament.status === "FINISHED" || new Date(reg.tournament.date) < new Date()) && (
+                {(reg.tournament.status === "FINALIZADO" || new Date(reg.tournament.date) < new Date()) && (
                   <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-20 overflow-hidden">
                     <div className="absolute top-0 left-0 w-[150px] h-[150px]">
                       <div className="absolute top-[30px] left-[-40px] w-[180px] bg-red-600/90 text-white font-bold text-xs uppercase tracking-widest text-center py-2 -rotate-45 shadow-lg border-y border-white/20 backdrop-blur-sm">

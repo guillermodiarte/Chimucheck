@@ -21,7 +21,7 @@ export default async function AvailableTournamentsPage() {
   // Fetch available OPEN tournaments excluding those already registered
   const tournaments = await db.tournament.findMany({
     where: {
-      status: "OPEN",
+      status: "INSCRIPCION",
       id: { notIn: registeredIds }
     },
     orderBy: {

@@ -4,10 +4,9 @@ import { useState } from "react";
 import { updateSectionContent } from "@/app/actions/sections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
-import { Save, Loader2, Gamepad2, Link as LinkIcon, Plus, Trash2 } from "lucide-react";
+import { Save, Loader2, Gamepad2, Link as LinkIcon, Plus, Trash2, Image as ImageIcon } from "lucide-react";
 
 interface GamingCard {
   id: string;
@@ -29,7 +28,6 @@ interface GamingSectionContent {
 }
 
 export function GamingSectionForm({ initialContent }: { initialContent: any }) {
-  // Defaults - ChimuCoin Design (CS2/Valorant)
   const defaultContent: GamingSectionContent = {
     title: "¿TIENES LO QUE SE NECESITA?",
     description: "Participa en nuestros torneos y demuestra tu habilidad.",
@@ -83,7 +81,6 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
     setLoading(true);
     const res = await updateSectionContent("gaming_section", content);
     setLoading(false);
-
     if (res.success) {
       toast.success(res.message);
     } else {
@@ -100,6 +97,23 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
     });
   };
 
+  const handleImageUpload = async (cardId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        updateCard(cardId, "imageUrl", data.url);
+        toast.success("Imagen subida correctamente");
+      } else {
+        toast.error(data.message || "Error al subir la imagen");
+      }
+    } catch {
+      toast.error("Error al procesar la imagen");
+    }
+  };
+
   const addCard = () => {
     if (content.cards.length >= 5) {
       toast.error("Máximo 5 tarjetas permitidas");
@@ -113,7 +127,7 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
           id: crypto.randomUUID(),
           title: "Nuevo Torneo",
           link: "/torneos",
-          imageUrl: "/images/tournament-placeholder.jpg"
+          imageUrl: ""   // empty → shows "Sin Imagen" placeholder
         }
       ]
     });
@@ -124,16 +138,21 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
       toast.error("Debe haber al menos 1 tarjeta");
       return;
     }
-    setContent({
-      ...content,
-      cards: content.cards.filter((c) => c.id !== id)
-    });
+    setContent({ ...content, cards: content.cards.filter((c) => c.id !== id) });
   };
 
+  const gridClass =
+    content.cards.length === 1 ? "grid-cols-1 max-w-2xl mx-auto" :
+      content.cards.length === 2 ? "grid-cols-1 md:grid-cols-2" :
+        content.cards.length === 3 ? "grid-cols-1 md:grid-cols-3" :
+          content.cards.length === 4 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" :
+            "grid-cols-1 md:grid-cols-3 lg:grid-cols-5";
+
   return (
-    <div className="space-y-6">
-      {/* Header / Controls */}
-      <div className="flex items-center justify-between bg-gray-900 p-4 rounded-t-lg border border-gray-800 border-b-0">
+    <div className="space-y-4">
+
+      {/* ── Header / Controls ──────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-900 p-4 rounded-t-lg border border-gray-800 border-b-0">
         <div>
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
             <Gamepad2 className="text-primary" />
@@ -141,12 +160,11 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
           </h3>
           <p className="text-gray-400 text-sm">Edita dinámicamente hasta 5 elementos.</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Button
             onClick={addCard}
             disabled={content.cards.length >= 5}
-            variant="outline"
-            className="border-primary/50 text-primary hover:bg-primary/20"
+            className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 disabled:opacity-50"
           >
             <Plus className="mr-2 w-4 h-4" />
             Agregar ({content.cards.length}/5)
@@ -158,112 +176,65 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
         </div>
       </div>
 
-      {/* Visual Editor Container */}
+      {/* ── Visual Preview ─────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-b-lg shadow-2xl border border-gray-800 bg-black">
         <div className="absolute top-0 right-0 p-4 z-50">
           <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30">MODO EDICIÓN</span>
         </div>
 
-        <section className="py-20 bg-black relative">
+        <section className="py-16 bg-black relative">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gray-900/50 p-8 md:p-12">
+            <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gray-900/50 p-8">
 
-              {/* Background Map - Fallback to first image */}
+              {/* Background blur */}
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-10 pointer-events-none"
-                style={{ backgroundImage: `url('${content.cards[0]?.imageUrl || ""}')` }}
+                style={{ backgroundImage: content.cards[0]?.imageUrl ? `url('${content.cards[0].imageUrl}')` : "none" }}
               />
 
               <div className="relative z-10 text-center max-w-[1200px] mx-auto">
-                {/* Header Edit */}
+                {/* Editable Title */}
                 <Input
                   value={content.title}
                   onChange={(e) => setContent({ ...content, title: e.target.value })}
-                  className="text-4xl md:text-6xl font-black text-white mb-8 uppercase text-center bg-transparent border-none p-0 h-auto focus:ring-0 placeholder:text-gray-700 w-full"
+                  className="text-3xl md:text-5xl font-black text-white mb-8 uppercase text-center bg-transparent border-none p-0 h-auto focus:ring-0 placeholder:text-gray-700 w-full"
                   placeholder="TÍTULO SECCIÓN"
                 />
 
-                {/* Cards Grid dynamically mapped */}
-                <div className={`grid gap-6 mb-12 ${content.cards.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' :
-                    content.cards.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
-                      content.cards.length === 3 ? 'grid-cols-1 md:grid-cols-3' :
-                        content.cards.length === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' :
-                          'grid-cols-1 md:grid-cols-3 lg:grid-cols-5'
-                  }`}>
+                {/* Cards preview grid */}
+                <div className={`grid gap-4 mb-10 ${gridClass}`}>
                   {content.cards.map((card) => (
-                    <div key={card.id} className="relative aspect-video rounded-xl overflow-hidden border border-primary/30 shadow-[0_0_20px_rgba(0,240,255,0.1)] group">
-
-                      {/* Delete Button */}
-                      <div className="absolute top-2 right-2 z-40 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          onClick={() => removeCard(card.id)}
-                          variant="destructive"
-                          size="icon"
-                          className="h-8 w-8 bg-red-600/80 hover:bg-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-
-                      {/* Image Logic */}
-                      <div className="absolute inset-0 z-0">
-                        <img
-                          src={card.imageUrl}
-                          alt="Background"
-                          className="w-full h-full object-cover transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-
-                        {/* Upload Overlay */}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                          <div className="p-4 bg-black/80 rounded-lg border border-white/20">
-                            <div className="mb-2 text-white font-bold text-xs text-center">Cambiar Imagen</div>
-                            <LocalImageUpload
-                              onFileSelect={() => { }}
-                              onUrlSelect={(url) => updateCard(card.id, "imageUrl", url)}
-                            />
-                          </div>
+                    <div key={card.id} className="relative aspect-video rounded-xl overflow-hidden border border-primary/30">
+                      {card.imageUrl ? (
+                        <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-800 flex flex-col items-center justify-center gap-2 text-gray-500">
+                          <ImageIcon className="w-8 h-8" />
+                          <span className="text-xs">Sin Imagen</span>
                         </div>
-                      </div>
-
-                      {/* Content Overlay */}
-                      <div className="absolute inset-0 flex items-end p-4 pointer-events-none z-30">
-                        <div className="w-full pointer-events-auto">
-                          <Input
-                            value={card.title}
-                            onChange={(e) => updateCard(card.id, "title", e.target.value)}
-                            className="text-xl md:text-2xl font-bold text-white text-left bg-transparent border-none p-0 h-auto focus:ring-0 placeholder:text-white/50 w-full mb-1 shadow-black/50 drop-shadow-md"
-                            placeholder="TÍTULO CARD"
-                          />
-                          <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 p-2 rounded backdrop-blur-sm w-fit">
-                            <LinkIcon className="w-3 h-3 text-white shrink-0" />
-                            <Input
-                              value={card.link}
-                              onChange={(e) => updateCard(card.id, "link", e.target.value)}
-                              className="bg-transparent border-none p-0 h-auto focus:ring-0 text-xs text-white w-full min-w-[120px]"
-                              placeholder="/ruta-destino"
-                            />
-                          </div>
-                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
+                        <p className="text-white font-bold text-sm leading-tight line-clamp-2">{card.title || "Sin título"}</p>
+                        <p className="text-gray-400 text-xs mt-0.5 truncate">{card.link}</p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* CTA Button Editor */}
-                <div className="relative group inline-block mt-8">
-                  <div className="flex items-center gap-2 mb-2 bg-black/50 p-2 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 left-1/2 -translate-x-1/2 w-max">
+                {/* CTA Button preview + editor */}
+                <div className="relative group inline-block">
+                  <div className="flex items-center gap-2 mb-2 bg-black/50 p-2 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 left-1/2 -translate-x-1/2 w-max z-10">
                     <input
                       type="checkbox"
                       id="ctaEnabled"
                       checked={content.ctaButton.enabled}
                       onChange={(e) => setContent({ ...content, ctaButton: { ...content.ctaButton, enabled: e.target.checked } })}
-                      className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary"
+                      className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-secondary"
                     />
                     <label htmlFor="ctaEnabled" className="text-gray-300 text-sm cursor-pointer select-none">Mostrar Botón</label>
                   </div>
-
-                  <div className={`transition-opacity duration-300 ${content.ctaButton.enabled ? 'opacity-100' : 'opacity-40 grayscale'}`}>
+                  <div className={`transition-opacity duration-300 ${content.ctaButton.enabled ? "opacity-100" : "opacity-40 grayscale"}`}>
                     <div className="inline-block px-12 py-4 bg-white text-black font-black text-xl rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                       <Input
                         value={content.ctaButton.text}
@@ -278,7 +249,7 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
                         <Input
                           value={content.ctaButton.link}
                           onChange={(e) => setContent({ ...content, ctaButton: { ...content.ctaButton, link: e.target.value } })}
-                          className="bg-transparent border border-gray-700/50 rounded px-2 py-1 h-auto focus:ring-0 text-white min-w-[200px] text-xs text-center relative z-50 pointer-events-auto"
+                          className="bg-transparent border border-gray-700/50 rounded px-2 py-1 h-auto focus:ring-0 text-white min-w-[200px] text-xs text-center"
                           placeholder="/ruta-destino"
                         />
                       </div>
@@ -291,6 +262,71 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
           </div>
         </section>
       </div>
+
+      {/* ── Card Editors (below the preview) ──────────────────── */}
+      <div className="space-y-3">
+        <p className="text-gray-400 text-sm px-1">Edita el contenido de cada tarjeta:</p>
+        {content.cards.map((card, index) => (
+          <div key={card.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
+
+            {/* Card Header */}
+            <div className="flex items-center justify-between">
+              <span className="text-primary font-bold text-sm">Tarjeta {index + 1}</span>
+              <Button
+                onClick={() => removeCard(card.id)}
+                variant="ghost"
+                size="sm"
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 px-2"
+              >
+                <Trash2 className="w-4 h-4 mr-1" /> Eliminar
+              </Button>
+            </div>
+
+            {/* Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-wider">Título</label>
+                <Input
+                  value={card.title}
+                  onChange={(e) => updateCard(card.id, "title", e.target.value)}
+                  placeholder="Nombre del juego / torneo"
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-wider">URL destino</label>
+                <Input
+                  value={card.link}
+                  onChange={(e) => updateCard(card.id, "link", e.target.value)}
+                  placeholder="/torneos"
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <label className="text-gray-400 text-xs font-bold uppercase tracking-wider">Imagen de Fondo</label>
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Mini preview */}
+                <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 shrink-0 flex items-center justify-center">
+                  {card.imageUrl ? (
+                    <img src={card.imageUrl} alt="preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="w-6 h-6 text-gray-600" />
+                  )}
+                </div>
+                <LocalImageUpload
+                  onFileSelect={(file) => handleImageUpload(card.id, file)}
+                  onUrlSelect={(url) => updateCard(card.id, "imageUrl", url)}
+                />
+              </div>
+            </div>
+
+          </div>
+        ))}
+      </div>
+
     </div>
   );
 }
