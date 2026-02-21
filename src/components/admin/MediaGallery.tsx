@@ -47,7 +47,7 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
     try {
       const result = await deleteMediaFile(fileToDelete);
       if (result.success) {
-        setFiles(files.filter((file) => file.name !== fileToDelete));
+        setFiles(files.filter((file) => file.url !== fileToDelete));
         toast.success("Archivo eliminado correctamente");
       } else {
         toast.error(result.error || "Error al eliminar el archivo");
@@ -150,7 +150,7 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
                           size="icon"
                           variant="ghost"
                           className="text-white hover:text-red-500 hover:bg-black/40"
-                          onClick={() => setFileToDelete(file.name)}
+                          onClick={() => setFileToDelete(file.url)}
                           title="Eliminar"
                         >
                           <Trash2 className="h-5 w-5" />

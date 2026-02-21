@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Search, FileIcon, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMediaFiles, type MediaFile } from "@/app/actions/media";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState("images");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,7 +43,8 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
   };
 
   const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchTerm.toLowerCase())
+    file.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    file.url.startsWith(`/uploads/${selectedFolder}`)
   );
 
   const handleConfirm = () => {
@@ -57,14 +60,25 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
       <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-4xl max-h-[80vh] flex flex-col p-0 gap-0 z-[110]">
         <DialogHeader className="p-6 pb-4 border-b border-gray-800">
           <DialogTitle>Seleccionar Multimedia</DialogTitle>
-          <div className="mt-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Buscar archivos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-900 border-gray-700 text-white w-full"
-            />
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mt-4">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar archivos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-gray-900 border-gray-700 text-white w-full"
+              />
+            </div>
+
+            <Tabs defaultValue="images" value={selectedFolder} onValueChange={setSelectedFolder} className="w-full sm:w-auto">
+              <TabsList className="bg-gray-900/50 border border-gray-800 w-full flex overflow-x-auto overflow-y-hidden sm:w-auto h-auto p-1 scrollbar-hide">
+                <TabsTrigger value="images" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Imágenes</TabsTrigger>
+                <TabsTrigger value="wallpapers" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Fondos</TabsTrigger>
+                <TabsTrigger value="avatars" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Avatares</TabsTrigger>
+                <TabsTrigger value="videos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Videos</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </DialogHeader>
 

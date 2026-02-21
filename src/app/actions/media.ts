@@ -72,29 +72,21 @@ export async function getMediaFiles(): Promise<MediaFile[]> {
   }
 }
 
-export async function deleteMediaFile(filename: string) {
-  const directories = [
-    UPLOADS_DIR,
-    path.join(process.cwd(), "public", "images"),
-    path.join(process.cwd(), "public", "videos"),
-  ];
-
+export async function deleteMediaFile(url: string) {
   try {
-    let filePath = "";
+    // Ensure we refer to a local public path properly regardless of the leading slash
+    const normalizedUrl = url.startsWith('/') ? url.slice(1) : url;
+    const filePath = path.join(process.cwd(), "public", normalizedUrl);
 
-    // Find which directory the file is in
-    for (const dir of directories) {
-      const potentialPath = path.join(dir, filename);
-      try {
-        await fs.access(potentialPath);
-        filePath = potentialPath;
-        break;
-      } catch {
-        continue;
-      }
+    // Security check: prevent directory traversal by ensuring the resolved path starts with the public dir
+    const publicDir = path.join(process.cwd(), "public");
+    if (!filePath.startsWith(publicDir)) {
+      return { success: false, error: "Ruta del archivo no válida" };
     }
 
-    if (!filePath) {
+    try {
+      await fs.access(filePath);
+    } catch {
       return { success: false, error: "Archivo no encontrado" };
     }
 
