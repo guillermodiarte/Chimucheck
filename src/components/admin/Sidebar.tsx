@@ -64,16 +64,6 @@ export const sidebarData = [
     icon: Gift,
   },
   {
-    title: "Redes Sociales",
-    href: "/admin/social-links",
-    icon: Share2,
-  },
-  {
-    title: "Streaming",
-    href: "/admin/streaming",
-    icon: Radio,
-  },
-  {
     title: "Biblioteca",
     href: "/admin/media",
     icon: ImageIcon,

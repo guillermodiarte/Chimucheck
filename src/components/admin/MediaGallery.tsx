@@ -28,7 +28,9 @@ interface MediaGalleryProps {
 export function MediaGallery({ initialFiles }: MediaGalleryProps) {
   const [files, setFiles] = useState<MediaFile[]>(initialFiles);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState<string>("images");
+  const [selectedFolder, setSelectedFolder] = useState<string>("imagenes");
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
 
   const filteredFiles = files.filter((file) =>
@@ -59,6 +61,70 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
     }
   };
 
+  const handleUploadClick = () => {
+    document.getElementById("media-upload-input")?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    if (selectedFiles.length === 0) return;
+
+    const validFiles = selectedFiles.filter(f => f.size <= 20 * 1024 * 1024);
+    if (validFiles.length < selectedFiles.length) {
+      toast.error("Algunos archivos superaban los 20MB y fueron omitidos");
+    }
+
+    if (validFiles.length === 0) return;
+
+    setIsUploading(true);
+
+    const newUploadedFiles: MediaFile[] = [];
+    let lastFolder = "";
+    let hasError = false;
+
+    await Promise.all(validFiles.map(async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const newUrlParts = data.url.split("/");
+          if (newUrlParts.length >= 3) {
+            const newFolder = newUrlParts[newUrlParts.length - 2];
+            lastFolder = newFolder;
+            newUploadedFiles.push({
+              name: newUrlParts[newUrlParts.length - 1],
+              url: data.url,
+              size: file.size,
+              createdAt: new Date(),
+              canDelete: true
+            });
+          }
+        } else {
+          hasError = true;
+          toast.error(data.message || `Error al subir ${file.name}`);
+        }
+      } catch (e) {
+        hasError = true;
+        toast.error(`Error inesperado al subir ${file.name}`);
+      }
+    }));
+
+    if (newUploadedFiles.length > 0) {
+      setFiles(prev => [...newUploadedFiles, ...prev]);
+      if (lastFolder) {
+        setSelectedFolder(lastFolder);
+      }
+      const msg = newUploadedFiles.length === 1 ? "1 archivo subido" : `${newUploadedFiles.length} archivos subidos`;
+      if (!hasError) toast.success(`${msg} correctamente`);
+    }
+
+    setIsUploading(false);
+    setFileInputKey(prev => prev + 1);
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes === 0) return "0 B";
     const k = 1024;
@@ -69,20 +135,36 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Buscar archivos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-gray-900/50 border-gray-800 text-white w-full md:w-80"
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+          <Button onClick={handleUploadClick} disabled={isUploading} className="bg-primary hover:bg-yellow-400 text-black shrink-0 w-full sm:w-auto">
+            {isUploading ? <FileIcon className="w-4 h-4 mr-2 animate-spin" /> : <FileIcon className="w-4 h-4 mr-2" />}
+            Agregar Archivos
+          </Button>
+          <input
+            key={`upload-${fileInputKey}`}
+            id="media-upload-input"
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept="image/*,video/*"
+            multiple
           />
+          <div className="relative w-full sm:w-[300px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar archivos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-gray-900/50 border-gray-800 text-white w-full"
+            />
+          </div>
         </div>
-        <Tabs value={selectedFolder} onValueChange={setSelectedFolder} className="w-full sm:w-auto">
-          <TabsList className="bg-gray-900/50 border border-gray-800">
-            <TabsTrigger value="images" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Imágenes</TabsTrigger>
-            <TabsTrigger value="wallpapers" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Fondos</TabsTrigger>
+
+        <Tabs value={selectedFolder} onValueChange={setSelectedFolder} className="w-full lg:w-auto">
+          <TabsList className="bg-gray-900/50 border border-gray-800 flex-wrap h-auto">
+            <TabsTrigger value="imagenes" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Imágenes</TabsTrigger>
+            <TabsTrigger value="fondos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Fondos</TabsTrigger>
             <TabsTrigger value="avatars" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Avatares</TabsTrigger>
             <TabsTrigger value="videos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Videos</TabsTrigger>
           </TabsList>

@@ -18,10 +18,25 @@ export async function POST(request: NextRequest) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
+  // Determine target folder based on file type and requested type
+  const requestedFolder = data.get("folder") as string;
+  const requestedType = data.get("type") as string;
+
+  let targetFolder = "imagenes"; // default for generic images
+
+  if (requestedType === "avatar" || requestedFolder === "avatars") {
+    targetFolder = "avatars";
+  } else if (requestedType === "fondo" || requestedFolder === "fondos") {
+    targetFolder = "fondos";
+  } else if (file.type.startsWith("video/")) {
+    targetFolder = "videos";
+  } else if (file.type.startsWith("image/")) {
+    targetFolder = "imagenes";
+  }
+
   // Ensure uploads directory exists
-  const folder = (data.get("folder") as string) || "images";
-  // Sanitize folder name (only alphanumeric and hyphens/underscores)
-  const sanitizedFolder = folder.replace(/[^a-zA-Z0-9-_]/g, "");
+  // We no longer use sanitizedFolder from the user input generic folder to enforce standardized paths
+  const sanitizedFolder = targetFolder.replace(/[^a-zA-Z0-9-_]/g, "");
 
   // Determine upload path
   const isProd = process.env.NODE_ENV === "production";

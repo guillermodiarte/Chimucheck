@@ -16,8 +16,8 @@ export interface MediaFile {
 
 export async function getMediaFiles(): Promise<MediaFile[]> {
   const directories = [
-    { path: path.join(process.cwd(), "public", "uploads", "wallpapers"), urlPrefix: "/uploads/wallpapers", canDelete: true },
-    { path: path.join(process.cwd(), "public", "uploads", "images"), urlPrefix: "/uploads/images", canDelete: true },
+    { path: path.join(process.cwd(), "public", "uploads", "fondos"), urlPrefix: "/uploads/fondos", canDelete: true },
+    { path: path.join(process.cwd(), "public", "uploads", "imagenes"), urlPrefix: "/uploads/imagenes", canDelete: true },
     { path: path.join(process.cwd(), "public", "uploads", "videos"), urlPrefix: "/uploads/videos", canDelete: true },
     { path: path.join(process.cwd(), "public", "uploads", "avatars"), urlPrefix: "/uploads/avatars", canDelete: true },
   ];

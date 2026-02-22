@@ -7,7 +7,7 @@ import { useScoreHistory } from "@/hooks/useScoreHistory";
 import { updatePlayerScore } from "@/app/actions/scores";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Image as ImageIcon, UploadCloud, Play } from "lucide-react";
+import { Loader2, Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Image as ImageIcon, UploadCloud, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,12 +55,38 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
   const [pendingValues, setPendingValues] = useState<Record<string, string>>({});
   const [sumValues, setSumValues] = useState<Record<string, string>>({});
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  const [isUploadingBg, setIsUploadingBg] = useState(false);
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setBgImage(url);
-    setFileInputKey(prev => prev + 1);
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("El fondo no puede superar los 10MB");
+      return;
+    }
+
+    setIsUploadingBg(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", "fondo");
+
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBgImage(data.url);
+        toast.success("Fondo actualizado correctamente");
+      } else {
+        toast.error(data.message || "Error al subir el fondo");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Error inesperado al subir el fondo");
+    } finally {
+      setIsUploadingBg(false);
+      setFileInputKey(prev => prev + 1);
+    }
   }
 
   useEffect(() => {
@@ -215,8 +241,8 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-zinc-900 border-white/10 text-white z-[110]">
-                  <DropdownMenuItem className="focus:bg-zinc-800 cursor-pointer" onSelect={(e) => { e.preventDefault(); document.getElementById('bg-upload-input')?.click(); }}>
-                    <UploadCloud className="w-4 h-4 mr-2" />
+                  <DropdownMenuItem className="focus:bg-zinc-800 cursor-pointer" onSelect={(e) => { e.preventDefault(); document.getElementById('bg-upload-input')?.click(); }} disabled={isUploadingBg}>
+                    {isUploadingBg ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UploadCloud className="w-4 h-4 mr-2" />}
                     Subir foto
                   </DropdownMenuItem>
                   <DropdownMenuItem className="focus:bg-zinc-800 cursor-pointer" onSelect={(e) => { e.preventDefault(); setShowMediaSelector(true); }}>
