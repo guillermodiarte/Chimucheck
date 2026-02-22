@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
 import { Save, Loader2, Gamepad2, Link as LinkIcon, Plus, Trash2, Image as ImageIcon } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 interface GamingCard {
   id: string;
@@ -60,8 +61,8 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
     // Migration from old card1/card2 format to dynamic cards array
     let cards = initialContent.cards || [];
     if (cards.length === 0) {
-      if (initialContent.card1) cards.push({ ...initialContent.card1, id: crypto.randomUUID() });
-      if (initialContent.card2) cards.push({ ...initialContent.card2, id: crypto.randomUUID() });
+      if (initialContent.card1) cards.push({ ...initialContent.card1, id: uuidv4() });
+      if (initialContent.card2) cards.push({ ...initialContent.card2, id: uuidv4() });
     }
     if (cards.length === 0) {
       cards = defaultContent.cards;
@@ -124,7 +125,7 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
       cards: [
         ...content.cards,
         {
-          id: crypto.randomUUID(),
+          id: uuidv4(),
           title: "Nuevo Torneo",
           link: "/torneos",
           imageUrl: ""   // empty → shows "Sin Imagen" placeholder

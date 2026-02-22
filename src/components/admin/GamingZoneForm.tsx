@@ -34,7 +34,7 @@ export default function GamingZoneForm({ initialItems }: { initialItems: GamingI
     setItems([
       ...items,
       {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         title: "Nuevo Elemento",
         image: "",
         message: "",
