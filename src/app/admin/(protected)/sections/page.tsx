@@ -34,6 +34,12 @@ export default async function SectionsPage() {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const streamingData = (streamingSection?.content as any) || null;
 
+  const footerSection = await db.siteSection.findUnique({
+    where: { key: "footer_section" },
+  });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const footerData = (footerSection?.content as any) || null;
+
   // Fetch Prizes Data
   const prizes = await db.prize.findMany({ orderBy: { order: "asc" } });
   const prizesSection = await db.siteSection.findUnique({ where: { key: "prizes_section" } });
@@ -65,6 +71,7 @@ export default async function SectionsPage() {
         gamingContent={gamingData}
         socialsContent={socialsData}
         streamingContent={streamingData}
+        footerContent={footerData}
         prizesData={{ initialPrizes: prizes, initialConfig: prizesConfig }}
       />
     </div>

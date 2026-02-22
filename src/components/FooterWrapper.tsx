@@ -3,7 +3,12 @@
 import { usePathname } from "next/navigation";
 import Footer from "./Footer";
 
-export default function FooterWrapper() {
+interface FooterWrapperProps {
+  socialLinks?: any;
+  footerData?: any;
+}
+
+export default function FooterWrapper({ socialLinks, footerData }: FooterWrapperProps) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
   const isPlayer = pathname?.startsWith("/player");
@@ -12,5 +17,5 @@ export default function FooterWrapper() {
     return null;
   }
 
-  return <Footer />;
+  return <Footer socialLinks={socialLinks} footerData={footerData} />;
 }

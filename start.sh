@@ -7,28 +7,17 @@ if [ ! -d "/app/data" ]; then
     mkdir -p /app/data
 fi
 
-# Ensure avatar directory exists
-if [ ! -d "/app/public/avatars" ]; then
-    echo "Creating /app/public/avatars..."
-    mkdir -p /app/public/avatars
+# Ensure uploads directory exists
+if [ ! -d "/app/public/uploads" ]; then
+    echo "Creating /app/public/uploads..."
+    mkdir -p /app/public/uploads
 fi
 
 # Create symlinks for standalone mode (Nixpacks/Docker)
 # This bridges the gap between /app/public (where we write) and /app/.next/standalone/public (where Next.js reads)
 if [ -d "/app/.next/standalone/public" ]; then
     echo "Creating symlinks for standalone public directory..."
-    mkdir -p /app/.next/standalone/public/avatars
-    mkdir -p /app/.next/standalone/public/uploads
-    
-    # We remove the directory if it's empty to replace with symlink, or link inside it?
-    # Safer: bind mount logic via symlink. 
-    # Actually, if we write to /app/public/avatars, we want .next/standalone/public/avatars to POINT to it.
-    
-    if [ ! -L "/app/.next/standalone/public/avatars" ]; then
-        rm -rf /app/.next/standalone/public/avatars
-        ln -s /app/public/avatars /app/.next/standalone/public/avatars
-        echo "Symlinked avatars directory"
-    fi
+
     
     if [ ! -L "/app/.next/standalone/public/uploads" ]; then
         rm -rf /app/.next/standalone/public/uploads
@@ -42,7 +31,7 @@ fi
 # If running as non-root, this might fail, but let's try or skip
 echo "Checking directory permissions..."
 ls -ld /app/data || echo "Cannot list /app/data"
-ls -ld /app/public/avatars || echo "Cannot list /app/public/avatars"
+ls -ld /app/public/uploads || echo "Cannot list /app/public/uploads"
 
 # Run migrations
 echo "Running migrations..."

@@ -3,15 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
-import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut } from "lucide-react";
+import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut, MessageCircle, Twitter, Facebook } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { Session } from "next-auth";
 import { useSession, signOut } from "next-auth/react";
 import LoginModal from "@/components/LoginModal";
 import RegisterModal from "@/components/RegisterModal";
+import { getSocialConfig } from "@/lib/utils";
 
-export default function Navbar({ logoUrl, logoText, session: initialSession }: { logoUrl?: string; logoText?: string; session?: Session | null }) {
+export default function Navbar({ logoUrl, logoText, session: initialSession, socialLinks }: { logoUrl?: string; logoText?: string; session?: Session | null; socialLinks?: any }) {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -111,18 +112,55 @@ export default function Navbar({ logoUrl, logoText, session: initialSession }: {
 
                 {/* Social Icons inside pill */}
                 <div className="flex items-center space-x-3">
-                  <a href="https://www.instagram.com/chimucheck/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 hover:scale-125 transition-all duration-300">
-                    <Instagram size={18} />
-                  </a>
-                  <a href="https://www.twitch.tv/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-500 hover:scale-125 transition-all duration-300">
-                    <Twitch size={18} />
-                  </a>
-                  <a href="https://www.youtube.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 hover:scale-125 transition-all duration-300">
-                    <Youtube size={18} />
-                  </a>
-                  <a href="https://www.kick.com/ChimuCheck" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
-                    <Monitor size={18} />
-                  </a>
+                  {(() => {
+                    const inst = getSocialConfig(socialLinks, "instagram");
+                    const fb = getSocialConfig(socialLinks, "facebook");
+                    const tw = getSocialConfig(socialLinks, "twitter");
+                    const wa = getSocialConfig(socialLinks, "whatsapp");
+                    const twitch = getSocialConfig(socialLinks, "twitch");
+                    const yt = getSocialConfig(socialLinks, "youtube");
+                    const kick = getSocialConfig(socialLinks, "kick");
+
+                    return (
+                      <>
+                        {inst.active && (
+                          <a href={inst.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-500 hover:scale-125 transition-all duration-300">
+                            <Instagram size={18} />
+                          </a>
+                        )}
+                        {fb.active && (
+                          <a href={fb.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 hover:scale-125 transition-all duration-300">
+                            <Facebook size={18} />
+                          </a>
+                        )}
+                        {tw.active && (
+                          <a href={tw.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 hover:scale-125 transition-all duration-300">
+                            <Twitter size={18} />
+                          </a>
+                        )}
+                        {wa.active && (
+                          <a href={wa.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
+                            <MessageCircle size={18} />
+                          </a>
+                        )}
+                        {twitch.active && (
+                          <a href={twitch.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-500 hover:scale-125 transition-all duration-300">
+                            <Twitch size={18} />
+                          </a>
+                        )}
+                        {yt.active && (
+                          <a href={yt.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 hover:scale-125 transition-all duration-300">
+                            <Youtube size={18} />
+                          </a>
+                        )}
+                        {kick.active && (
+                          <a href={kick.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
+                            <Monitor size={18} />
+                          </a>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Login inside pill */}

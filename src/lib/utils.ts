@@ -16,3 +16,13 @@ export function formatDate(date: Date | string): string {
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
 }
+
+/**
+ * Normalizes a social link entry from the DB
+ */
+export function getSocialConfig(socials: any, key: string): { url: string; active: boolean } {
+  const data = socials?.[key];
+  if (!data) return { url: '', active: false };
+  if (typeof data === 'string') return { url: data, active: data.trim() !== '' };
+  return { url: data.url || '', active: !!data.active && (data.url || '').trim() !== '' };
+}

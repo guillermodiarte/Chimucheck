@@ -9,9 +9,10 @@ interface NavbarWrapperProps {
   logoUrl?: string;
   logoText?: string;
   session?: Session | null;
+  socialLinks?: any;
 }
 
-export default function NavbarWrapper({ logoUrl, logoText, session }: NavbarWrapperProps) {
+export default function NavbarWrapper({ logoUrl, logoText, session, socialLinks }: NavbarWrapperProps) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
   const isAuthPage = pathname?.startsWith("/player/login") || pathname?.startsWith("/player/register");
@@ -20,5 +21,5 @@ export default function NavbarWrapper({ logoUrl, logoText, session }: NavbarWrap
     return null;
   }
 
-  return <Navbar logoUrl={logoUrl} logoText={logoText} session={session} />;
+  return <Navbar logoUrl={logoUrl} logoText={logoText} session={session} socialLinks={socialLinks} />;
 }

@@ -32,16 +32,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let homeSection;
+  let socialsSection;
+  let footerSection;
   try {
-    homeSection = await db.siteSection.findUnique({
-      where: { key: "home_section" },
-    });
+    [homeSection, socialsSection, footerSection] = await Promise.all([
+      db.siteSection.findUnique({ where: { key: "home_section" } }),
+      db.siteSection.findUnique({ where: { key: "social_links" } }),
+      db.siteSection.findUnique({ where: { key: "footer_section" } }),
+    ]);
   } catch (error) {
-    console.error("Failed to load home section:", error);
-    // Fallback or null
+    console.error("Failed to load sections:", error);
   }
   const logoUrl = (homeSection?.content as any)?.logoUrl;
   const logoText = (homeSection?.content as any)?.logoText;
+  const socialLinks = socialsSection?.content;
+  const footerData = footerSection?.content;
 
   const session = await auth();
 
@@ -51,11 +56,11 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <Providers>
-          <NavbarWrapper logoUrl={logoUrl} logoText={logoText} session={session} />
+          <NavbarWrapper logoUrl={logoUrl} logoText={logoText} session={session} socialLinks={socialLinks} />
           <main className="flex-grow">
             {children}
           </main>
-          <FooterWrapper />
+          <FooterWrapper socialLinks={socialLinks} footerData={footerData} />
           <Toaster richColors position="top-center" />
         </Providers>
       </body>
