@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { getPlayersForExport, importPlayers } from "@/app/actions/players";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,46 +8,48 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, FileJson, Download, Upload, Loader2, FileSpreadsheet } from "lucide-react";
+import { ChevronDown, Download, Upload, Loader2, FolderArchive } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export function PlayerActions() {
-  const [isExporting, startExportTransition] = useTransition();
+export function MediaActions() {
+  const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const router = useRouter();
 
-  const handleExport = () => {
-    startExportTransition(async () => {
-      const players = await getPlayersForExport();
-
-      if (!players || players.length === 0) {
-        toast.error("No hay jugadores para exportar.");
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch("/api/media/export");
+      if (!response.ok) {
+        toast.error("Error al generar el ZIP. Intente de nuevo.");
         return;
       }
 
-      // Convert to JSON
-      const jsonContent = JSON.stringify(players, null, 2);
-
-      // Trigger download
-      const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8;" });
+      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
+      const filename = `biblioteca_chimuchek_${new Date().toISOString().slice(0, 10)}.zip`;
       link.setAttribute("href", url);
-      link.setAttribute("download", `jugadores_chimuchek_${new Date().toISOString().slice(0, 10)}.json`);
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success("Lista de jugadores exportada en JSON.");
-    });
+      toast.success("Biblioteca exportada como ZIP exitosamente.");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Error inesperado al exportar.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!confirm(`Importar archivo: ${file.name}\n\nLos jugadores existentes (por email) serán actualizados. Los nuevos serán creados.\n¿Continuar?`)) {
+    if (!confirm(`Importar archivo: ${file.name}\n\nSe restaurarán todos los archivos del ZIP dentro de la carpeta de uploads. Los archivos existentes con el mismo nombre serán reemplazados.\n¿Continuar?`)) {
       e.target.value = "";
       return;
     }
@@ -58,22 +59,20 @@ export function PlayerActions() {
     formData.append("file", file);
 
     try {
-      // We can't use useActionState easily here because we are outside a form submission context for the dropdown
-      // So we call the server action directly.
-      // Note: importPlayers signature is (prevState, formData). We pass null as prevState.
-      const result = await importPlayers(null, formData);
+      const response = await fetch("/api/media/import", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await response.json();
 
-      if (result.success) {
+      if (response.ok && result.success) {
         toast.success(result.message);
-        if (result.detailedStats) {
-          console.log("Import Stats:", result.detailedStats);
-        }
         router.refresh();
       } else {
-        toast.error(result.message || "Error en la importación");
+        toast.error(result.error || "Error en la importación.");
       }
     } catch (error) {
-      console.error("Import error", error);
+      console.error("Import error:", error);
       toast.error("Error inesperado al importar.");
     } finally {
       setIsImporting(false);
@@ -86,28 +85,28 @@ export function PlayerActions() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button className="bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700 gap-2">
-            {isExporting || isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+            {isExporting || isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderArchive className="w-4 h-4" />}
             Exportar/Importar
             <ChevronDown className="w-4 h-4 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-white min-w-[200px]">
+        <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-white min-w-[220px]">
           <DropdownMenuItem
             className="hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800 focus:text-white py-2.5"
             onClick={handleExport}
             disabled={isExporting}
           >
             <Download className="w-4 h-4 mr-2 text-blue-400" />
-            <span>Exportar JSON</span>
+            <span>Exportar Biblioteca (.zip)</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem
             className="hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800 focus:text-white py-2.5"
-            onClick={() => document.getElementById("import-players-input")?.click()}
+            onClick={() => document.getElementById("import-media-input")?.click()}
             disabled={isImporting}
           >
             <Upload className="w-4 h-4 mr-2 text-green-400" />
-            <span>Importar JSON</span>
+            <span>Importar Biblioteca (.zip)</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -115,8 +114,8 @@ export function PlayerActions() {
       {/* Hidden File Input */}
       <input
         type="file"
-        id="import-players-input"
-        accept=".json"
+        id="import-media-input"
+        accept=".zip"
         className="hidden"
         onChange={handleFileChange}
         disabled={isImporting}

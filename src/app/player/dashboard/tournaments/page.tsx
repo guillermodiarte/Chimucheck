@@ -26,7 +26,7 @@ export default async function TournamentsPage() {
   // 2. Disponibles
   const available = await db.tournament.findMany({
     where: {
-      status: "INSCRIPCION",
+      status: { in: ["INSCRIPCION", "EN_JUEGO"] },
       id: { notIn: registeredIds }
     },
     orderBy: { date: "asc" },
@@ -170,8 +170,8 @@ export default async function TournamentsPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-4 left-4">
-                    <span className="px-2 py-1 rounded-md bg-primary text-black text-xs font-bold uppercase mb-2 inline-block">
-                      {tournament.status === "INSCRIPCION" ? "Inscripción Abierta" : "Abierto"}
+                    <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase mb-2 inline-block ${tournament.status === 'EN_JUEGO' ? 'bg-green-500/20 text-green-400' : 'bg-primary text-black'}`}>
+                      {tournament.status === "INSCRIPCION" ? "Inscripción Abierta" : tournament.status === "EN_JUEGO" ? "En Juego" : "Abierto"}
                     </span>
                     <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors">
                       {tournament.name}
@@ -197,9 +197,12 @@ export default async function TournamentsPage() {
 
                   <Link
                     href={`/torneos/${tournament.id}`}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-primary text-black font-bold hover:bg-primary/90 transition-all group-hover:shadow-[0_0_15px_rgba(255,215,0,0.3)]"
+                    className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-bold transition-all ${tournament.status === 'EN_JUEGO'
+                        ? 'bg-green-600/20 text-green-400 border border-green-500/30 hover:bg-green-600/40'
+                        : 'bg-primary text-black hover:bg-primary/90 group-hover:shadow-[0_0_15px_rgba(255,215,0,0.3)]'
+                      }`}
                   >
-                    Inscribirse <ArrowRight size={16} />
+                    {tournament.status === "EN_JUEGO" ? "Ver en Vivo" : "Inscribirse"} <ArrowRight size={16} />
                   </Link>
                 </div>
               </div>

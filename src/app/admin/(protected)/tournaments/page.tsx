@@ -17,6 +17,7 @@ import TournamentTabs from "@/components/admin/TournamentTabs";
 import Link from "next/link";
 import { Plus, Pencil, Trophy, Power, Gamepad2, Medal, Camera } from "lucide-react";
 import Image from "next/image";
+import { TournamentActions } from "@/components/admin/TournamentActions";
 import { formatDate } from "@/lib/utils";
 
 function getGames(tournament: any): GameEntry[] {
@@ -312,12 +313,15 @@ export default async function AdminTournamentsPage() {
           <h2 className="text-3xl font-bold tracking-tight text-white">Torneos</h2>
           <p className="text-gray-400">Gestiona las competencias y registros.</p>
         </div>
-        <Link href="/admin/tournaments/create">
-          <Button className="bg-primary text-black hover:bg-yellow-400">
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Torneo
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <TournamentActions />
+          <Link href="/admin/tournaments/create">
+            <Button className="bg-primary text-black hover:bg-yellow-400">
+              <Plus className="w-4 h-4 mr-2" />
+              Nuevo Torneo
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <TournamentTabs activeContent={activeContent} finishedContent={finishedContent} />

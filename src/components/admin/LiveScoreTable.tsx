@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { useScoreHistory } from "@/hooks/useScoreHistory";
 import { updatePlayerScore } from "@/app/actions/scores";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Image as ImageIcon, UploadCloud } from "lucide-react";
+import { Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Image as ImageIcon, UploadCloud, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { finishTournament } from "@/app/actions/tournaments";
+import { finishTournament, reactivateTournament } from "@/app/actions/tournaments";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +46,7 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
   const [searchTerm, setSearchTerm] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [status, setStatus] = useState(initialStatus);
+  const router = useRouter();
   const [bgImage, setBgImage] = useState("/uploads/wallpapers/4k.png");
   const [showMediaSelector, setShowMediaSelector] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
@@ -64,6 +66,13 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
   useEffect(() => {
     setPlayers(initialData);
   }, [initialData]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [router]);
 
   const handleScoreChange = async (playerId: string, newScore: number) => {
     const player = players.find(p => p.playerId === playerId);
@@ -114,6 +123,16 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
     }
   };
 
+  const handleReactivate = async () => {
+    const result = await reactivateTournament(tournamentId);
+    if (result.success) {
+      toast.success(`Torneo "${tournamentName}" reactivado`);
+      setStatus("EN_JUEGO");
+    } else {
+      toast.error(result.message || "Error al reactivar el torneo");
+    }
+  };
+
   const sortedPlayers = [...players]
     .filter(p => p.alias.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => b.score - a.score || a.alias.localeCompare(b.alias));
@@ -156,6 +175,31 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                     <AlertDialogCancel className="bg-transparent border-gray-700 text-white hover:bg-gray-800">Cancelar</AlertDialogCancel>
                     <AlertDialogAction onClick={handleFinalize} className="bg-yellow-600 hover:bg-yellow-700 text-white border-0">
                       Finalizar Torneo
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
+            {status === "FINALIZADO" && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" className="bg-green-900/20 hover:bg-green-900/40 text-green-400 border border-green-500/20" title="Volver a Activar Torneo">
+                    <Play className="w-5 h-5 mr-2" />
+                    Activar Torneo
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-gray-900 border-gray-800 text-white z-[110]">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Volver a activar torneo?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-gray-400">
+                      El torneo <strong>{tournamentName}</strong> pasará nuevamente al estado "En Juego". Se borrarán los ganadores registrados y se revertirán las estadísticas de partidas ganadas/jugadas correspondientes.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="bg-transparent border-gray-700 text-white hover:bg-gray-800">Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReactivate} className="bg-green-600 hover:bg-green-700 text-white border-0">
+                      Activar Torneo
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

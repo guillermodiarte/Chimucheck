@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { getPlayersForExport, importPlayers } from "@/app/actions/players";
+import { getTournamentsForExport, importTournaments } from "@/app/actions/tournaments";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,38 +9,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, FileJson, Download, Upload, Loader2, FileSpreadsheet } from "lucide-react";
+import { ChevronDown, Download, Upload, Loader2, FileJson } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export function PlayerActions() {
+export function TournamentActions() {
   const [isExporting, startExportTransition] = useTransition();
   const [isImporting, setIsImporting] = useState(false);
   const router = useRouter();
 
   const handleExport = () => {
     startExportTransition(async () => {
-      const players = await getPlayersForExport();
+      const tournaments = await getTournamentsForExport();
 
-      if (!players || players.length === 0) {
-        toast.error("No hay jugadores para exportar.");
+      if (!tournaments || tournaments.length === 0) {
+        toast.error("No hay torneos para exportar.");
         return;
       }
 
       // Convert to JSON
-      const jsonContent = JSON.stringify(players, null, 2);
+      const jsonContent = JSON.stringify(tournaments, null, 2);
 
       // Trigger download
       const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `jugadores_chimuchek_${new Date().toISOString().slice(0, 10)}.json`);
+      link.setAttribute("download", `torneos_chimuchek_${new Date().toISOString().slice(0, 10)}.json`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success("Lista de jugadores exportada en JSON.");
+      toast.success("Torneos exportados en JSON exitosamente.");
     });
   };
 
@@ -48,7 +48,7 @@ export function PlayerActions() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!confirm(`Importar archivo: ${file.name}\n\nLos jugadores existentes (por email) serán actualizados. Los nuevos serán creados.\n¿Continuar?`)) {
+    if (!confirm(`Importar archivo: ${file.name}\n\nSe restablecerán los torneos con todos sus participantes, puntajes y estados.\n¿Continuar?`)) {
       e.target.value = "";
       return;
     }
@@ -58,16 +58,10 @@ export function PlayerActions() {
     formData.append("file", file);
 
     try {
-      // We can't use useActionState easily here because we are outside a form submission context for the dropdown
-      // So we call the server action directly.
-      // Note: importPlayers signature is (prevState, formData). We pass null as prevState.
-      const result = await importPlayers(null, formData);
+      const result = await importTournaments(null, formData);
 
       if (result.success) {
         toast.success(result.message);
-        if (result.detailedStats) {
-          console.log("Import Stats:", result.detailedStats);
-        }
         router.refresh();
       } else {
         toast.error(result.message || "Error en la importación");
@@ -86,7 +80,7 @@ export function PlayerActions() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button className="bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700 gap-2">
-            {isExporting || isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+            {isExporting || isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileJson className="w-4 h-4" />}
             Exportar/Importar
             <ChevronDown className="w-4 h-4 opacity-50" />
           </Button>
@@ -103,7 +97,7 @@ export function PlayerActions() {
 
           <DropdownMenuItem
             className="hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800 focus:text-white py-2.5"
-            onClick={() => document.getElementById("import-players-input")?.click()}
+            onClick={() => document.getElementById("import-tournaments-input")?.click()}
             disabled={isImporting}
           >
             <Upload className="w-4 h-4 mr-2 text-green-400" />
@@ -115,7 +109,7 @@ export function PlayerActions() {
       {/* Hidden File Input */}
       <input
         type="file"
-        id="import-players-input"
+        id="import-tournaments-input"
         accept=".json"
         className="hidden"
         onChange={handleFileChange}

@@ -402,6 +402,57 @@ export async function finishTournament(id: string) {
   }
 }
 
+export async function reactivateTournament(id: string) {
+  try {
+    const tournament = await db.tournament.findUnique({
+      where: { id },
+      include: { registrations: true },
+    });
+    if (!tournament) return { success: false, message: "Torneo no encontrado" };
+    if (tournament.status !== "FINALIZADO") return { success: false, message: "El torneo no está finalizado" };
+
+    // Revert winners: chimucoins and wins
+    let winners: any[] = [];
+    try { winners = JSON.parse(tournament.winners as string || "[]"); } catch { }
+
+    for (const w of winners) {
+      if (!w.playerId) continue;
+      // Revert chimucoins
+      if (w.chimucoins > 0) {
+        await db.player.update({
+          where: { id: w.playerId },
+          data: { chimucoins: { decrement: w.chimucoins } },
+        });
+      }
+      // Revert wins
+      await db.playerStats.update({
+        where: { playerId: w.playerId },
+        data: { wins: { decrement: 1 } },
+      }).catch(() => { });
+    }
+
+    // Revert matchesPlayed for all registered players
+    for (const reg of tournament.registrations) {
+      await db.playerStats.update({
+        where: { playerId: reg.playerId },
+        data: { matchesPlayed: { decrement: 1 } },
+      }).catch(() => { });
+    }
+
+    await db.tournament.update({
+      where: { id },
+      data: { status: "EN_JUEGO", winners: "[]", photos: "[]" },
+    });
+
+    revalidatePath("/admin/tournaments");
+    revalidatePath("/torneos");
+    return { success: true };
+  } catch (error) {
+    console.error("Error reactivating tournament:", error);
+    return { success: false, message: "Error al reactivar el torneo" };
+  }
+}
+
 export type WinnerEntry = {
   position: number;
   playerId: string;
@@ -487,5 +538,116 @@ export async function setTournamentPhotos(id: string, photos: string[]) {
   } catch (error) {
     console.error("Error setting photos:", error);
     return { success: false, message: "Error al guardar fotos" };
+  }
+}
+
+// ─── Export / Import ────────────────────────────────────────────────────────
+
+export async function getTournamentsForExport() {
+  try {
+    const tournaments = await db.tournament.findMany({
+      orderBy: { date: "asc" },
+      include: {
+        registrations: true,
+      },
+    });
+    return tournaments;
+  } catch (error) {
+    console.error("Error fetching tournaments for export:", error);
+    return [];
+  }
+}
+
+export async function importTournaments(prevState: any, formData: FormData) {
+  const file = formData.get("file") as File;
+  if (!file) return { success: false, message: "No se seleccionó ningún archivo." };
+
+  try {
+    const text = await file.text();
+    const tournamentsData = JSON.parse(text);
+
+    if (!Array.isArray(tournamentsData)) {
+      return { success: false, message: "El archivo JSON no contiene un arreglo de torneos válido." };
+    }
+
+    let processed = 0;
+    let failed = 0;
+
+    for (const t of tournamentsData) {
+      if (!t.id || !t.name) { failed++; continue; }
+      try {
+        await db.tournament.upsert({
+          where: { id: t.id },
+          update: {
+            name: t.name,
+            description: t.description || null,
+            date: t.date ? new Date(t.date) : new Date(),
+            format: t.format || null,
+            maxPlayers: t.maxPlayers ?? 0,
+            currentPlayers: t.currentPlayers ?? 0,
+            prizePool: t.prizePool || null,
+            status: t.status ?? "INSCRIPCION",
+            active: t.active ?? true,
+            games: t.games ?? null,
+            game: t.game || null,
+            image: t.image || null,
+            photos: t.photos ?? "[]",
+            winners: t.winners ?? "[]",
+          },
+          create: {
+            id: t.id,
+            name: t.name,
+            description: t.description || null,
+            date: t.date ? new Date(t.date) : new Date(),
+            format: t.format || null,
+            maxPlayers: t.maxPlayers ?? 0,
+            currentPlayers: t.currentPlayers ?? 0,
+            prizePool: t.prizePool || null,
+            status: t.status ?? "INSCRIPCION",
+            active: t.active ?? true,
+            games: t.games ?? null,
+            game: t.game || null,
+            image: t.image || null,
+            photos: t.photos ?? "[]",
+            winners: t.winners ?? "[]",
+            createdAt: t.createdAt ? new Date(t.createdAt) : undefined,
+          }
+        });
+
+        // Restore registrations
+        if (Array.isArray(t.registrations)) {
+          for (const reg of t.registrations) {
+            if (!reg.playerId) continue;
+            const playerExists = await db.player.findUnique({ where: { id: reg.playerId } });
+            if (!playerExists) continue;
+            await db.tournamentRegistration.upsert({
+              where: { id: reg.id || `${t.id}_${reg.playerId}` },
+              update: { score: reg.score ?? 0 },
+              create: {
+                id: reg.id || undefined,
+                tournamentId: t.id,
+                playerId: reg.playerId,
+                score: reg.score ?? 0,
+              }
+            }).catch(() => { });
+          }
+        }
+
+        processed++;
+      } catch (err) {
+        console.error(`Error importing tournament ${t.name}:`, err);
+        failed++;
+      }
+    }
+
+    revalidatePath("/admin/tournaments");
+    revalidatePath("/torneos");
+    return {
+      success: true,
+      message: `Importación JSON finalizada. Torneos: ${processed} ok, ${failed} fallidos.`,
+    };
+  } catch (error) {
+    console.error("Import tournaments error:", error);
+    return { success: false, message: "Error al procesar el archivo JSON de torneos." };
   }
 }

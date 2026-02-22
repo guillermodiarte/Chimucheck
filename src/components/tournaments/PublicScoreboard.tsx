@@ -27,12 +27,13 @@ export function PublicScoreboard({
 }) {
   const router = useRouter();
 
-  // Auto-refresh the page data every 10 seconds if the tournament is LIVE
+  // Auto-refresh the page data every 10s if live, or 60s if finished, so it detects reactivation
   useEffect(() => {
-    if (status !== "EN_JUEGO") return;
+    if (status !== "EN_JUEGO" && status !== "FINALIZADO") return;
+    const intervalTime = status === "EN_JUEGO" ? 10000 : 60000;
     const interval = setInterval(() => {
       router.refresh();
-    }, 10000);
+    }, intervalTime);
     return () => clearInterval(interval);
   }, [status, router]);
 
@@ -72,7 +73,7 @@ export function PublicScoreboard({
             </div>
           );
 
-          if (isLiveOrFinished) {
+          if (status === "FINALIZADO") {
             if (isFirst) {
               rankBadge = (
                 <div className="w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(234,179,8,0.3)]">
@@ -100,25 +101,25 @@ export function PublicScoreboard({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               key={reg.playerId}
-              className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${isLiveOrFinished && isFirst ? "bg-yellow-900/10 border-yellow-500/30" : "bg-black/20 border-white/5"
+              className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${status === "FINALIZADO" && isFirst ? "bg-yellow-900/10 border-yellow-500/30" : "bg-black/20 border-white/5"
                 }`}
             >
               <div className="flex items-center gap-3">
                 {isLiveOrFinished && rankBadge}
 
-                <Avatar className={`border ${isLiveOrFinished && isFirst ? "border-yellow-500/50" : "border-gray-700"}`}>
+                <Avatar className={`border ${status === "FINALIZADO" && isFirst ? "border-yellow-500/50" : "border-gray-700"}`}>
                   <AvatarImage src={reg.player.image || ""} alt={playerName} className="object-cover" />
                   <AvatarFallback className="bg-gray-800 text-gray-400">{playerName[0]?.toUpperCase()}</AvatarFallback>
                 </Avatar>
 
-                <span className={`font-bold ${isLiveOrFinished && isFirst ? "text-yellow-400" : "text-white"}`}>
+                <span className={`font-bold ${status === "FINALIZADO" && isFirst ? "text-yellow-400" : "text-white"}`}>
                   {playerName}
                 </span>
               </div>
 
               {isLiveOrFinished && (
                 <div className="flex items-center gap-1">
-                  <span className={`text-xl font-black ${isFirst ? "text-yellow-500" : "text-white"}`}>
+                  <span className={`text-xl font-black ${status === "FINALIZADO" && isFirst ? "text-yellow-500" : "text-white"}`}>
                     {reg.score}
                   </span>
                   <span className="text-xs text-gray-500 font-bold uppercase mt-1">PTS</span>

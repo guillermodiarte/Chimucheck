@@ -1,4 +1,5 @@
 import { MediaGallery } from "@/components/admin/MediaGallery";
+import { MediaActions } from "@/components/admin/MediaActions";
 import { getMediaFiles } from "@/app/actions/media";
 
 export default async function MediaPage() {
@@ -13,6 +14,7 @@ export default async function MediaPage() {
             Gestiona todas las imágenes y archivos subidos al servidor.
           </p>
         </div>
+        <MediaActions />
       </div>
 
       <MediaGallery initialFiles={files} />
