@@ -40,6 +40,12 @@ export default async function SectionsPage() {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const footerData = (footerSection?.content as any) || null;
 
+  const chimucoinSection = await db.siteSection.findUnique({
+    where: { key: "chimucoin_section" },
+  });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const chimucoinData = (chimucoinSection?.content as any) || null;
+
   // Fetch Prizes Data
   const prizes = await db.prize.findMany({ orderBy: { order: "asc" } });
   const prizesSection = await db.siteSection.findUnique({ where: { key: "prizes_section" } });
@@ -72,6 +78,7 @@ export default async function SectionsPage() {
         socialsContent={socialsData}
         streamingContent={streamingData}
         footerContent={footerData}
+        chimucoinContent={chimucoinData}
         prizesData={{ initialPrizes: prizes, initialConfig: prizesConfig }}
       />
     </div>

@@ -13,9 +13,10 @@ interface LocalImageUploadProps {
   onUrlSelect?: (url: string) => void;
   currentPreview?: string | null;
   className?: string;
+  label?: string;
 }
 
-export function LocalImageUpload({ onFileSelect, onUrlSelect, className }: LocalImageUploadProps) {
+export function LocalImageUpload({ onFileSelect, onUrlSelect, className, label = "Subir Imagen" }: LocalImageUploadProps) {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
 
@@ -45,7 +46,7 @@ export function LocalImageUpload({ onFileSelect, onUrlSelect, className }: Local
           >
             <div className="flex items-center gap-2">
               <UploadCloud className="w-4 h-4" />
-              <span>Subir Imagen</span>
+              <span>{label}</span>
             </div>
           </Button>
           <input

@@ -43,6 +43,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
       uploadFormData.append("file", pendingFile);
       uploadFormData.append("customName", `avatar-${initialData.alias || "player"}`);
       uploadFormData.append("folder", "avatars");
+      uploadFormData.append("type", "avatar");
 
       try {
         const response = await fetch("/api/upload", {
@@ -105,6 +106,7 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
           <div className="flex-1">
             <LocalImageUpload
               onFileSelect={handleFileSelect}
+              label="Subir Avatar"
               onUrlSelect={(url) => {
                 setImageUrl(url);
                 setPendingFile(null);

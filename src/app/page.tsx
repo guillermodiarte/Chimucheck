@@ -4,7 +4,7 @@ import GamingSection from "@/components/GamingSection";
 import EventsGrid from "@/components/EventsGrid";
 import NewsGrid from "@/components/NewsGrid";
 
-import ChimuCoinSection from "@/components/ChimuCoinSection";
+import ChimuCoinSectionWrapper from "@/components/ChimuCoinSectionWrapper";
 
 import Image from "next/image";
 import contentData from "@/data/content.json";
@@ -84,7 +84,7 @@ export default async function Home() {
       <GamingSection content={gamingContent} />
 
       {/* ChimuCoin Section */}
-      <ChimuCoinSection />
+      <ChimuCoinSectionWrapper />
 
 
 
