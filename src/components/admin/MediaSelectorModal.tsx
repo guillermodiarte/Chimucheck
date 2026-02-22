@@ -21,7 +21,7 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState("images");
+  const [selectedFolder, setSelectedFolder] = useState("imagenes");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,10 +71,10 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
               />
             </div>
 
-            <Tabs defaultValue="images" value={selectedFolder} onValueChange={setSelectedFolder} className="w-full sm:w-auto">
+            <Tabs defaultValue="imagenes" value={selectedFolder} onValueChange={setSelectedFolder} className="w-full sm:w-auto">
               <TabsList className="bg-gray-900/50 border border-gray-800 w-full flex overflow-x-auto overflow-y-hidden sm:w-auto h-auto p-1 scrollbar-hide">
-                <TabsTrigger value="images" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Imágenes</TabsTrigger>
-                <TabsTrigger value="wallpapers" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Fondos</TabsTrigger>
+                <TabsTrigger value="imagenes" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Imágenes</TabsTrigger>
+                <TabsTrigger value="fondos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Fondos</TabsTrigger>
                 <TabsTrigger value="avatars" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Avatares</TabsTrigger>
                 <TabsTrigger value="videos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Videos</TabsTrigger>
               </TabsList>
