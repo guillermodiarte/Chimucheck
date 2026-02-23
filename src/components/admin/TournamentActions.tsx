@@ -79,7 +79,7 @@ export function TournamentActions() {
     <div className="flex items-center">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700 gap-2">
+          <Button className="bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700 gap-2" suppressHydrationWarning>
             {isExporting || isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileJson className="w-4 h-4" />}
             Exportar/Importar
             <ChevronDown className="w-4 h-4 opacity-50" />

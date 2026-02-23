@@ -42,27 +42,6 @@ function parseGames(gamesRaw: string | undefined): GameEntry[] {
 
 export async function getTournaments(onlyActive = true) {
   try {
-    // Auto-finish tournaments whose date has passed
-    const expiredTournaments = await db.tournament.findMany({
-      where: {
-        date: { lt: new Date() },
-        status: { notIn: ["FINALIZADO", "CANCELADO"] },
-      },
-      include: { registrations: true },
-    });
-
-    for (const t of expiredTournaments) {
-      await db.tournament.update({ where: { id: t.id }, data: { status: "FINALIZADO" } });
-      // Increment matchesPlayed for all registered players
-      for (const reg of t.registrations) {
-        await db.playerStats.upsert({
-          where: { playerId: reg.playerId },
-          create: { playerId: reg.playerId, matchesPlayed: 1 },
-          update: { matchesPlayed: { increment: 1 } },
-        });
-      }
-    }
-
     const where = onlyActive ? { active: true } : {};
     const tournaments = await db.tournament.findMany({
       where,
@@ -222,7 +201,7 @@ export async function updateTournament(id: string, prevState: any, formData: For
       where: { id },
       data: {
         ...rest,
-        ...(isMovingToFuture ? { status: "INSCRIPCION", winners: "[]", photos: "[]" } : {}),
+        ...(isMovingToFuture ? { status: "INSCRIPCION", winners: "[]", photos: "[]", autoStarted: false, startedAt: null } : {}),
         games: JSON.stringify(games),
       },
     });
@@ -441,7 +420,7 @@ export async function reactivateTournament(id: string) {
 
     await db.tournament.update({
       where: { id },
-      data: { status: "EN_JUEGO", winners: "[]", photos: "[]" },
+      data: { status: "EN_JUEGO", winners: "[]", photos: "[]", startedAt: new Date() },
     });
 
     revalidatePath("/admin/tournaments");

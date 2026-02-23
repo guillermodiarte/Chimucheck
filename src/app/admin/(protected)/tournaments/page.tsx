@@ -18,7 +18,7 @@ import Link from "next/link";
 import { Plus, Pencil, Trophy, Power, Gamepad2, Medal, Camera } from "lucide-react";
 import Image from "next/image";
 import { TournamentActions } from "@/components/admin/TournamentActions";
-import { formatDate } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 
 function getGames(tournament: any): GameEntry[] {
   if (tournament.games) {
@@ -122,7 +122,7 @@ export default async function AdminTournamentsPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-gray-400">
-                    {formatDate(tournament.date)}
+                    {formatDateTime(tournament.date)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-gray-300">
@@ -243,7 +243,7 @@ export default async function AdminTournamentsPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-gray-400">
-                    {formatDate(tournament.date)}
+                    {formatDateTime(tournament.date)}
                   </TableCell>
                   <TableCell>
                     <span className="text-gray-300">{tournament.registrations.length}</span>

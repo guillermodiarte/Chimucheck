@@ -103,6 +103,8 @@ model Tournament {
   name           String
   description    String?
   date           DateTime
+  startedAt      DateTime?
+  autoStarted    Boolean                  @default(false)
   status         String                   @default("INSCRIPCION")
   maxPlayers     Int                      @default(16)
   currentPlayers Int                      @default(0)

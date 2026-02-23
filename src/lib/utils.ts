@@ -18,6 +18,19 @@ export function formatDate(date: Date | string): string {
 }
 
 /**
+ * Formats a date to DD/MM/YYYY HH:mm
+ */
+export function formatDateTime(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+/**
  * Normalizes a social link entry from the DB
  */
 export function getSocialConfig(socials: any, key: string): { url: string; active: boolean } {
