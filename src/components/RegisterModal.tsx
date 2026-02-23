@@ -56,9 +56,6 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div className="w-full max-w-sm mx-auto bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl shadow-primary/5 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
         {/* Header */}

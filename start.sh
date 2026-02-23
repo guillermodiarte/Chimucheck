@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# Force Argentina timezone for all date/time operations
+export TZ="America/Argentina/Buenos_Aires"
+
 # Ensure data directory exists for SQLite
 if [ ! -d "/app/data" ]; then
     echo "Creating /app/data directory..."
@@ -81,4 +84,4 @@ if [ -z "$SERVER_JS" ]; then
 fi
 
 echo "Found server.js at: $SERVER_JS"
-exec node "$SERVER_JS"
+exec env TZ="America/Argentina/Buenos_Aires" node "$SERVER_JS"
