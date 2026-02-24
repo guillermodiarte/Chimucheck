@@ -238,8 +238,8 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
                         placeholder="TEXTO DEL BOTÓN"
                       />
                     </div>
-                    <div className="mt-2 flex items-center gap-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-0 right-0 pt-2">
-                      <div className="bg-black/80 p-2 rounded flex items-center gap-2 z-50">
+                    <div className="mt-3 flex items-center gap-2 justify-center">
+                      <div className="bg-black/80 p-2 rounded flex items-center gap-2">
                         <LinkIcon className="w-3 h-3 text-gray-500" />
                         <Input
                           value={content.ctaButton.link}
