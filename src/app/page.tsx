@@ -6,12 +6,6 @@ import NewsGrid from "@/components/NewsGrid";
 
 import ChimuCoinSectionWrapper from "@/components/ChimuCoinSectionWrapper";
 
-import Image from "next/image";
-import contentData from "@/data/content.json";
-
-async function getData() {
-  return contentData;
-}
 
 import { db } from "@/lib/prisma";
 import { Banner, News, Event } from "@prisma/client";
@@ -42,7 +36,6 @@ async function getEvents(): Promise<Event[]> {
 }
 
 export default async function Home() {
-  const data = await getData(); // Still needed for static texts like hero subtitle
   const banners = await getBanners();
 
   const newsSection = await db.siteSection.findUnique({ where: { key: "news_section" } });
@@ -72,10 +65,10 @@ export default async function Home() {
       <section className="py-20 px-4 text-center bg-black relative z-10">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-            {data.hero.subtitle}
+            Pasatiempo | Gaming | Diversión
           </h2>
           <p className="text-xl md:text-2xl text-gray-300 leading-relaxed">
-            {data.hero.description}
+            Tu destino para lo mejor del gaming, streams y entretenimiento. ¡Sumate a la comunidad!
           </p>
         </div>
       </section>
