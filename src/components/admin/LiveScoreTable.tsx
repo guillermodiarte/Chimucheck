@@ -7,7 +7,7 @@ import { useScoreHistory } from "@/hooks/useScoreHistory";
 import { updatePlayerScore } from "@/app/actions/scores";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Image as ImageIcon, UploadCloud, Play } from "lucide-react";
+import { Loader2, Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Crown, Image as ImageIcon, UploadCloud, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { MediaSelectorModal } from "@/components/admin/MediaSelectorModal";
+import { PodiumModal } from "@/components/tournament/PodiumModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +48,17 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [status, setStatus] = useState(initialStatus);
   const router = useRouter();
-  const [bgImage, setBgImage] = useState("/uploads/wallpapers/4k.png");
+  const [bgImage, setBgImageState] = useState("/uploads/wallpapers/4k.png");
+  const setBgImage = (url: string) => {
+    setBgImageState(url);
+    if (typeof window !== "undefined") localStorage.setItem("projector_bg", url);
+  };
+
+  // Load persisted bg on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("projector_bg");
+    if (saved) setBgImageState(saved);
+  }, []);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
 
@@ -56,6 +67,7 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
   const [sumValues, setSumValues] = useState<Record<string, string>>({});
 
   const [isUploadingBg, setIsUploadingBg] = useState(false);
+  const [showPodium, setShowPodium] = useState(false);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -144,6 +156,8 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
     if (result.success) {
       toast.success(`Torneo "${tournamentName}" finalizado`);
       setStatus("FINALIZADO");
+      // Show podium animation
+      setShowPodium(true);
     } else {
       toast.error(result.message || "Error al finalizar");
     }
@@ -276,10 +290,20 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
                 key={player.playerId}
-                className="flex items-center justify-between bg-black/40 backdrop-blur-lg border border-white/20 rounded-xl p-4 hover:border-primary/50 transition-colors shadow-xl"
+                className={`flex items-center justify-between backdrop-blur-lg rounded-xl p-4 transition-colors shadow-xl ${index === 0 ? "bg-yellow-500/10 border-2 border-yellow-500/50 hover:border-yellow-400" :
+                  index === 1 ? "bg-gray-400/10 border-2 border-gray-400/40 hover:border-gray-300" :
+                    index === 2 ? "bg-orange-500/10 border-2 border-orange-500/40 hover:border-orange-400" :
+                      "bg-black/40 border border-white/20 hover:border-primary/50"
+                  }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 text-gray-400 font-black text-lg">
+                  <div className="relative flex items-center justify-center w-8 h-8 rounded-full font-black text-lg" style={{
+                    background: index === 0 ? 'rgba(234,179,8,0.2)' : index === 1 ? 'rgba(156,163,175,0.2)' : index === 2 ? 'rgba(234,88,12,0.2)' : 'rgba(255,255,255,0.05)',
+                    color: index === 0 ? '#facc15' : index === 1 ? '#d1d5db' : index === 2 ? '#f97316' : '#9ca3af',
+                  }}>
+                    {index === 0 && (
+                      <Crown className="absolute -top-5 left-1/2 -translate-x-1/2 w-5 h-5 text-yellow-400 fill-yellow-400" />
+                    )}
                     {index + 1}
                   </div>
                   <Avatar className="w-10 h-10 border border-gray-700">
@@ -398,6 +422,17 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
           }}
         />
       )}
+
+      <PodiumModal
+        isOpen={showPodium}
+        onClose={() => setShowPodium(false)}
+        winners={sortedPlayers.slice(0, 3).map((p, i) => ({
+          alias: p.alias,
+          image: p.image,
+          score: p.score,
+          position: i + 1,
+        }))}
+      />
     </>
   );
 

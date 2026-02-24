@@ -81,12 +81,12 @@ export function ScoreRow({ registration, tournamentId }: ScoreRowProps) {
 
       <div className="flex items-center gap-3">
         <div className="relative">
-          <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-yellow-500" />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-yellow-500">Ptos</span>
           <Input
             type="number"
             value={score}
             onChange={(e) => handleScoreChange(e.target.value)}
-            className="pl-9 w-24 bg-black/40 border-white/10 text-white font-mono text-lg"
+            className="pl-12 w-24 bg-black/40 border-white/10 text-white font-mono text-lg"
           />
         </div>
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { Trophy, Crown, PartyPopper } from "lucide-react";
 import Confetti from "react-confetti";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface PodiumModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] h-[90vh] bg-black/90 border-none flex flex-col items-center justify-center overflow-hidden z-[110]">
+        <VisuallyHidden><DialogTitle>Torneo Finalizado</DialogTitle></VisuallyHidden>
         {isOpen && <Confetti width={windowSize.width} height={windowSize.height} numberOfPieces={500} recycle={false} />}
 
         <motion.div

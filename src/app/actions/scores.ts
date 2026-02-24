@@ -84,3 +84,39 @@ export async function undoLastScoreUpdate(playerId: string, tournamentId: string
     return { success: false, message: "Error al deshacer" };
   }
 }
+
+export type BulkScoreEntry = {
+  playerId: string;
+  score: number;
+};
+
+export async function bulkUpdateScores(tournamentId: string, entries: BulkScoreEntry[]) {
+  try {
+    for (const entry of entries) {
+      const registration = await db.tournamentRegistration.findUnique({
+        where: { playerId_tournamentId: { playerId: entry.playerId, tournamentId } },
+      });
+      if (!registration) continue;
+
+      // Only update if score changed
+      if (registration.score !== entry.score) {
+        const history = JSON.parse(registration.scoreHistory || "[]");
+        history.push({ score: registration.score, timestamp: Date.now() });
+        if (history.length > 50) history.shift();
+
+        await db.tournamentRegistration.update({
+          where: { playerId_tournamentId: { playerId: entry.playerId, tournamentId } },
+          data: { score: entry.score, scoreHistory: JSON.stringify(history) },
+        });
+      }
+    }
+
+    revalidatePath(`/admin/tournaments/results/${tournamentId}`);
+    revalidatePath(`/admin/tournaments/live/${tournamentId}`);
+    revalidatePath(`/live/${tournamentId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error bulk updating scores:", error);
+    return { success: false, message: "Error al actualizar puntajes" };
+  }
+}

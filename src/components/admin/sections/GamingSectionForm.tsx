@@ -20,6 +20,7 @@ interface GamingCard {
 interface GamingSectionContent {
   title: string;
   description: string;
+  backgroundImage: string;
   cards: GamingCard[];
   ctaButton: {
     text: string;
@@ -52,7 +53,8 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
       text: "INSCRIBIRSE AL TORNEO",
       link: "/registro",
       enabled: true
-    }
+    },
+    backgroundImage: ""
   };
 
   const [content, setContent] = useState<GamingSectionContent>(() => {
@@ -71,6 +73,7 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
     return {
       title: initialContent.title || defaultContent.title,
       description: initialContent.description || defaultContent.description,
+      backgroundImage: initialContent.backgroundImage || "",
       cards,
       ctaButton: initialContent.ctaButton || defaultContent.ctaButton
     };
@@ -172,6 +175,49 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
         </div>
       </div>
 
+      {/* ── Background Image ──────────────────────────────────── */}
+      <div className="p-4 border border-gray-800 rounded-lg bg-gray-900/50 mb-4">
+        <label className="text-sm font-bold text-gray-400 flex items-center gap-2 mb-2">
+          <ImageIcon className="w-4 h-4" />
+          Fondo de la sección
+        </label>
+        {content.backgroundImage && (
+          <div className="relative w-full h-24 rounded-lg overflow-hidden mb-2 border border-white/10">
+            <img src={content.backgroundImage} alt="Fondo" className="w-full h-full object-cover" />
+          </div>
+        )}
+        <LocalImageUpload
+          onFileSelect={async (file: File) => {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("type", "gaming-bg");
+            try {
+              const res = await fetch("/api/upload", { method: "POST", body: formData });
+              const data = await res.json();
+              if (res.ok && data.success) {
+                setContent({ ...content, backgroundImage: data.url });
+                toast.success("Fondo actualizado");
+              } else {
+                toast.error(data.message || "Error al subir");
+              }
+            } catch { toast.error("Error al subir imagen"); }
+          }}
+          onUrlSelect={(url: string) => setContent({ ...content, backgroundImage: url })}
+          label="Subir imagen de fondo"
+        />
+        {content.backgroundImage && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setContent({ ...content, backgroundImage: "" })}
+            className="text-red-400 hover:text-red-300 mt-2"
+          >
+            <Trash2 className="w-3 h-3 mr-1" />
+            Quitar fondo
+          </Button>
+        )}
+      </div>
+
       {/* ── Visual Preview ─────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-b-lg shadow-2xl border border-gray-800 bg-black">
         <div className="absolute top-0 right-0 p-4 z-50">
@@ -185,7 +231,7 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
               {/* Background blur */}
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-10 pointer-events-none"
-                style={{ backgroundImage: content.cards[0]?.imageUrl ? `url('${content.cards[0].imageUrl}')` : "none" }}
+                style={{ backgroundImage: content.backgroundImage ? `url('${content.backgroundImage}')` : (content.cards[0]?.imageUrl ? `url('${content.cards[0].imageUrl}')` : "none") }}
               />
 
               <div className="relative z-10 text-center max-w-[1200px] mx-auto">

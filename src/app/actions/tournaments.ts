@@ -505,6 +505,37 @@ export async function setTournamentWinners(id: string, winners: WinnerEntry[]) {
   }
 }
 
+export async function revertTournamentChimucoins(id: string) {
+  try {
+    const tournament = await db.tournament.findUnique({ where: { id } });
+    if (!tournament) return { success: false, message: "Torneo no encontrado" };
+
+    let winners: WinnerEntry[] = [];
+    try { winners = JSON.parse(tournament.winners || "[]"); } catch { winners = []; }
+
+    // Revert chimucoins for each winner
+    for (const w of winners) {
+      if (!w.playerId || !w.chimucoins || w.chimucoins <= 0) continue;
+      await db.player.update({
+        where: { id: w.playerId },
+        data: { chimucoins: { decrement: w.chimucoins } },
+      });
+    }
+
+    // Clear winners so setTournamentWinners sees no previous entries
+    await db.tournament.update({
+      where: { id },
+      data: { winners: "[]" },
+    });
+
+    revalidatePath("/admin/tournaments");
+    return { success: true, previousWinners: winners };
+  } catch (error) {
+    console.error("Error reverting chimucoins:", error);
+    return { success: false, message: "Error al revertir chimucoins" };
+  }
+}
+
 export async function setTournamentPhotos(id: string, photos: string[]) {
   try {
     await db.tournament.update({

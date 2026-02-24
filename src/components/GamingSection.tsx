@@ -16,6 +16,7 @@ interface GamingCard {
 interface GamingSectionContent {
   title: string;
   description: string;
+  backgroundImage?: string;
   cards?: GamingCard[];
   card1?: any; // Legacy
   card2?: any; // Legacy
@@ -93,7 +94,7 @@ export default function GamingSection({ content }: { content?: GamingSectionCont
           {/* Background Pattern - Use fallback to ensure image always shows */}
           <div
             className="absolute inset-0 bg-cover bg-center opacity-10 pointer-events-none"
-            style={{ backgroundImage: `url('${cards[0]?.imageUrl || ""}')` }}
+            style={{ backgroundImage: `url('${content?.backgroundImage || cards[0]?.imageUrl || ""}')` }}
           />
 
           <div className="relative z-10 text-center max-w-[1200px] mx-auto">

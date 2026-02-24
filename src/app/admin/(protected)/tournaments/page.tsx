@@ -249,18 +249,37 @@ export default async function AdminTournamentsPage() {
                     <span className="text-gray-300">{tournament.registrations.length}</span>
                   </TableCell>
                   <TableCell>
-                    {winners.length > 0 ? (
-                      <div className="flex flex-col gap-0.5">
-                        {winners.map((w: any, i: number) => (
-                          <span key={i} className="text-xs">
-                            <span className="text-primary font-bold">{w.position}°</span>{" "}
-                            <span className="text-gray-300">{w.playerAlias}</span>
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-500 text-xs">Sin asignar</span>
-                    )}
+                    {(() => {
+                      // Try winners JSON first
+                      if (winners.length > 0) {
+                        return (
+                          <div className="flex flex-col gap-0.5">
+                            {winners.filter((w: any) => w.position >= 1 && w.position <= 3).sort((a: any, b: any) => a.position - b.position).map((w: any, i: number) => (
+                              <span key={i} className="text-xs">
+                                <span className="text-primary font-bold">{w.position}°</span>{" "}
+                                <span className="text-gray-300">{w.playerAlias}</span>
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      }
+                      // Auto-assign from scores
+                      const sorted = [...tournament.registrations].sort((a: any, b: any) => b.score - a.score);
+                      const top3 = sorted.slice(0, 3).filter((r: any) => r.score > 0);
+                      if (top3.length > 0) {
+                        return (
+                          <div className="flex flex-col gap-0.5">
+                            {top3.map((r: any, i: number) => (
+                              <span key={r.id} className="text-xs">
+                                <span className="text-primary font-bold">{i + 1}°</span>{" "}
+                                <span className="text-gray-300">{r.player?.alias || r.player?.name || "?"}</span>
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return <span className="text-gray-500 text-xs">Sin asignar</span>;
+                    })()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -307,7 +326,7 @@ export default async function AdminTournamentsPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-white">Torneos</h2>
