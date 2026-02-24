@@ -116,8 +116,8 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
   };
 
   const addCard = () => {
-    if (content.cards.length >= 5) {
-      toast.error("Máximo 5 tarjetas permitidas");
+    if (content.cards.length >= 10) {
+      toast.error("Máximo 10 tarjetas permitidas");
       return;
     }
     setContent({
@@ -142,12 +142,7 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
     setContent({ ...content, cards: content.cards.filter((c) => c.id !== id) });
   };
 
-  const gridClass =
-    content.cards.length === 1 ? "grid-cols-1 max-w-2xl mx-auto" :
-      content.cards.length === 2 ? "grid-cols-1 md:grid-cols-2" :
-        content.cards.length === 3 ? "grid-cols-1 md:grid-cols-3" :
-          content.cards.length === 4 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" :
-            "grid-cols-1 md:grid-cols-3 lg:grid-cols-5";
+  const gridClass = "justify-center";
 
   return (
     <div className="space-y-4">
@@ -159,16 +154,16 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
             <Gamepad2 className="text-primary" />
             Editor Visual: Zona Gaming
           </h3>
-          <p className="text-gray-400 text-sm">Edita dinámicamente hasta 5 elementos.</p>
+          <p className="text-gray-400 text-sm">Edita dinámicamente hasta 10 elementos.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button
             onClick={addCard}
-            disabled={content.cards.length >= 5}
+            disabled={content.cards.length >= 10}
             className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 disabled:opacity-50"
           >
             <Plus className="mr-2 w-4 h-4" />
-            Agregar ({content.cards.length}/5)
+            Agregar ({content.cards.length}/10)
           </Button>
           <Button onClick={handleSubmit} disabled={loading} className="bg-secondary text-black hover:bg-yellow-400 font-bold">
             {loading ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 w-4 h-4" />}
@@ -202,10 +197,9 @@ export function GamingSectionForm({ initialContent }: { initialContent: any }) {
                   placeholder="TÍTULO SECCIÓN"
                 />
 
-                {/* Cards preview grid */}
-                <div className={`grid gap-4 mb-10 ${gridClass}`}>
+                <div className={`flex flex-wrap gap-4 mb-10 ${gridClass}`}>
                   {content.cards.map((card) => (
-                    <div key={card.id} className="relative aspect-video rounded-xl overflow-hidden border border-primary/30">
+                    <div key={card.id} className="relative aspect-video rounded-xl overflow-hidden border border-primary/30" style={{ width: 'calc(20% - 0.8rem)', minWidth: '120px' }}>
                       {card.imageUrl ? (
                         <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
                       ) : (

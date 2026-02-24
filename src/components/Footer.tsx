@@ -1,4 +1,5 @@
 import { Instagram, Youtube, Twitch, Monitor, Facebook, Twitter, MessageCircle } from "lucide-react";
+import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import Image from "next/image";
 import { getSocialConfig } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export default function Footer({ socialLinks, footerData }: { socialLinks?: any;
             const twitch = getSocialConfig(socialLinks, "twitch");
             const yt = getSocialConfig(socialLinks, "youtube");
             const kick = getSocialConfig(socialLinks, "kick");
+            const tiktok = getSocialConfig(socialLinks, "tiktok");
 
             return (
               <>
@@ -74,6 +76,11 @@ export default function Footer({ socialLinks, footerData }: { socialLinks?: any;
                 {kick.active && (
                   <a href={kick.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 transition-colors">
                     <Monitor size={24} />
+                  </a>
+                )}
+                {tiktok.active && (
+                  <a href={tiktok.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                    <TikTokIcon size={24} />
                   </a>
                 )}
               </>

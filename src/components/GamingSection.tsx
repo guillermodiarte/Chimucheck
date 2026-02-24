@@ -78,12 +78,11 @@ export default function GamingSection({ content }: { content?: GamingSectionCont
   // Calculate dynamic grid classes
   const getGridClass = (length: number) => {
     switch (length) {
-      case 1: return "grid-cols-1 max-w-2xl mx-auto";
-      case 2: return "grid-cols-1 md:grid-cols-2";
-      case 3: return "grid-cols-1 md:grid-cols-3";
-      case 4: return "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
-      case 5: return "grid-cols-1 md:grid-cols-3 lg:grid-cols-5";
-      default: return "grid-cols-1 md:grid-cols-3";
+      case 1: return "justify-center";
+      case 2: return "justify-center";
+      case 3: return "justify-center";
+      case 4: return "justify-center";
+      default: return "justify-center";
     }
   };
 
@@ -107,17 +106,21 @@ export default function GamingSection({ content }: { content?: GamingSectionCont
               {title}
             </motion.h3>
 
-            <div className={`grid gap-6 mb-12 ${getGridClass(cards.length)}`}>
+            <div className={`flex flex-wrap gap-6 mb-12 ${getGridClass(cards.length)}`}>
               {cards.map((card, index) => (
-                <Link key={card.id} href={card.link} className="block group w-full">
+                <Link key={card.id} href={card.link} className="block group" style={{ width: 'calc(20% - 1.2rem)', minWidth: '140px' }}>
                   <div className={`relative aspect-video rounded-xl overflow-hidden border shadow-[0_0_20px_rgba(255,255,255,0.05)] group ${index % 2 === 0 ? 'border-primary/30 group-hover:shadow-[0_0_20px_rgba(0,240,255,0.2)]' : 'border-secondary/30 group-hover:shadow-[0_0_20px_rgba(255,215,0,0.2)]'
                     }`}>
-                    <Image
-                      src={card.imageUrl}
-                      alt={card.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
+                    {card.imageUrl ? (
+                      <Image
+                        src={card.imageUrl}
+                        alt={card.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-800" />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                       <h4 className="text-xl md:text-2xl font-bold text-white text-left drop-shadow-md">{card.title}</h4>
                     </div>

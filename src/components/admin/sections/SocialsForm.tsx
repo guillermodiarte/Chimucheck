@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Facebook, Instagram, Twitter, MessageCircle, Youtube, Twitch, Monitor } from "lucide-react";
+import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import { getSocialConfig } from "@/lib/utils";
 
 export function SocialsForm({ initialContent }: { initialContent: any }) {
@@ -19,6 +20,7 @@ export function SocialsForm({ initialContent }: { initialContent: any }) {
     youtube: getSocialConfig(initialContent, "youtube"),
     twitch: getSocialConfig(initialContent, "twitch"),
     kick: getSocialConfig(initialContent, "kick"),
+    tiktok: getSocialConfig(initialContent, "tiktok"),
   });
   const [loading, setLoading] = useState(false);
 
@@ -156,6 +158,21 @@ export function SocialsForm({ initialContent }: { initialContent: any }) {
             </div>
           </div>
           <Input placeholder="https://youtube.com/@tu-canal" className="bg-gray-800 border-gray-700 text-white" value={content.youtube.url} onChange={(e) => updateNetwork("youtube", "url", e.target.value)} />
+        </div>
+
+        {/* TikTok */}
+        <div className="space-y-2 border border-gray-800 p-4 rounded-lg bg-gray-800/50">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-gray-300 flex items-center gap-2">
+              <TikTokIcon size={20} className="text-white" />
+              TikTok
+            </Label>
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm text-gray-400">Activa</Label>
+              <Switch checked={content.tiktok.active} onCheckedChange={(c) => updateNetwork("tiktok", "active", c)} />
+            </div>
+          </div>
+          <Input placeholder="https://tiktok.com/@tu-usuario" className="bg-gray-800 border-gray-700 text-white" value={content.tiktok.url} onChange={(e) => updateNetwork("tiktok", "url", e.target.value)} />
         </div>
       </div>
 

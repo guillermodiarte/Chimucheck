@@ -63,13 +63,14 @@ export default function PrizesView({ prizes, config }: PrizesViewProps) {
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="relative aspect-square md:aspect-video lg:aspect-auto lg:h-full w-full rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] bg-gray-900 group"
+            className="relative w-full rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] group flex items-center justify-center"
           >
             <Image
               src={infoImage}
               alt="Información de Canje"
-              fill
-              className="object-cover"
+              width={800}
+              height={1200}
+              className="w-full h-auto rounded-3xl"
             />
           </motion.div>
 
@@ -81,7 +82,7 @@ export default function PrizesView({ prizes, config }: PrizesViewProps) {
             className="space-y-8"
           >
             <div className="space-y-4">
-              <h2 className="text-4xl md:text-5xl font-black text-white leading-none whitespace-pre-line">
+              <h2 className="text-4xl md:text-5xl font-black text-white leading-tight break-words">
                 {infoTitle}
               </h2>
               <p className="text-lg text-gray-400 leading-relaxed">

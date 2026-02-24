@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut, MessageCircle, Twitter, Facebook } from "lucide-react";
+import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { Session } from "next-auth";
@@ -120,6 +121,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                     const twitch = getSocialConfig(socialLinks, "twitch");
                     const yt = getSocialConfig(socialLinks, "youtube");
                     const kick = getSocialConfig(socialLinks, "kick");
+                    const tiktok = getSocialConfig(socialLinks, "tiktok");
 
                     return (
                       <>
@@ -156,6 +158,11 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                         {kick.active && (
                           <a href={kick.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-500 hover:scale-125 transition-all duration-300">
                             <Monitor size={18} />
+                          </a>
+                        )}
+                        {tiktok.active && (
+                          <a href={tiktok.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white hover:scale-125 transition-all duration-300">
+                            <TikTokIcon size={18} />
                           </a>
                         )}
                       </>
