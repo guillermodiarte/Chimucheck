@@ -192,15 +192,29 @@ export default function PrizesPageConfig({ initialConfig }: PrizesPageConfigProp
             {/* Content Side */}
             <div className="space-y-8">
               <div className="space-y-4">
-                <Input
+                <textarea
                   value={config.infoTitle}
-                  onChange={(e) => handleChange("infoTitle", e.target.value)}
-                  className="text-3xl md:text-5xl font-black text-white leading-none whitespace-pre-line bg-transparent border-none p-0 h-auto focus:ring-0 uppercase placeholder:text-gray-700 w-full"
+                  onChange={(e) => {
+                    handleChange("infoTitle", e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onFocus={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                  className="text-3xl md:text-5xl font-black text-white leading-tight bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 p-1 focus:ring-0 focus:outline-none uppercase placeholder:text-gray-700 w-full resize-none overflow-hidden rounded"
+                  placeholder="TÍTULO"
+                  rows={1}
                 />
-                <Textarea
+                <textarea
                   value={config.infoDescription}
-                  onChange={(e) => handleChange("infoDescription", e.target.value)}
-                  className="text-base md:text-lg text-gray-400 leading-relaxed bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 h-[180px] md:h-[150px] resize-none focus:ring-0"
+                  onChange={(e) => {
+                    handleChange("infoDescription", e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onFocus={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                  className="text-base md:text-lg text-gray-400 leading-relaxed bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 p-1 resize-none overflow-hidden focus:ring-0 focus:outline-none w-full rounded"
+                  placeholder="Descripción..."
+                  rows={3}
                 />
               </div>
 

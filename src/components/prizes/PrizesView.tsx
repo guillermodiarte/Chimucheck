@@ -82,10 +82,10 @@ export default function PrizesView({ prizes, config }: PrizesViewProps) {
             className="space-y-8"
           >
             <div className="space-y-4">
-              <h2 className="text-4xl md:text-5xl font-black text-white leading-tight break-words">
+              <h2 className="text-4xl md:text-5xl font-black text-white leading-tight break-words whitespace-pre-line">
                 {infoTitle}
               </h2>
-              <p className="text-lg text-gray-400 leading-relaxed">
+              <p className="text-lg text-gray-400 leading-relaxed whitespace-pre-line">
                 {infoDescription}
               </p>
             </div>
