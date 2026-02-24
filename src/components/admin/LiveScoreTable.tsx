@@ -290,18 +290,18 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
                 key={player.playerId}
-                className={`flex items-center justify-between backdrop-blur-lg rounded-xl p-4 transition-colors shadow-xl ${index === 0 ? "bg-yellow-500/10 border-2 border-yellow-500/50 hover:border-yellow-400" :
-                  index === 1 ? "bg-gray-400/10 border-2 border-gray-400/40 hover:border-gray-300" :
-                    index === 2 ? "bg-orange-500/10 border-2 border-orange-500/40 hover:border-orange-400" :
-                      "bg-black/40 border border-white/20 hover:border-primary/50"
+                className={`flex items-center justify-between backdrop-blur-lg rounded-xl p-4 transition-colors shadow-xl ${status === "FINALIZADO" && index === 0 ? "bg-yellow-500/10 border-2 border-yellow-500/50 hover:border-yellow-400" :
+                    status === "FINALIZADO" && index === 1 ? "bg-gray-400/10 border-2 border-gray-400/40 hover:border-gray-300" :
+                      status === "FINALIZADO" && index === 2 ? "bg-orange-500/10 border-2 border-orange-500/40 hover:border-orange-400" :
+                        "bg-black/40 border border-white/20 hover:border-primary/50"
                   }`}
               >
                 <div className="flex items-center gap-4">
                   <div className="relative flex items-center justify-center w-8 h-8 rounded-full font-black text-lg" style={{
-                    background: index === 0 ? 'rgba(234,179,8,0.2)' : index === 1 ? 'rgba(156,163,175,0.2)' : index === 2 ? 'rgba(234,88,12,0.2)' : 'rgba(255,255,255,0.05)',
-                    color: index === 0 ? '#facc15' : index === 1 ? '#d1d5db' : index === 2 ? '#f97316' : '#9ca3af',
+                    background: status === "FINALIZADO" && index === 0 ? 'rgba(234,179,8,0.2)' : status === "FINALIZADO" && index === 1 ? 'rgba(156,163,175,0.2)' : status === "FINALIZADO" && index === 2 ? 'rgba(234,88,12,0.2)' : 'rgba(255,255,255,0.05)',
+                    color: status === "FINALIZADO" && index === 0 ? '#facc15' : status === "FINALIZADO" && index === 1 ? '#d1d5db' : status === "FINALIZADO" && index === 2 ? '#f97316' : '#9ca3af',
                   }}>
-                    {index === 0 && (
+                    {status === "FINALIZADO" && index === 0 && (
                       <Crown className="absolute -top-5 left-1/2 -translate-x-1/2 w-5 h-5 text-yellow-400 fill-yellow-400" />
                     )}
                     {index + 1}
