@@ -178,11 +178,18 @@ export async function updateTournament(id: string, prevState: any, formData: For
               data: { chimucoins: { decrement: w.chimucoins } },
             });
           }
-          // Revert wins
-          await db.playerStats.update({
-            where: { playerId: w.playerId },
-            data: { wins: { decrement: 1 } },
-          }).catch(() => { });
+          // Revert positional wins
+          if (w.position >= 1 && w.position <= 3) {
+            const updateData: any = { wins: { decrement: 1 } };
+            if (w.position === 1) updateData.winsFirst = { decrement: 1 };
+            else if (w.position === 2) updateData.winsSecond = { decrement: 1 };
+            else if (w.position === 3) updateData.winsThird = { decrement: 1 };
+
+            await db.playerStats.update({
+              where: { playerId: w.playerId },
+              data: updateData,
+            }).catch(() => { });
+          }
         }
 
         // Revert matchesPlayed for all registered players (only if was FINALIZADO)
@@ -354,13 +361,25 @@ export async function finishTournament(id: string) {
   try {
     const tournament = await db.tournament.findUnique({
       where: { id },
-      include: { registrations: true },
+      include: { registrations: { include: { player: true } } },
     });
     if (!tournament) return { success: false, message: "Torneo no encontrado" };
 
+    // Sort registrations by score (descending) to find top 3
+    const sorted = [...tournament.registrations].sort((a, b) => b.score - a.score);
+    const top3 = sorted.slice(0, 3).filter(r => r.score > 0);
+
+    // Build winners array
+    const winners: WinnerEntry[] = top3.map((reg, i) => ({
+      position: i + 1,
+      playerId: reg.playerId,
+      playerAlias: reg.player?.alias || reg.player?.name || "?",
+      chimucoins: 0,
+    }));
+
     await db.tournament.update({
       where: { id },
-      data: { status: "FINALIZADO" },
+      data: { status: "FINALIZADO", winners: JSON.stringify(winners) },
     });
 
     // Increment matchesPlayed for all registered players
@@ -369,6 +388,16 @@ export async function finishTournament(id: string) {
         where: { playerId: reg.playerId },
         create: { playerId: reg.playerId, matchesPlayed: 1 },
         update: { matchesPlayed: { increment: 1 } },
+      });
+    }
+
+    // Increment positional wins for top 3
+    for (const winner of winners) {
+      const field = winner.position === 1 ? "winsFirst" : winner.position === 2 ? "winsSecond" : "winsThird";
+      await db.playerStats.upsert({
+        where: { playerId: winner.playerId },
+        create: { playerId: winner.playerId, [field]: 1, wins: 1, matchesPlayed: 0 },
+        update: { [field]: { increment: 1 }, wins: { increment: 1 } },
       });
     }
 
@@ -403,11 +432,18 @@ export async function reactivateTournament(id: string) {
           data: { chimucoins: { decrement: w.chimucoins } },
         });
       }
-      // Revert wins
-      await db.playerStats.update({
-        where: { playerId: w.playerId },
-        data: { wins: { decrement: 1 } },
-      }).catch(() => { });
+      // Revert positional wins
+      if (w.position >= 1 && w.position <= 3) {
+        const updateData: any = { wins: { decrement: 1 } };
+        if (w.position === 1) updateData.winsFirst = { decrement: 1 };
+        else if (w.position === 2) updateData.winsSecond = { decrement: 1 };
+        else if (w.position === 3) updateData.winsThird = { decrement: 1 };
+
+        await db.playerStats.update({
+          where: { playerId: w.playerId },
+          data: updateData,
+        }).catch(() => { });
+      }
     }
 
     // Revert matchesPlayed for all registered players
@@ -469,15 +505,45 @@ export async function setTournamentWinners(id: string, winners: WinnerEntry[]) {
         });
       }
 
-      // Increment wins only for NEW winners (not previously saved)
-      if (!prevWinnerIds.has(winner.playerId)) {
-        const stats = await db.playerStats.upsert({
-          where: { playerId: winner.playerId },
-          create: { playerId: winner.playerId, wins: 1, matchesPlayed: 0 },
-          update: { wins: { increment: 1 } },
-        });
+      // Track positional wins for positions 1-3
+      if (winner.position >= 1 && winner.position <= 3) {
+        const prevWinner = prevWinners.find(w => w.playerId === winner.playerId);
+        const prevPosition = prevWinner?.position || 0;
+
+        // Build update data
+        const updateData: any = {};
+        const createData: any = { playerId: winner.playerId, matchesPlayed: 0 };
+
+        // If player had a previous position, decrement it
+        if (prevPosition >= 1 && prevPosition <= 3 && prevPosition !== winner.position) {
+          const prevField = prevPosition === 1 ? "winsFirst" : prevPosition === 2 ? "winsSecond" : "winsThird";
+          updateData[prevField] = { decrement: 1 };
+          updateData.wins = { decrement: 1 };
+        }
+
+        // If player is new to podium or changed position, increment new position
+        if (prevPosition !== winner.position) {
+          const newField = winner.position === 1 ? "winsFirst" : winner.position === 2 ? "winsSecond" : "winsThird";
+          // Can't mix increment in same upsert, so do separate update
+          await db.playerStats.upsert({
+            where: { playerId: winner.playerId },
+            create: { ...createData, [newField]: 1, wins: 1 },
+            update: { [newField]: { increment: 1 }, ...(prevPosition < 1 || prevPosition > 3 ? { wins: { increment: 1 } } : {}) },
+          });
+        }
+
+        // If player had a previous different position, decrement old position
+        if (prevPosition >= 1 && prevPosition <= 3 && prevPosition !== winner.position) {
+          const prevField = prevPosition === 1 ? "winsFirst" : prevPosition === 2 ? "winsSecond" : "winsThird";
+          await db.playerStats.update({
+            where: { playerId: winner.playerId },
+            data: { [prevField]: { decrement: 1 } },
+          }).catch(() => { });
+        }
+
         // Update winRate
-        if (stats.matchesPlayed > 0) {
+        const stats = await db.playerStats.findUnique({ where: { playerId: winner.playerId } });
+        if (stats && stats.matchesPlayed > 0) {
           await db.playerStats.update({
             where: { playerId: winner.playerId },
             data: { winRate: stats.wins / stats.matchesPlayed },
@@ -486,12 +552,17 @@ export async function setTournamentWinners(id: string, winners: WinnerEntry[]) {
       }
     }
 
-    // Handle removed winners: decrement wins
+    // Handle removed winners: decrement positional wins
     for (const prev of prevWinners) {
       if (prev.playerId && !winners.find(w => w.playerId === prev.playerId)) {
+        const updateData: any = { wins: { decrement: 1 } };
+        if (prev.position === 1) updateData.winsFirst = { decrement: 1 };
+        else if (prev.position === 2) updateData.winsSecond = { decrement: 1 };
+        else if (prev.position === 3) updateData.winsThird = { decrement: 1 };
+
         await db.playerStats.update({
           where: { playerId: prev.playerId },
-          data: { wins: { decrement: 1 } },
+          data: updateData,
         }).catch(() => { }); // ignore if stats don't exist
       }
     }

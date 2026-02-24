@@ -215,12 +215,22 @@ export function ProfileForm({ player }: { player: any }) {
                   <div className="text-xs text-zinc-500 uppercase tracking-wider">Monedas</div>
                 </div>
                 <div className="p-4 rounded-xl bg-black/40 border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-white">{player.stats?.wins || 0}</div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider">Victorias</div>
-                </div>
-                <div className="col-span-2 p-4 rounded-xl bg-black/40 border border-white/5 text-center">
                   <div className="text-2xl font-bold text-white">{player.stats?.matchesPlayed || 0}</div>
                   <div className="text-xs text-zinc-500 uppercase tracking-wider">Partidas Jugadas</div>
+                </div>
+                <div className="col-span-2 grid grid-cols-3 gap-3">
+                  <div className="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
+                    <div className="text-2xl font-bold text-yellow-400">{player.stats?.winsFirst || 0}</div>
+                    <div className="text-[10px] text-yellow-500/80 uppercase tracking-wider font-bold">🥇 1° Puesto</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-400/10 border border-gray-400/20 text-center">
+                    <div className="text-2xl font-bold text-gray-300">{player.stats?.winsSecond || 0}</div>
+                    <div className="text-[10px] text-gray-400/80 uppercase tracking-wider font-bold">🥈 2° Puesto</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
+                    <div className="text-2xl font-bold text-orange-400">{player.stats?.winsThird || 0}</div>
+                    <div className="text-[10px] text-orange-400/80 uppercase tracking-wider font-bold">🥉 3° Puesto</div>
+                  </div>
                 </div>
               </div>
             </CardContent>

@@ -20,6 +20,12 @@ interface PlayerFormProps {
     image: string | null;
     chimucoins: number;
     active: boolean;
+    stats?: {
+      matchesPlayed: number;
+      winsFirst: number;
+      winsSecond: number;
+      winsThird: number;
+    } | null;
   };
 }
 
@@ -187,6 +193,57 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
             className="bg-gray-800 border-gray-700 text-white"
             placeholder="Dejar en blanco para no cambiar"
           />
+        </div>
+      </div>
+
+      {/* Stats Section */}
+      <div className="pt-4 border-t border-gray-800">
+        <h3 className="text-white font-bold mb-4 flex items-center gap-2">📊 Estadísticas</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="matchesPlayed" className="text-zinc-400 text-xs">Partidas Jugadas</Label>
+            <Input
+              id="matchesPlayed"
+              name="matchesPlayed"
+              type="number"
+              min="0"
+              defaultValue={initialData.stats?.matchesPlayed || 0}
+              className="bg-gray-800 border-gray-700 text-white font-mono"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="winsFirst" className="text-yellow-400 text-xs font-bold">🥇 1° Puesto</Label>
+            <Input
+              id="winsFirst"
+              name="winsFirst"
+              type="number"
+              min="0"
+              defaultValue={initialData.stats?.winsFirst || 0}
+              className="bg-gray-800 border-yellow-500/30 text-white font-mono"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="winsSecond" className="text-gray-300 text-xs font-bold">🥈 2° Puesto</Label>
+            <Input
+              id="winsSecond"
+              name="winsSecond"
+              type="number"
+              min="0"
+              defaultValue={initialData.stats?.winsSecond || 0}
+              className="bg-gray-800 border-gray-400/30 text-white font-mono"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="winsThird" className="text-orange-400 text-xs font-bold">🥉 3° Puesto</Label>
+            <Input
+              id="winsThird"
+              name="winsThird"
+              type="number"
+              min="0"
+              defaultValue={initialData.stats?.winsThird || 0}
+              className="bg-gray-800 border-orange-500/30 text-white font-mono"
+            />
+          </div>
         </div>
       </div>
 

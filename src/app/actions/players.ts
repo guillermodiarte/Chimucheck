@@ -119,6 +119,20 @@ export async function updatePlayer(id: string, prevState: any, formData: FormDat
       data,
     });
 
+    // Update stats if provided
+    const matchesPlayed = parseInt(formData.get("matchesPlayed") as string || "0");
+    const winsFirst = parseInt(formData.get("winsFirst") as string || "0");
+    const winsSecond = parseInt(formData.get("winsSecond") as string || "0");
+    const winsThird = parseInt(formData.get("winsThird") as string || "0");
+    const wins = winsFirst + winsSecond + winsThird;
+    const winRate = matchesPlayed > 0 ? wins / matchesPlayed : 0;
+
+    await db.playerStats.upsert({
+      where: { playerId: id },
+      create: { playerId: id, matchesPlayed, winsFirst, winsSecond, winsThird, wins, winRate },
+      update: { matchesPlayed, winsFirst, winsSecond, winsThird, wins, winRate },
+    });
+
   } catch (error) {
     console.error("Error updating player:", error);
     return {
