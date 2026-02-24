@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-// import { Banner } from "@prisma/client";
 
 interface Banner {
   id: string;
@@ -79,7 +78,7 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.8 }}
-          className="text-5xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-secondary drop-shadow-[0_0_25px_rgba(0,240,255,0.4)] mb-4"
+          className="text-5xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-secondary drop-shadow-[0_0_25px_rgba(0,240,255,0.4)] mb-4 pb-2 leading-normal overflow-visible"
         >
           {slides[current].title}
         </motion.h1>
@@ -89,7 +88,7 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="text-xl md:text-3xl font-medium text-white tracking-widest uppercase border-b-2 border-primary pb-2"
+            className="text-xl md:text-3xl font-medium text-white tracking-widest uppercase border-b-2 border-primary pb-3"
           >
             {slides[current].subtitle}
           </motion.p>
