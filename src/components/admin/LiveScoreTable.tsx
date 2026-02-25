@@ -7,7 +7,7 @@ import { useScoreHistory } from "@/hooks/useScoreHistory";
 import { updatePlayerScore } from "@/app/actions/scores";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Crown, Image as ImageIcon, UploadCloud, Play } from "lucide-react";
+import { Loader2, Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Crown, Image as ImageIcon, UploadCloud, Play, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,7 +48,7 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [status, setStatus] = useState(initialStatus);
   const router = useRouter();
-  const [bgImage, setBgImageState] = useState("/uploads/wallpapers/4k.png");
+  const [bgImage, setBgImageState] = useState("");
   const setBgImage = (url: string) => {
     setBgImageState(url);
     if (typeof window !== "undefined") localStorage.setItem("projector_bg", url);
@@ -180,10 +180,14 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
   const content = (
     <>
       {isFullscreen && (
-        <div
-          className="fixed inset-0 z-[100] bg-cover bg-center pointer-events-none"
-          style={{ backgroundImage: `url('${bgImage}')` }}
-        />
+        <div className="fixed inset-0 z-[100] bg-black pointer-events-none">
+          {bgImage && (
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-40 blur-sm"
+              style={{ backgroundImage: `url('${bgImage}')` }}
+            />
+          )}
+        </div>
       )}
       <div className={`flex flex-col gap-4 md:gap-6 w-full ${isFullscreen ? 'fixed inset-0 z-[101] pt-8 px-4 md:px-[4%] xl:px-[6%] overflow-auto' : 'relative z-10'}`}>
         <div className="flex items-center justify-between bg-black/40 backdrop-blur-lg p-4 rounded-xl border border-white/20 shadow-xl">
@@ -263,6 +267,12 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                     <ImageIcon className="w-4 h-4 mr-2" />
                     Galería
                   </DropdownMenuItem>
+                  {bgImage && (
+                    <DropdownMenuItem className="focus:bg-zinc-800 cursor-pointer text-red-400" onSelect={() => { setBgImage(""); toast.success("Fondo eliminado"); }}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar fondo
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -291,9 +301,9 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                 transition={{ duration: 0.3 }}
                 key={player.playerId}
                 className={`flex items-center justify-between backdrop-blur-lg rounded-xl p-4 transition-colors shadow-xl ${status === "FINALIZADO" && index === 0 ? "bg-yellow-500/10 border-2 border-yellow-500/50 hover:border-yellow-400" :
-                    status === "FINALIZADO" && index === 1 ? "bg-gray-400/10 border-2 border-gray-400/40 hover:border-gray-300" :
-                      status === "FINALIZADO" && index === 2 ? "bg-orange-500/10 border-2 border-orange-500/40 hover:border-orange-400" :
-                        "bg-black/40 border border-white/20 hover:border-primary/50"
+                  status === "FINALIZADO" && index === 1 ? "bg-gray-400/10 border-2 border-gray-400/40 hover:border-gray-300" :
+                    status === "FINALIZADO" && index === 2 ? "bg-orange-500/10 border-2 border-orange-500/40 hover:border-orange-400" :
+                      "bg-black/40 border border-white/20 hover:border-primary/50"
                   }`}
               >
                 <div className="flex items-center gap-4">
