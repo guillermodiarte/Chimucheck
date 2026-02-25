@@ -10,7 +10,11 @@ export default async function ProfilePage() {
   const player = await db.player.findUnique({
     where: { id: session.user.id },
     include: {
-      stats: true
+      stats: true,
+      registrations: {
+        include: { tournament: true },
+        orderBy: { registeredAt: "desc" },
+      },
     }
   });
 

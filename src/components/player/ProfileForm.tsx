@@ -18,8 +18,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "@/app/actions/player-profile";
-import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff } from "lucide-react";
+import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff, Coins, Gamepad2, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { formatDate } from "@/lib/utils";
 
@@ -128,7 +129,7 @@ export function ProfileForm({ player }: { player: any }) {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto pb-10">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl mx-auto pb-10">
 
       {/* 1. Profile Header Card (Interactive Avatar) */}
       <div className="relative mb-20">
@@ -196,6 +197,32 @@ export function ProfileForm({ player }: { player: any }) {
           <Calendar size={14} />
           <span className="text-sm">Miembro desde {formatDate(player.createdAt)}</span>
         </div>
+      </div>
+      {/* Dashboard Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-2 mb-8">
+        {/* Chimucoins Card */}
+        <div className="bg-zinc-900/50 border border-yellow-500/20 rounded-2xl p-6 hover:border-yellow-500/40 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-gray-200">Chimucoins</span>
+            <Coins className="h-5 w-5 text-yellow-500" />
+          </div>
+          <div className="text-3xl font-black text-yellow-400">{player.chimucoins || 0} 🟡</div>
+          <p className="text-xs text-gray-500 mt-1">Monedas disponibles</p>
+        </div>
+
+        {/* Torneos Card */}
+        <Link href="/player/dashboard/tournaments" className="block">
+          <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-6 hover:border-blue-500/40 transition-colors h-full group cursor-pointer">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-200">Torneos Participados</span>
+              <Gamepad2 className="h-5 w-5 text-blue-400" />
+            </div>
+            <div className="text-3xl font-black text-white">{player.registrations?.length || 0}</div>
+            <p className="text-xs text-gray-500 flex items-center gap-1 mt-1 group-hover:text-blue-400 transition-colors">
+              Ver historial <ChevronRight size={12} />
+            </p>
+          </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -404,6 +431,51 @@ export function ProfileForm({ player }: { player: any }) {
         </div>
 
       </div>
+
+      {/* Actividad Reciente */}
+      {player.registrations && player.registrations.length > 0 && (
+        <div className="mt-8">
+          <Card className="bg-zinc-900 border-white/10">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white">Actividad Reciente</h3>
+                <Link
+                  href="/player/dashboard/tournaments"
+                  className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  Ver todos <ChevronRight size={12} />
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {player.registrations.slice(0, 5).map((reg: any) => (
+                  <Link
+                    key={reg.id}
+                    href={`/torneos/${reg.tournament.id}`}
+                    className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0 hover:bg-white/2 -mx-2 px-2 rounded transition-colors group"
+                  >
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium text-white group-hover:text-primary transition-colors">{reg.tournament.name}</p>
+                      <p className="text-xs text-gray-400">{formatDate(reg.tournament.date)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(reg.tournament.status === "IN_PROGRESS" || reg.tournament.status === "FINISHED" || reg.tournament.status === "EN_JUEGO" || reg.tournament.status === "FINALIZADO") && (
+                        <span className="text-xs font-bold text-primary">{reg.score ?? 0} pts</span>
+                      )}
+                      <div className={`text-xs font-medium px-2 py-1 rounded ${reg.status === "CONFIRMED" ? "bg-green-500/20 text-green-400" :
+                        reg.status === "ELIMINATED" ? "bg-red-500/20 text-red-400" :
+                          "bg-white/5 text-gray-300"
+                        }`}>
+                        {reg.status === "CONFIRMED" ? "Inscrito" :
+                          reg.status === "ELIMINATED" ? "Eliminado" : "Pendiente"}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

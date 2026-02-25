@@ -98,15 +98,6 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                   <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/acerca-de" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
                 </Link>
 
-                {session?.user && (
-                  <Link
-                    href="/player/dashboard"
-                    className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/player/dashboard" ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
-                  >
-                    Mi Cuenta
-                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/player/dashboard" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
-                  </Link>
-                )}
 
                 {/* Separator inside pill */}
                 <div className="h-6 w-px bg-white/20"></div>
@@ -174,7 +165,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                 {session?.user ? (
                   <div className="relative group ml-2">
                     <Link
-                      href="/player/dashboard"
+                      href="/player/dashboard/profile"
                       className="flex items-center gap-2 text-white hover:text-primary transition-colors"
                     >
                       {(session.user as any).image ? (
