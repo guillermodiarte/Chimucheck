@@ -10,6 +10,7 @@ import UnregisterButton from "@/components/tournaments/UnregisterButton";
 import TournamentImageCarousel from "@/components/tournaments/TournamentImageCarousel";
 import type { GameEntry } from "@/app/actions/tournaments";
 import { PublicScoreboard } from "@/components/tournaments/PublicScoreboard";
+import { PublicProjector } from "@/components/tournaments/PublicProjector";
 
 function getGames(tournament: any): GameEntry[] {
   if (tournament.games) {
@@ -366,12 +367,24 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                 <div className="pt-6 border-t border-white/10">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
                     {tournament.status === "INSCRIPCION" ? "Inscriptos" : "Posiciones"}
-                    {tournament.status === "EN_JUEGO" && (
-                      <span className="flex items-center gap-2 text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full border border-green-500/30 font-bold tracking-widest uppercase">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        En Vivo
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {(tournament.status === "EN_JUEGO" || tournament.status === "FINALIZADO") && (
+                        <>
+                          <PublicProjector
+                            registrations={tournament.registrations}
+                            status={tournament.status}
+                            tournamentId={tournament.id}
+                            bannerImages={games.map(g => g.image).filter(Boolean)}
+                          />
+                          {tournament.status === "EN_JUEGO" && (
+                            <span className="flex items-center gap-2 text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full border border-green-500/30 font-bold tracking-widest uppercase">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                              En Vivo
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </h3>
                   <PublicScoreboard registrations={tournament.registrations} status={tournament.status} tournamentId={tournament.id} />
                 </div>
