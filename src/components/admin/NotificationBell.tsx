@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Bell, UserPlus, Gamepad2, Check } from "lucide-react";
+import { Bell, UserPlus, Gamepad2, Check, UserCheck, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 interface Notification {
   id: string;
@@ -9,6 +10,7 @@ interface Notification {
   title: string;
   message: string;
   read: boolean;
+  data: string | null;
   createdAt: string;
 }
 
@@ -57,14 +59,48 @@ export function NotificationBell() {
     }
   };
 
+  const deleteReadNotifications = async () => {
+    try {
+      const res = await fetch("/api/admin/notifications", { method: "DELETE" });
+      if (res.ok) {
+        setNotifications((prev) => prev.filter((n) => !n.read));
+      }
+    } catch (err) {
+      console.error("Error deleting old notifications:", err);
+    }
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case "NEW_PLAYER":
         return <UserPlus size={16} className="text-green-400" />;
       case "TOURNAMENT_REGISTRATION":
         return <Gamepad2 size={16} className="text-blue-400" />;
+      case "PENDING_REGISTRATION":
+        return <UserCheck size={16} className="text-yellow-400" />;
       default:
         return <Bell size={16} className="text-gray-400" />;
+    }
+  };
+
+  const getRedirectUrl = (notification: Notification) => {
+    try {
+      if (!notification.data) return "/admin/dashboard";
+      const payload = JSON.parse(notification.data);
+
+      switch (notification.type) {
+        case "NEW_PLAYER":
+          // Si el admin tiene pág de detalle de jugador: return `/admin/players/${payload.playerId}`
+          return `/admin/players`;
+        case "TOURNAMENT_REGISTRATION":
+          return `/admin/tournaments`;
+        case "PENDING_REGISTRATION":
+          return `/admin/requests`;
+        default:
+          return "/admin/dashboard";
+      }
+    } catch {
+      return "/admin/dashboard";
     }
   };
 
@@ -102,14 +138,26 @@ export function NotificationBell() {
             <h3 className="text-sm font-bold text-white">
               Notificaciones {unreadCount > 0 && `(${unreadCount})`}
             </h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                className="text-xs text-primary hover:text-yellow-300 flex items-center gap-1 transition-colors"
-              >
-                <Check size={12} /> Marcar leídas
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllRead}
+                  className="text-xs text-primary hover:text-yellow-300 flex items-center gap-1 transition-colors"
+                  title="Marcar todas como leídas"
+                >
+                  <Check size={12} /> Marcar leídas
+                </button>
+              )}
+              {notifications.some(n => n.read) && (
+                <button
+                  onClick={deleteReadNotifications}
+                  className="text-xs text-gray-400 hover:text-red-400 flex items-center gap-1 transition-colors"
+                  title="Borrar notificaciones leídas"
+                >
+                  <Trash2 size={12} /> Borrar vistas
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
@@ -119,23 +167,25 @@ export function NotificationBell() {
               </div>
             ) : (
               notifications.map((n) => (
-                <div
+                <Link
+                  href={getRedirectUrl(n)}
                   key={n.id}
-                  className={`flex items-start gap-3 p-3 border-b border-white/5 last:border-0 transition-colors ${n.read ? "opacity-60" : "bg-white/2"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-start gap-3 p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors ${n.read ? "opacity-60" : "bg-white/2"
                     }`}
                 >
-                  <div className="mt-0.5 p-1.5 rounded-lg bg-white/5">
+                  <div className="mt-0.5 p-1.5 rounded-lg bg-white/5 shrink-0">
                     {getIcon(n.type)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{n.title}</p>
-                    <p className="text-xs text-gray-400 truncate">{n.message}</p>
+                    <p className="text-xs text-gray-400 break-words line-clamp-2 mt-0.5">{n.message}</p>
                     <p className="text-[10px] text-gray-500 mt-1">{timeAgo(n.createdAt)}</p>
                   </div>
                   {!n.read && (
                     <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
                   )}
-                </div>
+                </Link>
               ))
             )}
           </div>

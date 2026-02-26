@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/admin/Sidebar";
 import { MobileNav } from "@/components/admin/MobileNav";
+import { NotificationBell } from "@/components/admin/NotificationBell";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
@@ -24,8 +25,12 @@ export default async function AdminLayout({
         <Sidebar />
       </div>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="w-full">{children}</div>
+      <main className="flex-1 overflow-y-auto">
+        {/* Top Bar with Notifications */}
+        <div className="sticky top-0 z-40 flex items-center justify-end px-8 py-3 bg-black/80 backdrop-blur-sm border-b border-white/5">
+          <NotificationBell />
+        </div>
+        <div className="w-full p-4 md:p-8 pt-2">{children}</div>
       </main>
     </div>
   );

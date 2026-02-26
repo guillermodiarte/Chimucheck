@@ -16,9 +16,9 @@ import {
   Gift,
   Trophy,
   Users,
-  Share2,
   Radio,
   LayoutTemplate,
+  UserCheck,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -49,6 +49,11 @@ export const sidebarData = [
     icon: Trophy,
   },
   {
+    title: "Solicitudes",
+    href: "/admin/requests",
+    icon: UserCheck,
+  },
+  {
     title: "Jugadores",
     href: "/admin/players",
     icon: Users,
@@ -75,18 +80,15 @@ export const sidebarData = [
   },
 ];
 
-import { NotificationBell } from "@/components/admin/NotificationBell";
-
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
     <div className="flex flex-col h-full bg-gray-900 text-white w-64 border-r border-gray-800">
-      <div className="p-6 flex items-center justify-between">
+      <div className="p-6">
         <h2 className="text-xl font-bold tracking-tight text-secondary">
           Chimucheck Admin
         </h2>
-        <NotificationBell />
       </div>
       <nav className="px-4 space-y-2 overflow-y-auto">
         {sidebarData.map((item) => (

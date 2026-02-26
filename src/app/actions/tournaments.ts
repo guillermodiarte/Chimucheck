@@ -13,6 +13,7 @@ const TournamentSchema = z.object({
   maxPlayers: z.coerce.number().min(2, "Mínimo 2 jugadores"),
   prizePool: z.string().optional(),
   active: z.boolean().optional(),
+  isRestricted: z.boolean().optional(),
   // Legacy fields (kept for backward compat)
   game: z.string().optional(),
   image: z.string().optional(),
@@ -98,6 +99,7 @@ export async function createTournament(prevState: any, formData: FormData) {
     maxPlayers: formData.get("maxPlayers"),
     prizePool: formData.get("prizePool"),
     active: formData.get("active") === "true" || formData.get("active") === "on",
+    isRestricted: formData.get("isRestricted") === "true" || formData.get("isRestricted") === "on",
     game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
     image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
     games: gamesRaw || "[]",
@@ -140,6 +142,7 @@ export async function updateTournament(id: string, prevState: any, formData: For
     maxPlayers: formData.get("maxPlayers"),
     prizePool: formData.get("prizePool"),
     active: formData.get("active") === "true" || formData.get("active") === "on",
+    isRestricted: formData.get("isRestricted") === "true" || formData.get("isRestricted") === "on",
     game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
     image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
     games: gamesRaw || "[]",
@@ -275,20 +278,24 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
       return { success: false, message: "Ya estás inscrito en este torneo" };
     }
 
+    const status = tournament.isRestricted ? "PENDING" : "CONFIRMED";
+
     await db.tournamentRegistration.create({
       data: {
         playerId,
         tournamentId,
-        status: "CONFIRMED"
+        status
       }
     });
 
-    await db.tournament.update({
-      where: { id: tournamentId },
-      data: {
-        currentPlayers: { increment: 1 }
-      }
-    });
+    if (status === "CONFIRMED") {
+      await db.tournament.update({
+        where: { id: tournamentId },
+        data: {
+          currentPlayers: { increment: 1 }
+        }
+      });
+    }
 
     // Get player info for notification
     const player = await db.player.findUnique({ where: { id: playerId } });
@@ -297,9 +304,11 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
     try {
       await db.notification.create({
         data: {
-          type: "TOURNAMENT_REGISTRATION",
-          title: "Inscripción a Torneo",
-          message: `${player?.alias || player?.name || "Jugador"} se inscribió a ${tournament.name}.`,
+          type: tournament.isRestricted ? "PENDING_REGISTRATION" : "TOURNAMENT_REGISTRATION",
+          title: tournament.isRestricted ? "Solicitud de Inscripción" : "Inscripción a Torneo",
+          message: tournament.isRestricted
+            ? `${player?.alias || player?.name || "Jugador"} ha solicitado unirse a ${tournament.name}.`
+            : `${player?.alias || player?.name || "Jugador"} se inscribió a ${tournament.name}.`,
           data: JSON.stringify({ playerId, tournamentId, tournamentName: tournament.name }),
         },
       });

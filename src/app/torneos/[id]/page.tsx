@@ -40,10 +40,13 @@ export default async function TournamentDetailPage({ params }: { params: Promise
 
   const games = getGames(tournament);
 
-  const isRegistered = session?.user?.id
+  const userRegistration = session?.user?.id
     // @ts-ignore
-    ? tournament.registrations.some((r) => r.playerId === session.user.id)
-    : false;
+    ? tournament.registrations.find((r) => r.playerId === session.user.id)
+    : null;
+
+  const isFormalyRegistered = userRegistration &&
+    (userRegistration.status === "APPROVED" || userRegistration.status === "CONFIRMED");
 
   const isFull = tournament.registrations.length >= tournament.maxPlayers;
 
@@ -349,17 +352,21 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                       </p>
                       <TournamentLoginButton />
                     </div>
-                  ) : isRegistered ? (
+                  ) : isFormalyRegistered ? (
                     // @ts-ignore
                     <UnregisterButton tournamentId={tournament.id} userId={session.user.id} />
-                  ) : isFull ? (
+                  ) : isFull && (!userRegistration || userRegistration.status === "REJECTED") ? (
                     <div className="w-full py-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center text-red-400 font-bold flex items-center justify-center gap-2">
                       <AlertCircle className="w-5 h-5" />
                       CUPO COMPLETO
                     </div>
                   ) : (
-                    // @ts-ignore
-                    <RegistrationButton tournamentId={tournament.id} userId={session.user.id} />
+                    <RegistrationButton
+                      tournamentId={tournament.id}
+                      userId={session?.user?.id || ""}
+                      registrationStatus={userRegistration?.status}
+                      isRestricted={tournament.isRestricted}
+                    />
                   )}
                 </div>
 

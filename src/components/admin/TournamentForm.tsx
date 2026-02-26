@@ -41,6 +41,7 @@ const TournamentSchema = z.object({
   }),
   maxPlayers: z.coerce.number().min(2, "Mínimo 2 jugadores"),
   active: z.boolean().default(true),
+  isRestricted: z.boolean().default(false),
 });
 
 interface TournamentFormProps {
@@ -96,6 +97,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       date: tournament?.date ? new Date(tournament.date).toISOString().slice(0, 16) : "",
       maxPlayers: tournament?.maxPlayers || 16,
       active: tournament?.active ?? true,
+      isRestricted: tournament?.isRestricted ?? false,
     },
   });
 
@@ -176,6 +178,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       });
       formData.append("prizePool", prizesJson);
       formData.append("active", String(data.active));
+      formData.append("isRestricted", String(data.isRestricted));
       formData.append("games", JSON.stringify(uploadedGames));
 
       const result = tournament
@@ -422,29 +425,56 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
           </div>
 
           {/* ===== FULL-WIDTH BOTTOM ===== */}
-          {/* Active checkbox */}
-          <FormField
-            control={form.control}
-            name="active"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-gray-800 p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    Torneo Activo
-                  </FormLabel>
-                  <p className="text-sm text-gray-400">
-                    Si está desactivado, no aparecerá en la lista pública.
-                  </p>
-                </div>
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Active checkbox */}
+            <FormField
+              control={form.control}
+              name="active"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-gray-800 p-4 h-full">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Torneo Activo
+                    </FormLabel>
+                    <p className="text-sm text-gray-400">
+                      Si está desactivado, no aparecerá en la lista pública.
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* isRestricted checkbox */}
+            <FormField
+              control={form.control}
+              name="isRestricted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-gray-800 p-4 bg-yellow-900/10 border-yellow-900/30 h-full">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-yellow-500 font-bold">
+                      Torneo Restrictivo (Requiere Aprobación)
+                    </FormLabel>
+                    <p className="text-sm text-yellow-600/80">
+                      Si se activa, los jugadores quedarán "Pendientes" y un Admin deberá aprobarlos manualmente desde el menú "Solicitudes".
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Media modal for game images */}
           <MediaSelectorModal

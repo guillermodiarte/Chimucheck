@@ -35,3 +35,17 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(req: NextRequest) {
+  const cookieStore = await cookies();
+  const session = cookieStore.get("admin_session");
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  await db.notification.deleteMany({
+    where: { read: true },
+  });
+
+  return NextResponse.json({ success: true });
+}

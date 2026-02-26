@@ -15,7 +15,7 @@ import { FinishTournamentButton } from "@/components/admin/FinishTournamentButto
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import TournamentTabs from "@/components/admin/TournamentTabs";
 import Link from "next/link";
-import { Plus, Pencil, Trophy, Power, Gamepad2, Medal, Camera } from "lucide-react";
+import { Plus, Pencil, Trophy, Power, Gamepad2, Medal, Camera, Lock } from "lucide-react";
 import Image from "next/image";
 import { TournamentActions } from "@/components/admin/TournamentActions";
 import { formatDateTime } from "@/lib/utils";
@@ -98,8 +98,15 @@ export default async function AdminTournamentsPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-white line-clamp-1">{tournament.name}</span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white line-clamp-1">{tournament.name}</span>
+                          {tournament.isRestricted && (
+                            <span className="flex items-center gap-1 bg-yellow-900/50 text-yellow-500 text-[9px] px-1.5 py-0.5 rounded-md border border-yellow-500/30 font-bold uppercase tracking-wider whitespace-nowrap">
+                              <Lock className="w-2.5 h-2.5" /> Restringido
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-gray-400 line-clamp-1">{tournament.format || "General"}</span>
                       </div>
                     </div>
@@ -219,8 +226,15 @@ export default async function AdminTournamentsPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-white line-clamp-1">{tournament.name}</span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white line-clamp-1">{tournament.name}</span>
+                          {tournament.isRestricted && (
+                            <span className="flex items-center gap-1 bg-yellow-900/50 text-yellow-500 text-[9px] px-1.5 py-0.5 rounded-md border border-yellow-500/30 font-bold uppercase tracking-wider whitespace-nowrap">
+                              <Lock className="w-2.5 h-2.5" /> Restringido
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-gray-400 line-clamp-1">{tournament.format || "General"}</span>
                       </div>
                     </div>

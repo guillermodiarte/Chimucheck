@@ -116,6 +116,7 @@ model Tournament {
   prizePool      String?
   image          String?
   active         Boolean                  @default(true)
+  isRestricted   Boolean                  @default(false)
   game           String?
   format         String?
   games          String?                  @default("[]")

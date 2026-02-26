@@ -6,14 +6,21 @@ import { Button } from "@/components/ui/button";
 import { registerPlayer } from "@/app/actions/tournaments";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Swords, Loader2, CheckCircle2 } from "lucide-react";
+import { Swords, Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
 interface RegistrationButtonProps {
   tournamentId: string;
   userId: string;
+  registrationStatus?: string | null;
+  isRestricted?: boolean;
 }
 
-export default function RegistrationButton({ tournamentId, userId }: RegistrationButtonProps) {
+export default function RegistrationButton({
+  tournamentId,
+  userId,
+  registrationStatus,
+  isRestricted = false
+}: RegistrationButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
@@ -37,6 +44,33 @@ export default function RegistrationButton({ tournamentId, userId }: Registratio
     }
   }
 
+  if (registrationStatus === "REJECTED") {
+    return (
+      <Button
+        disabled
+        className="w-full bg-red-900/50 text-red-200 border border-red-500/30 font-bold text-lg py-6 cursor-not-allowed"
+      >
+        <AlertCircle className="w-6 h-6 mr-2" />
+        Inscripción Rechazada
+      </Button>
+    );
+  }
+
+  if (registrationStatus === "PENDING") {
+    return (
+      <Button
+        disabled
+        className="w-full bg-gray-800 text-gray-400 border border-gray-700 font-bold text-lg py-6 cursor-not-allowed"
+      >
+        <Clock className="w-6 h-6 mr-2" />
+        Inscripción Pendiente
+      </Button>
+    );
+  }
+
+  // If approved or confirmed, this component wouldn't be shown (Unregister button shows instead)
+  // We only show this if they are not registered at all.
+
   return (
     <>
       <Button
@@ -56,7 +90,9 @@ export default function RegistrationButton({ tournamentId, userId }: Registratio
               </div>
               <h3 className="text-lg font-bold text-white">¿Inscribirte al torneo?</h3>
               <p className="text-sm text-gray-400">
-                Vas a confirmar tu inscripción a este torneo. ¡Preparate para competir!
+                {isRestricted
+                  ? "Este torneo requiere aprobación. Tu solicitud quedará pendiente hasta que un administrador la revise."
+                  : "Vas a confirmar tu inscripción a este torneo. ¡Preparate para competir!"}
               </p>
             </div>
             <div className="flex gap-3">
