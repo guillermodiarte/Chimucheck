@@ -9,8 +9,11 @@ import { join } from "path";
 
 export async function updateProfile(data: {
   alias: string;
+  email?: string;
   name?: string;
   phone?: string;
+  country?: string;
+  province?: string;
   password?: string;
   image?: string;
 }) {
@@ -33,6 +36,20 @@ export async function updateProfile(data: {
       return { success: false, message: "El alias ya está en uso" };
     }
 
+    // Check if email is taken by another user
+    if (data.email) {
+      const existingEmail = await db.player.findFirst({
+        where: {
+          email: data.email,
+          id: { not: session.user.id }
+        }
+      });
+
+      if (existingEmail) {
+        return { success: false, message: "El email ya está en uso por otro jugador" };
+      }
+    }
+
     const currentPlayer = await db.player.findUnique({
       where: { id: session.user.id }
     });
@@ -41,7 +58,13 @@ export async function updateProfile(data: {
       alias: data.alias,
       name: data.name,
       phone: data.phone,
+      country: data.country || null,
+      province: data.province || null,
     };
+
+    if (data.email) {
+      updateData.email = data.email;
+    }
 
     // Handle image update and cleanup
     if (data.image) {
@@ -81,3 +104,4 @@ export async function updateProfile(data: {
     return { success: false, message: "Error al actualizar el perfil" };
   }
 }
+

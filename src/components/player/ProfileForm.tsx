@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "@/app/actions/player-profile";
-import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff, Coins, Gamepad2, ChevronRight } from "lucide-react";
+import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff, Coins, Gamepad2, ChevronRight, Pencil, Globe, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -26,8 +26,11 @@ import { formatDate } from "@/lib/utils";
 
 const profileSchema = z.object({
   alias: z.string().min(2, "El alias debe tener al menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
   name: z.string().optional(),
   phone: z.string().optional(),
+  country: z.string().optional(),
+  province: z.string().optional(),
   password: z.string().optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
@@ -40,6 +43,15 @@ const profileSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const COUNTRIES = [
+  "Argentina", "Bolivia", "Brasil", "Chile", "Colombia", "Costa Rica", "Cuba",
+  "Ecuador", "El Salvador", "España", "Estados Unidos", "Guatemala", "Honduras",
+  "México", "Nicaragua", "Panamá", "Paraguay", "Perú", "Puerto Rico",
+  "República Dominicana", "Uruguay", "Venezuela",
+  "Alemania", "Australia", "Canadá", "China", "Corea del Sur", "Francia",
+  "India", "Italia", "Japón", "Portugal", "Reino Unido", "Rusia", "Suecia",
+].sort();
+
 export function ProfileForm({ player }: { player: any }) {
   const { update } = useSession();
   const [isPending, startTransition] = useTransition();
@@ -49,14 +61,18 @@ export function ProfileForm({ player }: { player: any }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageError, setImageError] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       alias: player.alias || "",
+      email: player.email || "",
       name: player.name || "",
       phone: player.phone || "",
+      country: player.country || "",
+      province: player.province || "",
       password: "",
       confirmPassword: "",
     },
@@ -109,8 +125,11 @@ export function ProfileForm({ player }: { player: any }) {
 
       const result = await updateProfile({
         alias: values.alias,
+        email: values.email,
         name: values.name,
         phone: values.phone,
+        country: values.country,
+        province: values.province,
         password: values.password || undefined,
         image: imageUrl,
       });
@@ -121,6 +140,7 @@ export function ProfileForm({ player }: { player: any }) {
           alias: values.alias
         });
         toast.success("Perfil actualizado correctamente");
+        setIsEditing(false);
         router.refresh();
       } else {
         toast.error(result.message || "Error al actualizar perfil");
@@ -129,7 +149,7 @@ export function ProfileForm({ player }: { player: any }) {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl mx-auto pb-10">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-7xl mx-auto pb-10">
 
       {/* 1. Profile Header Card (Interactive Avatar) */}
       <div className="relative mb-20">
@@ -210,25 +230,21 @@ export function ProfileForm({ player }: { player: any }) {
           <p className="text-xs text-gray-500 mt-1">Monedas disponibles</p>
         </div>
 
-        {/* Torneos Card */}
-        <Link href="/player/dashboard/tournaments" className="block">
-          <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-6 hover:border-blue-500/40 transition-colors h-full group cursor-pointer">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-200">Torneos Participados</span>
-              <Gamepad2 className="h-5 w-5 text-blue-400" />
-            </div>
-            <div className="text-3xl font-black text-white">{player.registrations?.length || 0}</div>
-            <p className="text-xs text-gray-500 flex items-center gap-1 mt-1 group-hover:text-blue-400 transition-colors">
-              Ver historial <ChevronRight size={12} />
-            </p>
+        {/* Partidas Jugadas Card */}
+        <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-gray-200">Partidas Jugadas</span>
+            <Gamepad2 className="h-5 w-5 text-blue-400" />
           </div>
-        </Link>
+          <div className="text-3xl font-black text-white">{player.stats?.matchesPlayed || 0}</div>
+          <p className="text-xs text-gray-500 mt-1">Total de partidas</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        {/* 3. Left Column: Quick Stats */}
-        <div className="lg:col-span-1 space-y-6">
+        {/* Left Column: Stats + Actividad Reciente */}
+        <div className="space-y-6">
           <Card className="bg-zinc-900/50 border-white/5 backdrop-blur-sm">
             <CardContent className="p-6 space-y-6">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -236,42 +252,101 @@ export function ProfileForm({ player }: { player: any }) {
                 Estadísticas
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-black/40 border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-primary">{player.chimucoins}</div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider">Monedas</div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
+                  <div className="text-2xl font-bold text-yellow-400">{player.stats?.winsFirst || 0}</div>
+                  <div className="text-[10px] text-yellow-500/80 uppercase tracking-wider font-bold">🥇 1° Puesto</div>
                 </div>
-                <div className="p-4 rounded-xl bg-black/40 border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-white">{player.stats?.matchesPlayed || 0}</div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider">Partidas Jugadas</div>
+                <div className="p-3 rounded-xl bg-gray-400/10 border border-gray-400/20 text-center">
+                  <div className="text-2xl font-bold text-gray-300">{player.stats?.winsSecond || 0}</div>
+                  <div className="text-[10px] text-gray-400/80 uppercase tracking-wider font-bold">🥈 2° Puesto</div>
                 </div>
-                <div className="col-span-2 grid grid-cols-3 gap-3">
-                  <div className="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
-                    <div className="text-2xl font-bold text-yellow-400">{player.stats?.winsFirst || 0}</div>
-                    <div className="text-[10px] text-yellow-500/80 uppercase tracking-wider font-bold">🥇 1° Puesto</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-gray-400/10 border border-gray-400/20 text-center">
-                    <div className="text-2xl font-bold text-gray-300">{player.stats?.winsSecond || 0}</div>
-                    <div className="text-[10px] text-gray-400/80 uppercase tracking-wider font-bold">🥈 2° Puesto</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
-                    <div className="text-2xl font-bold text-orange-400">{player.stats?.winsThird || 0}</div>
-                    <div className="text-[10px] text-orange-400/80 uppercase tracking-wider font-bold">🥉 3° Puesto</div>
-                  </div>
+                <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
+                  <div className="text-2xl font-bold text-orange-400">{player.stats?.winsThird || 0}</div>
+                  <div className="text-[10px] text-orange-400/80 uppercase tracking-wider font-bold">🥉 3° Puesto</div>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Actividad Reciente */}
+          {player.registrations && player.registrations.length > 0 && (
+            <Card className="bg-zinc-900 border-white/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">Actividad Reciente</h3>
+                  <Link
+                    href="/player/dashboard/tournaments"
+                    className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1"
+                  >
+                    Ver todos <ChevronRight size={12} />
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {player.registrations.slice(0, 4).map((reg: any) => (
+                    <Link
+                      key={reg.id}
+                      href={`/torneos/${reg.tournament.id}`}
+                      className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0 hover:bg-white/2 -mx-2 px-2 rounded transition-colors group"
+                    >
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-white group-hover:text-primary transition-colors">{reg.tournament.name}</p>
+                        <p className="text-xs text-gray-400">{formatDate(reg.tournament.date)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {(reg.tournament.status === "IN_PROGRESS" || reg.tournament.status === "FINISHED" || reg.tournament.status === "EN_JUEGO" || reg.tournament.status === "FINALIZADO") && (
+                          <span className="text-xs font-bold text-primary">{reg.score ?? 0} pts</span>
+                        )}
+                        <div className={`text-xs font-medium px-2 py-1 rounded ${reg.status === "CONFIRMED" ? "bg-green-500/20 text-green-400" :
+                          reg.status === "ELIMINATED" ? "bg-red-500/20 text-red-400" :
+                            "bg-white/5 text-gray-300"
+                          }`}>
+                          {reg.status === "CONFIRMED" ? "Inscrito" :
+                            reg.status === "ELIMINATED" ? "Eliminado" : "Pendiente"}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* 4. Right Column: Form Inputs */}
-        <div className="lg:col-span-2">
+        {/* Right Column: Form Inputs */}
+        <div>
           <Card className="bg-zinc-900 border-white/10 shadow-2xl overflow-hidden">
             <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
             <CardContent className="p-8">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white">Editar Perfil</h2>
-                <p className="text-zinc-400 text-sm">Actualiza tu información personal y de seguridad.</p>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Editar Perfil</h2>
+                  <p className="text-zinc-400 text-sm">Actualiza tu información personal y de seguridad.</p>
+                </div>
+                {!isEditing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditing(true)}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-white border-white/10 hover:border-primary/50 transition-all"
+                  >
+                    <Pencil size={16} className="mr-2" />
+                    Editar
+                  </Button>
+                )}
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setIsEditing(false);
+                      form.reset();
+                    }}
+                    className="text-zinc-400 hover:text-white"
+                  >
+                    Cancelar
+                  </Button>
+                )}
               </div>
 
               <Form {...form}>
@@ -290,11 +365,34 @@ export function ProfileForm({ player }: { player: any }) {
                             <div className="relative group">
                               <Input
                                 {...field}
-                                className="bg-black/40 border-white/10 text-white h-12 px-4 focus:border-primary/50 focus:ring-primary/20 transition-all font-medium text-lg placeholder:text-zinc-600"
+                                disabled={!isEditing}
+                                className="bg-black/40 border-white/10 text-white h-12 px-4 focus:border-primary/50 focus:ring-primary/20 transition-all font-medium text-lg placeholder:text-zinc-600 disabled:opacity-60 disabled:cursor-not-allowed"
                                 placeholder="Tu alias de jugador"
                               />
-                              <div className="absolute inset-0 rounded-md bg-primary/5 opacity-0 group-focus-within:opacity-100 pointer-events-none transition-opacity duration-500"></div>
+                              {isEditing && <div className="absolute inset-0 rounded-md bg-primary/5 opacity-0 group-focus-within:opacity-100 pointer-events-none transition-opacity duration-500"></div>}
                             </div>
+                          </FormControl>
+                          <FormMessage className="text-red-400" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-zinc-400 font-medium flex items-center gap-2">
+                            <Mail size={16} className="text-primary" /> Email
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="email"
+                              disabled={!isEditing}
+                              className="bg-black/40 border-white/10 text-white h-11 focus:border-white/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                              placeholder="tu@email.com"
+                            />
                           </FormControl>
                           <FormMessage className="text-red-400" />
                         </FormItem>
@@ -311,7 +409,8 @@ export function ProfileForm({ player }: { player: any }) {
                             <FormControl>
                               <Input
                                 {...field}
-                                className="bg-black/40 border-white/10 text-white h-11 focus:border-white/20 transition-all"
+                                disabled={!isEditing}
+                                className="bg-black/40 border-white/10 text-white h-11 focus:border-white/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                 placeholder="Nombre Real"
                               />
                             </FormControl>
@@ -331,8 +430,57 @@ export function ProfileForm({ player }: { player: any }) {
                             <FormControl>
                               <Input
                                 {...field}
-                                className="bg-black/40 border-white/10 text-white h-11 focus:border-white/20 transition-all"
+                                disabled={!isEditing}
+                                className="bg-black/40 border-white/10 text-white h-11 focus:border-white/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                 placeholder="+54 9 ..."
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-400 font-medium flex items-center gap-2">
+                              <Globe size={14} className="text-primary" /> País
+                            </FormLabel>
+                            <FormControl>
+                              <select
+                                {...field}
+                                disabled={!isEditing}
+                                className="w-full bg-black/40 border border-white/10 text-white h-11 px-3 rounded-md focus:border-white/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed appearance-none"
+                              >
+                                <option value="" className="bg-zinc-900">Seleccionar país</option>
+                                {COUNTRIES.map((c) => (
+                                  <option key={c} value={c} className="bg-zinc-900">{c}</option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormMessage className="text-red-400" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="province"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-zinc-400 font-medium flex items-center gap-2">
+                              <MapPin size={14} /> Provincia / Estado
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                disabled={!isEditing}
+                                className="bg-black/40 border-white/10 text-white h-11 focus:border-white/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                placeholder="Ej: Formosa"
                               />
                             </FormControl>
                             <FormMessage className="text-red-400" />
@@ -365,7 +513,8 @@ export function ProfileForm({ player }: { player: any }) {
                                 <Input
                                   type={showPassword ? "text" : "password"}
                                   {...field}
-                                  className="bg-black/40 border-white/10 text-white h-11 focus:border-primary/50 transition-all pr-10"
+                                  disabled={!isEditing}
+                                  className="bg-black/40 border-white/10 text-white h-11 focus:border-primary/50 transition-all pr-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                 />
                                 <button
                                   type="button"
@@ -392,7 +541,8 @@ export function ProfileForm({ player }: { player: any }) {
                                 <Input
                                   type={showConfirmPassword ? "text" : "password"}
                                   {...field}
-                                  className="bg-black/40 border-white/10 text-white h-11 focus:border-primary/50 transition-all pr-10"
+                                  disabled={!isEditing}
+                                  className="bg-black/40 border-white/10 text-white h-11 focus:border-primary/50 transition-all pr-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                 />
                                 <button
                                   type="button"
@@ -410,20 +560,22 @@ export function ProfileForm({ player }: { player: any }) {
                     </div>
                   </div>
 
-                  <div className="pt-4">
-                    <Button
-                      type="submit"
-                      className="w-full h-12 bg-gradient-to-r from-primary to-yellow-500 hover:to-primary text-black font-black uppercase tracking-wide shadow-lg shadow-primary/20 transition-all duration-300 transform hover:scale-[1.01]"
-                      disabled={isPending}
-                    >
-                      {isPending ? (
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      ) : (
-                        <Save className="mr-2 h-5 w-5" />
-                      )}
-                      GUARDAR CAMBIOS
-                    </Button>
-                  </div>
+                  {isEditing && (
+                    <div className="pt-4">
+                      <Button
+                        type="submit"
+                        className="w-full h-12 bg-gradient-to-r from-primary to-yellow-500 hover:to-primary text-black font-black uppercase tracking-wide shadow-lg shadow-primary/20 transition-all duration-300 transform hover:scale-[1.01]"
+                        disabled={isPending}
+                      >
+                        {isPending ? (
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        ) : (
+                          <Save className="mr-2 h-5 w-5" />
+                        )}
+                        GUARDAR CAMBIOS
+                      </Button>
+                    </div>
+                  )}
                 </form>
               </Form>
             </CardContent>
@@ -431,51 +583,6 @@ export function ProfileForm({ player }: { player: any }) {
         </div>
 
       </div>
-
-      {/* Actividad Reciente */}
-      {player.registrations && player.registrations.length > 0 && (
-        <div className="mt-8">
-          <Card className="bg-zinc-900 border-white/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white">Actividad Reciente</h3>
-                <Link
-                  href="/player/dashboard/tournaments"
-                  className="text-xs text-gray-400 hover:text-primary transition-colors flex items-center gap-1"
-                >
-                  Ver todos <ChevronRight size={12} />
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {player.registrations.slice(0, 5).map((reg: any) => (
-                  <Link
-                    key={reg.id}
-                    href={`/torneos/${reg.tournament.id}`}
-                    className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0 hover:bg-white/2 -mx-2 px-2 rounded transition-colors group"
-                  >
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-white group-hover:text-primary transition-colors">{reg.tournament.name}</p>
-                      <p className="text-xs text-gray-400">{formatDate(reg.tournament.date)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {(reg.tournament.status === "IN_PROGRESS" || reg.tournament.status === "FINISHED" || reg.tournament.status === "EN_JUEGO" || reg.tournament.status === "FINALIZADO") && (
-                        <span className="text-xs font-bold text-primary">{reg.score ?? 0} pts</span>
-                      )}
-                      <div className={`text-xs font-medium px-2 py-1 rounded ${reg.status === "CONFIRMED" ? "bg-green-500/20 text-green-400" :
-                        reg.status === "ELIMINATED" ? "bg-red-500/20 text-red-400" :
-                          "bg-white/5 text-gray-300"
-                        }`}>
-                        {reg.status === "CONFIRMED" ? "Inscrito" :
-                          reg.status === "ELIMINATED" ? "Eliminado" : "Pendiente"}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

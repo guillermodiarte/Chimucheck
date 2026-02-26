@@ -81,6 +81,8 @@ model Player {
   alias         String?                  @unique
   image         String?
   phone         String?
+  country       String?
+  province      String?
   chimucoins    Int                      @default(0)
   active        Boolean                  @default(true)
   createdAt     DateTime                 @default(now())
