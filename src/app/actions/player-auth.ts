@@ -98,6 +98,20 @@ export async function registerPlayer(prevState: any, formData: FormData) {
       }
     });
 
+    // Create notification for admin (non-blocking)
+    try {
+      await db.notification.create({
+        data: {
+          type: "NEW_PLAYER",
+          title: "Nuevo Jugador Registrado",
+          message: `${alias} (${email}) se ha registrado.`,
+          data: JSON.stringify({ playerId: newPlayer.id, alias, email }),
+        },
+      });
+    } catch (notifErr) {
+      console.error("Notification error (non-blocking):", notifErr);
+    }
+
     return { success: true, message: "Cuenta creada. Inicia sesión." };
 
   } catch (error) {

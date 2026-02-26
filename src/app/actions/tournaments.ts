@@ -290,6 +290,23 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
       }
     });
 
+    // Get player info for notification
+    const player = await db.player.findUnique({ where: { id: playerId } });
+
+    // Create notification for admin (non-blocking)
+    try {
+      await db.notification.create({
+        data: {
+          type: "TOURNAMENT_REGISTRATION",
+          title: "Inscripción a Torneo",
+          message: `${player?.alias || player?.name || "Jugador"} se inscribió a ${tournament.name}.`,
+          data: JSON.stringify({ playerId, tournamentId, tournamentName: tournament.name }),
+        },
+      });
+    } catch (notifErr) {
+      console.error("Notification error (non-blocking):", notifErr);
+    }
+
     revalidatePath(`/torneos/${tournamentId}`);
     revalidatePath("/torneos");
     return { success: true, message: "Inscripción exitosa" };
