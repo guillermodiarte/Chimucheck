@@ -84,7 +84,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const { email, password } = parsedCredentials.data;
           const player = await getPlayer(email);
 
-          if (!player) return null;
+          if (!player) {
+            console.log("Invalid credentials: User not found");
+            return null;
+          }
+
+          if (!player.active || player.registrationStatus !== "APPROVED") {
+            console.log("Invalid credentials: User is not active or not approved");
+            throw new Error("ACCESO_DENEGADO");
+          }
 
           const passwordsMatch = await bcrypt.compare(password, player.password);
 

@@ -37,7 +37,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
       });
 
       if (result?.error) {
-        toast.error("Credenciales inválidas.");
+        // Here we show the actual string thrown from Auth.js or fallback
+        const message = result.error.includes("ACCESO_DENEGADO") || result.error.includes("en revisión")
+          ? "Tu cuenta se encuentra en revisión. Aguarda a que un administrador la apruebe."
+          : "Credenciales inválidas.";
+        toast.error(message);
       } else {
         toast.success("¡Bienvenido!");
         onClose();

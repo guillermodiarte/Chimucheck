@@ -5,6 +5,7 @@ import { AuthError } from "next-auth";
 import { db } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { getGlobalSettings } from "@/app/actions/settings";
 
 const RegisterSchema = z.object({
   alias: z.string().min(2, "El alias es requerido"),
@@ -22,6 +23,17 @@ export async function loginPlayer(prevState: string | undefined, formData: FormD
     });
   } catch (error) {
     if (error instanceof AuthError) {
+      if (
+        error.type === "CallbackRouteError" ||
+        error.message.includes("ACCESO_DENEGADO") ||
+        (error.cause?.err as any)?.message === "ACCESO_DENEGADO"
+      ) {
+        // Because NextAuth wraps custom errors, we check deep inside cause
+        if (String((error.cause?.err as any)?.message).includes("ACCESO_DENEGADO") || error.message.includes("ACCESO_DENEGADO")) {
+          return "Tu cuenta se encuentra en revisión. Aguarda a que un administrador la apruebe.";
+        }
+      }
+
       switch (error.type) {
         case "CredentialsSignin":
           return "Credenciales inválidas.";
@@ -29,6 +41,11 @@ export async function loginPlayer(prevState: string | undefined, formData: FormD
           return "Algo salió mal.";
       }
     }
+
+    if (error instanceof Error && error.message.includes("ACCESO_DENEGADO")) {
+      return "Tu cuenta se encuentra en revisión. Aguarda a que un administrador la apruebe.";
+    }
+
     throw error;
   }
 }
@@ -63,6 +80,21 @@ export async function registerPlayer(prevState: any, formData: FormData) {
   try {
     const existingEmail = await db.player.findUnique({ where: { email } });
     if (existingEmail) {
+      if (existingEmail.registrationStatus === "PENDING") {
+        return {
+          success: false,
+          message: "Tu solicitud de registro está pendiente de aprobación por un administrador.",
+          payload: { alias, email, phone }
+        };
+      }
+      if (existingEmail.registrationStatus === "REJECTED") {
+        return {
+          success: false,
+          message: "Tu solicitud de registro ha sido rechazada.",
+          payload: { alias, email, phone }
+        };
+      }
+
       return {
         success: false,
         message: "El email ya está registrado.",
@@ -81,13 +113,17 @@ export async function registerPlayer(prevState: any, formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const settings = await getGlobalSettings();
+    const isRestricted = settings?.restrictPlayerRegistration;
+
     const newPlayer = await db.player.create({
       data: {
         alias,
         email,
         password: hashedPassword,
         phone,
-        // Active by default for MVP, or verify email later
+        active: !isRestricted,
+        registrationStatus: isRestricted ? "PENDING" : "APPROVED",
       },
     });
 

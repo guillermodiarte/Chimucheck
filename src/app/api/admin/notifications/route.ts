@@ -18,7 +18,10 @@ export async function GET() {
     where: { read: false },
   });
 
-  return NextResponse.json({ notifications, unreadCount });
+  const settings = await db.globalSettings.findFirst();
+  const restrictRegistration = settings?.restrictPlayerRegistration ?? false;
+
+  return NextResponse.json({ notifications, unreadCount, restrictRegistration });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -26,6 +29,19 @@ export async function PATCH(req: NextRequest) {
   const session = cookieStore.get("admin_session");
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (body.id) {
+      await db.notification.update({
+        where: { id: body.id },
+        data: { read: true },
+      });
+      return NextResponse.json({ success: true });
+    }
+  } catch (error) {
+    // Ignore and proceed to updateMany
   }
 
   await db.notification.updateMany({

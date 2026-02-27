@@ -18,6 +18,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [restrictRegistration, setRestrictRegistration] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = useCallback(async () => {
@@ -27,6 +28,7 @@ export function NotificationBell() {
         const data = await res.json();
         setNotifications(data.notifications);
         setUnreadCount(data.unreadCount);
+        setRestrictRegistration(data.restrictRegistration);
       }
     } catch (err) {
       console.error("Error fetching notifications:", err);
@@ -70,6 +72,25 @@ export function NotificationBell() {
     }
   };
 
+  const handleNotificationClick = async (n: Notification) => {
+    setIsOpen(false);
+    if (!n.read) {
+      try {
+        await fetch("/api/admin/notifications", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: n.id }),
+        });
+        setNotifications((prev) =>
+          prev.map((nf) => (nf.id === n.id ? { ...nf, read: true } : nf))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error("Error marking notification as read:", err);
+      }
+    }
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case "NEW_PLAYER":
@@ -90,8 +111,7 @@ export function NotificationBell() {
 
       switch (notification.type) {
         case "NEW_PLAYER":
-          // Si el admin tiene pág de detalle de jugador: return `/admin/players/${payload.playerId}`
-          return `/admin/players`;
+          return restrictRegistration ? `/admin/requests?tab=players` : `/admin/players`;
         case "TOURNAMENT_REGISTRATION":
           return `/admin/tournaments`;
         case "PENDING_REGISTRATION":
@@ -170,7 +190,7 @@ export function NotificationBell() {
                 <Link
                   href={getRedirectUrl(n)}
                   key={n.id}
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => handleNotificationClick(n)}
                   className={`flex items-start gap-3 p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors ${n.read ? "opacity-60" : "bg-white/2"
                     }`}
                 >

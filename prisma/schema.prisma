@@ -84,11 +84,12 @@ model Player {
   country       String?
   province      String?
   chimucoins    Int                      @default(0)
-  active        Boolean                  @default(true)
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  stats         PlayerStats?
-  registrations TournamentRegistration[]
+  active             Boolean                  @default(true)
+  registrationStatus String                   @default("APPROVED") // PENDING, APPROVED, REJECTED
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  stats              PlayerStats?
+  registrations      TournamentRegistration[]
 }
 
 model PlayerStats {
@@ -100,7 +101,14 @@ model PlayerStats {
   winsThird     Int    @default(0)
   matchesPlayed Int    @default(0)
   winRate       Float  @default(0.0)
+  totalPrize    String @default("0")
   player        Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+}
+
+model GlobalSettings {
+  id                         String   @id @default(uuid())
+  restrictPlayerRegistration Boolean  @default(false)
+  updatedAt                  DateTime @updatedAt
 }
 
 model Tournament {

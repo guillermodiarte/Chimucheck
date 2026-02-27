@@ -333,6 +333,7 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
         onSwitchToRegister={openRegister}
       />
       <RegisterModal
+        key={showRegisterModal ? "open" : "closed"}
         isOpen={showRegisterModal}
         onClose={() => setShowRegisterModal(false)}
         onSwitchToLogin={openLogin}

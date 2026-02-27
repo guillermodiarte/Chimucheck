@@ -146,3 +146,56 @@ export async function deleteRegistration(registrationId: string) {
     return { success: false, message: "Error al eliminar la inscripción" };
   }
 }
+
+export async function getPlayerRequests() {
+  try {
+    return await db.player.findMany({
+      where: {
+        registrationStatus: {
+          in: ["PENDING", "REJECTED"], // optionally just fetch PENDING and we show rejected there too, or combined
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Error fetching player requests:", error);
+    return [];
+  }
+}
+
+export async function updatePlayerRequestStatus(playerId: string, status: "APPROVED" | "REJECTED" | "PENDING") {
+  try {
+    await db.player.update({
+      where: { id: playerId },
+      data: {
+        registrationStatus: status,
+        active: status === "APPROVED"
+      }
+    });
+
+    revalidatePath("/admin/requests");
+
+    let msg = "Solicitud actualizada";
+    if (status === "APPROVED") msg = "Jugador aprobado exitosamente";
+    if (status === "REJECTED") msg = "Jugador rechazado";
+    if (status === "PENDING") msg = "Movido a revisión (Pendiente)";
+
+    return { success: true, message: msg };
+  } catch (error) {
+    console.error("Error updating player request:", error);
+    return { success: false, message: "Error al actualizar la solicitud del jugador" };
+  }
+}
+
+export async function deletePlayerRequest(playerId: string) {
+  try {
+    await db.player.delete({
+      where: { id: playerId }
+    });
+    revalidatePath("/admin/requests");
+    return { success: true, message: "Solicitud eliminada. El usuario puede volver a registrarse." };
+  } catch (error) {
+    console.error("Error deleting player request:", error);
+    return { success: false, message: "Error al eliminar el registro del jugador" };
+  }
+}

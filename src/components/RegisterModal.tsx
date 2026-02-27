@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, startTransition } from "react";
+import { useActionState, useEffect, useState, startTransition, useRef } from "react";
 import { registerPlayer } from "@/app/actions/player-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,18 +22,25 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const [confirmPassword, setConfirmPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmError, setConfirmError] = useState("");
+  const successHandled = useRef(false);
 
   useEffect(() => {
-    // Only trigger redirect if success AND the modal is currently open.
-    // This prevents the "stale state" bug where an unseen RegisterModal re-opens the 
-    // LoginModal when the parent Navbar re-renders.
-    if (state?.success && isOpen) {
+    // Reset success handling flag when the modal is freshly opened
+    if (isOpen) {
+      successHandled.current = false;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    // Only trigger redirect if success AND the modal is currently open AND we haven't handled this success yet.
+    if (state?.success && isOpen && !successHandled.current) {
+      successHandled.current = true;
       toast.success(state.message);
       // Wait a bit and then switch to login
       setTimeout(() => {
         onSwitchToLogin();
       }, 1500);
-    } else if (state?.message && isOpen) {
+    } else if (state?.message && isOpen && !state?.success) {
       // Only show errors if open too
       toast.error(state.message);
     }
