@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { registerPlayer } from "@/app/actions/tournaments";
 import { toast } from "sonner";
@@ -23,7 +23,14 @@ export default function RegistrationButton({
 }: RegistrationButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(registrationStatus === "PENDING");
   const router = useRouter();
+
+  useEffect(() => {
+    if (registrationStatus === "PENDING") {
+      setShowPendingModal(true);
+    }
+  }, [registrationStatus]);
 
   async function handleRegister() {
     setIsLoading(true);
@@ -58,13 +65,37 @@ export default function RegistrationButton({
 
   if (registrationStatus === "PENDING") {
     return (
-      <Button
-        disabled
-        className="w-full bg-gray-800 text-gray-400 border border-gray-700 font-bold text-lg py-6 cursor-not-allowed"
-      >
-        <Clock className="w-6 h-6 mr-2" />
-        Inscripción Pendiente
-      </Button>
+      <>
+        <Button
+          onClick={() => setShowPendingModal(true)}
+          className="w-full bg-gray-800 text-gray-400 border border-gray-700 font-bold text-lg py-6 hover:bg-gray-700 transition-colors"
+        >
+          <Clock className="w-6 h-6 mr-2" />
+          Inscripción Pendiente
+        </Button>
+
+        {showPendingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-2 animate-pulse border border-yellow-500/20">
+                  <Clock className="w-8 h-8 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white tracking-tight">Inscripción en Revisión</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  Tu solicitud para participar en este torneo requiere aprobación manual. Te notificaremos cuando un administrador la revise.
+                </p>
+              </div>
+              <Button
+                onClick={() => setShowPendingModal(false)}
+                className="w-full bg-zinc-800 text-white hover:bg-zinc-700 font-bold h-11"
+              >
+                Entendido
+              </Button>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
