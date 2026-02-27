@@ -22,12 +22,14 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const [confirmPassword, setConfirmPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmError, setConfirmError] = useState("");
+  const [showPendingScreen, setShowPendingScreen] = useState(false);
   const successHandled = useRef(false);
 
   useEffect(() => {
     // Reset success handling flag when the modal is freshly opened
     if (isOpen) {
       successHandled.current = false;
+      setShowPendingScreen(false);
     }
   }, [isOpen]);
 
@@ -35,11 +37,16 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     // Only trigger redirect if success AND the modal is currently open AND we haven't handled this success yet.
     if (state?.success && isOpen && !successHandled.current) {
       successHandled.current = true;
-      toast.success(state.message);
-      // Wait a bit and then switch to login
-      setTimeout(() => {
-        onSwitchToLogin();
-      }, 1500);
+      if (state.isPending) {
+        // Show pending screen instead of login redirect
+        setShowPendingScreen(true);
+      } else {
+        toast.success(state.message);
+        // Wait a bit and then switch to login
+        setTimeout(() => {
+          onSwitchToLogin();
+        }, 1500);
+      }
     } else if (state?.message && isOpen && !state?.success) {
       // Only show errors if open too
       toast.error(state.message);
@@ -80,108 +87,126 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
           <p className="text-sm text-gray-400 mt-1">Crea tu perfil de jugador</p>
         </div>
 
-        {/* Form */}
-        <form action={handleSubmit} className="px-6 pb-6 space-y-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reg-alias" className="text-gray-300 text-sm">Alias (Usuario)</Label>
-              <Input
-                id="reg-alias"
-                name="alias"
-                defaultValue={state?.payload?.alias as string}
-                required
-                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.alias ? "border-red-500" : ""}`}
-                placeholder="Ej: Slayer99"
-              />
-              {state?.errors?.alias && (
-                <p className="text-xs text-red-500">{state.errors.alias[0]}</p>
-              )}
+        {/* Content */}
+        {showPendingScreen ? (
+          <div className="px-6 pb-8 text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mx-auto w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-2 animate-pulse rounded-full border border-yellow-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-500"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reg-email" className="text-gray-300 text-sm">Email</Label>
-              <Input
-                id="reg-email"
-                name="email"
-                type="email"
-                defaultValue={state?.payload?.email as string}
-                required
-                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.email ? "border-red-500" : ""}`}
-                placeholder="tu@email.com"
-              />
-              {state?.errors?.email && (
-                <p className="text-xs text-red-500">{state.errors.email[0]}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reg-phone" className="text-gray-300 text-sm">Teléfono (Opcional)</Label>
-              <Input
-                id="reg-phone"
-                name="phone"
-                type="tel"
-                defaultValue={state?.payload?.phone as string}
-                className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10"
-                placeholder="+54 9 ..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reg-password" className="text-gray-300 text-sm">Contraseña</Label>
-              <PasswordInput
-                id="reg-password"
-                name="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.password ? "border-red-500" : ""}`}
-                placeholder="******"
-              />
-              {state?.errors?.password && (
-                <p className="text-xs text-red-500">{state.errors.password[0]}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reg-confirm-password" className="text-gray-300 text-sm">Confirmar Contraseña</Label>
-              <PasswordInput
-                id="reg-confirm-password"
-                name="confirmPassword"
-                required
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  if (password && e.target.value !== password) {
-                    setConfirmError("Las contraseñas no coinciden");
-                  } else {
-                    setConfirmError("");
-                  }
-                }}
-                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${confirmError ? "border-red-500" : ""}`}
-                placeholder="******"
-              />
-              {confirmError && (
-                <p className="text-xs text-red-500">{confirmError}</p>
-              )}
-            </div>
+            <h4 className="text-xl font-bold text-white">Cuenta en revisión</h4>
+            <p className="text-gray-400 text-sm leading-relaxed max-w-[260px] mx-auto">
+              ¡Gracias por registrarte! Actualmente las inscripciones nuevas se encuentran restringidas y requieren aprobación manual por un administrador.
+            </p>
+            <p className="text-gray-400 text-sm leading-relaxed max-w-[260px] mx-auto pb-2">
+              Te notificaremos cuando tu acceso sea habilitado.
+            </p>
+            <Button onClick={onClose} className="w-full bg-zinc-800 text-white hover:bg-zinc-700 font-bold h-11 transition-all">
+              Entendido
+            </Button>
           </div>
+        ) : (
+          <form action={handleSubmit} className="px-6 pb-6 space-y-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reg-alias" className="text-gray-300 text-sm">Alias (Usuario)</Label>
+                <Input
+                  id="reg-alias"
+                  name="alias"
+                  defaultValue={state?.payload?.alias as string}
+                  required
+                  className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.alias ? "border-red-500" : ""}`}
+                  placeholder="Ej: Slayer99"
+                />
+                {state?.errors?.alias && (
+                  <p className="text-xs text-red-500">{state.errors.alias[0]}</p>
+                )}
+              </div>
 
-          <Button type="submit" className="w-full bg-primary text-black hover:bg-yellow-400 font-bold h-11 shadow-[0_0_20px_rgba(255,215,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all mt-2" disabled={isPending || !!confirmError}>
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Registrarme
-          </Button>
+              <div className="space-y-2">
+                <Label htmlFor="reg-email" className="text-gray-300 text-sm">Email</Label>
+                <Input
+                  id="reg-email"
+                  name="email"
+                  type="email"
+                  defaultValue={state?.payload?.email as string}
+                  required
+                  className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.email ? "border-red-500" : ""}`}
+                  placeholder="tu@email.com"
+                />
+                {state?.errors?.email && (
+                  <p className="text-xs text-red-500">{state.errors.email[0]}</p>
+                )}
+              </div>
 
-          <p className="text-center text-sm text-gray-500 pt-1">
-            ¿Ya tienes cuenta?{" "}
-            <button
-              type="button"
-              className="text-yellow-500 hover:underline font-medium cursor-pointer"
-              onClick={onSwitchToLogin}
-            >
-              Inicia Sesión
-            </button>
-          </p>
-        </form>
+              <div className="space-y-2">
+                <Label htmlFor="reg-phone" className="text-gray-300 text-sm">Teléfono (Opcional)</Label>
+                <Input
+                  id="reg-phone"
+                  name="phone"
+                  type="tel"
+                  defaultValue={state?.payload?.phone as string}
+                  className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10"
+                  placeholder="+54 9 ..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reg-password" className="text-gray-300 text-sm">Contraseña</Label>
+                <PasswordInput
+                  id="reg-password"
+                  name="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.password ? "border-red-500" : ""}`}
+                  placeholder="******"
+                />
+                {state?.errors?.password && (
+                  <p className="text-xs text-red-500">{state.errors.password[0]}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reg-confirm-password" className="text-gray-300 text-sm">Confirmar Contraseña</Label>
+                <PasswordInput
+                  id="reg-confirm-password"
+                  name="confirmPassword"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (password && e.target.value !== password) {
+                      setConfirmError("Las contraseñas no coinciden");
+                    } else {
+                      setConfirmError("");
+                    }
+                  }}
+                  className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${confirmError ? "border-red-500" : ""}`}
+                  placeholder="******"
+                />
+                {confirmError && (
+                  <p className="text-xs text-red-500">{confirmError}</p>
+                )}
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full bg-primary text-black hover:bg-yellow-400 font-bold h-11 shadow-[0_0_20px_rgba(255,215,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all mt-2" disabled={isPending || !!confirmError}>
+              {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Registrarme
+            </Button>
+
+            <p className="text-center text-sm text-gray-500 pt-1">
+              ¿Ya tienes cuenta?{" "}
+              <button
+                type="button"
+                className="text-yellow-500 hover:underline font-medium cursor-pointer"
+                onClick={onSwitchToLogin}
+              >
+                Inicia Sesión
+              </button>
+            </p>
+          </form>
+        )}
       </div>
     </div>
   );

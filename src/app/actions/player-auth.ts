@@ -148,7 +148,11 @@ export async function registerPlayer(prevState: any, formData: FormData) {
       console.error("Notification error (non-blocking):", notifErr);
     }
 
-    return { success: true, message: "Cuenta creada. Inicia sesión." };
+    return {
+      success: true,
+      message: isRestricted ? "Cuenta en revisión" : "Cuenta creada. Inicia sesión.",
+      isPending: isRestricted
+    };
 
   } catch (error) {
     console.error("Player Registration error:", error);
