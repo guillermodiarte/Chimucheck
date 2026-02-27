@@ -50,7 +50,13 @@ export default function EventsGrid({ events }: EventsGridProps) {
                   {new Date(event.date).toLocaleString("es-ES")}
                 </div>
               )}
-              <h3 className="text-2xl font-bold mb-2 text-white">{event.name}</h3>
+              {event.url ? (
+                <a href={event.url} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary transition-colors inline-block w-fit">
+                  <h3 className="text-2xl font-bold mb-2 text-white">{event.name}</h3>
+                </a>
+              ) : (
+                <h3 className="text-2xl font-bold mb-2 text-white">{event.name}</h3>
+              )}
               <p className="text-gray-400 mb-4">{event.description}</p>
               {event.location && (
                 <div className="flex items-center gap-2 text-sm text-gray-500">

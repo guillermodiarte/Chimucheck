@@ -18,6 +18,7 @@ interface EventFormProps {
     date: Date | null;
     location: string | null;
     imageUrl: string | null;
+    url: string | null;
     active: boolean;
   } | null;
 }
@@ -131,6 +132,18 @@ export function EventForm({ initialData }: EventFormProps) {
             className="bg-gray-800 border-gray-700 text-white"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="url" className="text-white">URL / Link del Evento (Opcional)</Label>
+        <Input
+          id="url"
+          name="url"
+          defaultValue={(payload?.url as string) || initialData?.url || ""}
+          placeholder="Ej: https://chimucheck.com/meet-and-greet"
+          className="bg-gray-800 border-gray-700 text-white"
+        />
+        {(state as any)?.errors?.url && <p className="text-red-500 text-sm">{(state as any).errors.url}</p>}
       </div>
 
       <div className="space-y-2">
