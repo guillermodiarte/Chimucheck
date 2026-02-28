@@ -70,7 +70,7 @@ export default function TournamentImageCarousel({
             src={img.src}
             alt={img.label || alt}
             fill
-            className="object-cover"
+            className="w-full h-full object-fill"
           />
         </div>
       ))}
@@ -100,8 +100,8 @@ export default function TournamentImageCarousel({
                 key={i}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrent(i); }}
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === current
-                    ? "bg-primary w-4"
-                    : "bg-white/40 hover:bg-white/60"
+                  ? "bg-primary w-4"
+                  : "bg-white/40 hover:bg-white/60"
                   }`}
                 aria-label={`Imagen ${i + 1}`}
               />
