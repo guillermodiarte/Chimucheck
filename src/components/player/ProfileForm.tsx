@@ -89,6 +89,7 @@ export function ProfileForm({ player }: { player: any }) {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
       setImageError(false);
+      setIsEditing(true);
     }
   };
 
@@ -323,7 +324,7 @@ export function ProfileForm({ player }: { player: any }) {
                   <h2 className="text-2xl font-bold text-white">Editar Perfil</h2>
                   <p className="text-zinc-400 text-sm">Actualiza tu información personal y de seguridad.</p>
                 </div>
-                {!isEditing && (
+                {!isEditing ? (
                   <Button
                     type="button"
                     variant="outline"
@@ -333,19 +334,34 @@ export function ProfileForm({ player }: { player: any }) {
                     <Pencil size={16} className="mr-2" />
                     Editar
                   </Button>
-                )}
-                {isEditing && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsEditing(false);
-                      form.reset();
-                    }}
-                    className="text-zinc-400 hover:text-white"
-                  >
-                    Cancelar
-                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsEditing(false);
+                        form.reset();
+                      }}
+                      className="text-zinc-400 hover:text-white"
+                      disabled={isPending}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={form.handleSubmit(onSubmit)}
+                      className="bg-gradient-to-r from-primary to-yellow-500 hover:to-primary text-black font-bold shadow-lg shadow-primary/20 transition-all"
+                      disabled={isPending}
+                    >
+                      {isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      Guardar
+                    </Button>
+                  </div>
                 )}
               </div>
 
@@ -560,22 +576,7 @@ export function ProfileForm({ player }: { player: any }) {
                     </div>
                   </div>
 
-                  {isEditing && (
-                    <div className="pt-4">
-                      <Button
-                        type="submit"
-                        className="w-full h-12 bg-gradient-to-r from-primary to-yellow-500 hover:to-primary text-black font-black uppercase tracking-wide shadow-lg shadow-primary/20 transition-all duration-300 transform hover:scale-[1.01]"
-                        disabled={isPending}
-                      >
-                        {isPending ? (
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        ) : (
-                          <Save className="mr-2 h-5 w-5" />
-                        )}
-                        GUARDAR CAMBIOS
-                      </Button>
-                    </div>
-                  )}
+                  {/* El botón de guardar se movió arriba */}
                 </form>
               </Form>
             </CardContent>
