@@ -9,6 +9,7 @@ import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
 import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 import { startTransition } from "react";
+import { CATEGORIES, calculateRank, RANK_TIERS } from "@/lib/mmr";
 
 interface PlayerFormProps {
   initialData: {
@@ -26,6 +27,10 @@ interface PlayerFormProps {
       winsSecond: number;
       winsThird: number;
     } | null;
+    categoryStats?: {
+      category: string;
+      points: number;
+    }[];
   };
 }
 
@@ -244,6 +249,55 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               className="bg-gray-800 border-orange-500/30 text-white font-mono"
             />
           </div>
+        </div>
+      </div>
+
+      {/* MMR Section */}
+      <div className="pt-4 border-t border-gray-800">
+        <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+          Puntaje Competitivo (MMR)
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {CATEGORIES.map((cat) => {
+            const stat = initialData.categoryStats?.find(s => s.category === cat);
+            const defaultPoints = stat?.points || 0;
+
+            return (
+              <div key={cat} className="space-y-1 bg-black/20 p-3 rounded-lg border border-gray-800">
+                <Label htmlFor={`mmr_${cat}`} className="text-blue-400 text-xs font-bold uppercase tracking-wider">{cat.replace("_", " ")}</Label>
+                <div className="relative">
+                  <Input
+                    id={`mmr_${cat}`}
+                    name={`mmr_${cat}`}
+                    type="number"
+                    min="0"
+                    max="100"
+                    defaultValue={defaultPoints}
+                    className="bg-gray-800 border-gray-700 text-white font-mono"
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      const display = document.getElementById(`rank_display_${cat}`);
+                      if (display) {
+                        if (isNaN(val)) display.textContent = "";
+                        else {
+                          const r = calculateRank(val);
+                          display.textContent = r.label;
+                          display.className = r.tier === RANK_TIERS.PRO ? "text-[10px] text-yellow-500 font-bold" : r.tier === RANK_TIERS.SEMI_PRO ? "text-[10px] text-blue-400 font-bold" : "text-[10px] text-green-400 font-bold";
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                {/* Dynamic Rank Display Span */}
+                <div className="flex justify-end mt-1 h-4">
+                  <span id={`rank_display_${cat}`} className="text-[10px] text-gray-400 font-bold">
+                    {calculateRank(defaultPoints).label}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

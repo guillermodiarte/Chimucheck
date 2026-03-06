@@ -4,6 +4,7 @@
 import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { calculateRank, canJoinTournament, RankTier, MMR_CONSTANTS } from "@/lib/mmr";
 
 const TournamentSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
@@ -14,6 +15,8 @@ const TournamentSchema = z.object({
   prizePool: z.string().optional(),
   active: z.boolean().optional(),
   isRestricted: z.boolean().optional(),
+  category: z.string().default("SHOOTER"),
+  requiredRank: z.string().default("AMATEUR"),
   // Legacy fields (kept for backward compat)
   game: z.string().optional(),
   image: z.string().optional(),
@@ -100,6 +103,8 @@ export async function createTournament(prevState: any, formData: FormData) {
     prizePool: formData.get("prizePool"),
     active: formData.get("active") === "true" || formData.get("active") === "on",
     isRestricted: formData.get("isRestricted") === "true" || formData.get("isRestricted") === "on",
+    category: formData.get("category") as string || "SHOOTER",
+    requiredRank: formData.get("requiredRank") as string || "AMATEUR",
     game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
     image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
     games: gamesRaw || "[]",
@@ -143,6 +148,8 @@ export async function updateTournament(id: string, prevState: any, formData: For
     prizePool: formData.get("prizePool"),
     active: formData.get("active") === "true" || formData.get("active") === "on",
     isRestricted: formData.get("isRestricted") === "true" || formData.get("isRestricted") === "on",
+    category: formData.get("category") as string || "SHOOTER",
+    requiredRank: formData.get("requiredRank") as string || "AMATEUR",
     game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
     image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
     games: gamesRaw || "[]",
@@ -264,6 +271,28 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
     if (tournament.registrations.length >= tournament.maxPlayers) {
       return { success: false, message: "El torneo está lleno" };
     }
+
+    // --- MMR Validation ---
+    const playerStats = await db.playerCategoryStats.findUnique({
+      where: {
+        playerId_category: {
+          playerId,
+          category: tournament.category
+        }
+      }
+    });
+
+    const points = playerStats?.points || 0;
+    const playerRank = calculateRank(points);
+    const requiredRank = tournament.requiredRank as RankTier;
+
+    if (!canJoinTournament(playerRank.tier, requiredRank)) {
+      return {
+        success: false,
+        message: `No cumples con el nivel. Eres ${playerRank.label} y el torneo es para ${requiredRank}.`
+      };
+    }
+    // -----------------------
 
     const existingRegistration = await db.tournamentRegistration.findUnique({
       where: {
@@ -426,6 +455,31 @@ export async function finishTournament(id: string) {
         update: { [field]: { increment: 1 }, wins: { increment: 1 } },
       });
     }
+
+    // --- MMR Update Logic ---
+    for (let i = 0; i < sorted.length; i++) {
+      const reg = sorted[i];
+
+      let delta = MMR_CONSTANTS.POINTS_LOSS; // -5
+      if (i === 0) delta = MMR_CONSTANTS.POINTS_1ST; // +15
+      else if (i === 1) delta = MMR_CONSTANTS.POINTS_2ND; // +10
+      else if (i === 2) delta = MMR_CONSTANTS.POINTS_3RD; // +5
+
+      // Fetch current points to safely clamp between 0 and 100
+      const currentStats = await db.playerCategoryStats.findUnique({
+        where: { playerId_category: { playerId: reg.playerId, category: tournament.category } }
+      });
+
+      const currentPoints = currentStats?.points || 0;
+      const newPoints = Math.max(MMR_CONSTANTS.MIN_POINTS, Math.min(MMR_CONSTANTS.MAX_POINTS, currentPoints + delta));
+
+      await db.playerCategoryStats.upsert({
+        where: { playerId_category: { playerId: reg.playerId, category: tournament.category } },
+        create: { playerId: reg.playerId, category: tournament.category, points: newPoints },
+        update: { points: newPoints }
+      });
+    }
+    // -------------------------
 
     revalidatePath("/admin/tournaments");
     revalidatePath("/torneos");

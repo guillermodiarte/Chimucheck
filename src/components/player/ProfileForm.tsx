@@ -23,6 +23,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { formatDate } from "@/lib/utils";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { calculateRank, CATEGORIES, RANK_TIERS } from "@/lib/mmr";
 
 const profileSchema = z.object({
   alias: z.string().min(2, "El alias debe tener al menos 2 caracteres"),
@@ -266,6 +268,77 @@ export function ProfileForm({ player }: { player: any }) {
                   <div className="text-2xl font-bold text-orange-400">{player.stats?.winsThird || 0}</div>
                   <div className="text-[10px] text-orange-400/80 uppercase tracking-wider font-bold">🥉 3° Puesto</div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Rango Competitivo (MMR Radar Chart) */}
+          <Card className="bg-zinc-900 border-white/10 overflow-hidden relative group shadow-lg">
+            <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <CardContent className="p-6 relative z-10 space-y-4">
+              <h3 className="text-lg font-bold text-white flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Shield className="text-blue-400" size={20} />
+                  Rangos Competitivos
+                </span>
+                <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">MMR System</span>
+              </h3>
+
+              {/* Radar Chart */}
+              <div className="w-full h-64 bg-black/40 rounded-xl border border-white/5 relative flex items-center justify-center">
+                {(!player.categoryStats || player.categoryStats.length === 0) ? (
+                  <div className="text-center space-y-2">
+                    <Shield className="w-10 h-10 text-zinc-700 mx-auto" />
+                    <p className="text-zinc-500 text-sm font-medium">No hay historial competitivo</p>
+                    <p className="text-zinc-700 text-xs">Juega torneos para ganar puntos</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={CATEGORIES.map(cat => {
+                      const stat = player.categoryStats?.find((s: any) => s.category === cat);
+                      return {
+                        subject: cat.replace("_", " "),
+                        puntos: stat?.points || 0,
+                        fullMark: 100,
+                      };
+                    })}>
+                      <PolarGrid stroke="#3f3f46" strokeDasharray="3 3" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 10, fontWeight: 600 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff' }}
+                        itemStyle={{ color: '#60a5fa', fontWeight: 'bold' }}
+                      />
+                      <Radar name="Puntos" dataKey="puntos" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              {/* Ranks List */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                {CATEGORIES.map(cat => {
+                  const stat = player.categoryStats?.find((s: any) => s.category === cat);
+                  const points = stat?.points || 0;
+                  const rank = calculateRank(points);
+
+                  // Color coding based on tier
+                  const tierColor = rank.tier === RANK_TIERS.PRO ? "text-yellow-400 border-yellow-500/20 bg-yellow-500/10"
+                    : rank.tier === RANK_TIERS.SEMI_PRO ? "text-blue-400 border-blue-500/20 bg-blue-500/10"
+                      : "text-green-400 border-green-500/20 bg-green-500/10";
+
+                  return (
+                    <div key={cat} className="flex flex-col p-2.5 rounded-lg bg-zinc-950 border border-white/5">
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">{cat.replace("_", " ")}</span>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${tierColor}`}>
+                          {rank.label}
+                        </span>
+                        <span className="text-sm font-black text-white">{points} <span className="text-[10px] text-zinc-600 font-normal shadow-none">PTS</span></span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

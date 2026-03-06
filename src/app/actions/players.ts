@@ -10,6 +10,7 @@ export async function getPlayers() {
       orderBy: { createdAt: "desc" },
       include: {
         stats: true,
+        categoryStats: true,
       },
     });
     return players;
@@ -45,6 +46,7 @@ export async function togglePlayerStatus(id: string, currentStatus: boolean) {
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { CATEGORIES } from "@/lib/mmr";
 
 const PlayerSchema = z.object({
   alias: z.string().min(2, "El alias es requerido"),
@@ -132,6 +134,24 @@ export async function updatePlayer(id: string, prevState: any, formData: FormDat
       create: { playerId: id, matchesPlayed, winsFirst, winsSecond, winsThird, wins, winRate },
       update: { matchesPlayed, winsFirst, winsSecond, winsThird, wins, winRate },
     });
+
+    // Update MMR Categories if provided
+    const mmrUpdates = CATEGORIES.map(async (cat) => {
+      const rawPoints = formData.get(`mmr_${cat}`);
+      if (rawPoints !== null) {
+        let points = parseInt(rawPoints as string, 10);
+        if (isNaN(points)) points = 0;
+        points = Math.max(0, Math.min(100, points)); // Clamp validation
+
+        return db.playerCategoryStats.upsert({
+          where: { playerId_category: { playerId: id, category: cat } },
+          create: { playerId: id, category: cat, points },
+          update: { points },
+        });
+      }
+    });
+
+    await Promise.all(mmrUpdates);
 
   } catch (error) {
     console.error("Error updating player:", error);

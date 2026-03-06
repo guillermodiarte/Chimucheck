@@ -20,6 +20,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { createTournament, updateTournament } from "@/app/actions/tournaments";
+import { CATEGORIES, RANK_TIERS } from "@/lib/mmr";
 import { LocalImageUpload } from "./LocalImageUpload";
 import { MediaSelectorModal } from "./MediaSelectorModal";
 import { Plus, X, Gamepad2 } from "lucide-react";
@@ -42,6 +43,8 @@ const TournamentSchema = z.object({
   maxPlayers: z.coerce.number().min(2, "Mínimo 2 jugadores"),
   active: z.boolean().default(true),
   isRestricted: z.boolean().default(false),
+  category: z.string().default("SHOOTER"),
+  requiredRank: z.string().default("AMATEUR"),
 });
 
 interface TournamentFormProps {
@@ -98,6 +101,8 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       maxPlayers: tournament?.maxPlayers || 16,
       active: tournament?.active ?? true,
       isRestricted: tournament?.isRestricted ?? false,
+      category: tournament?.category || "SHOOTER",
+      requiredRank: tournament?.requiredRank || "AMATEUR",
     },
   });
 
@@ -179,6 +184,8 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
       formData.append("prizePool", prizesJson);
       formData.append("active", String(data.active));
       formData.append("isRestricted", String(data.isRestricted));
+      formData.append("category", data.category);
+      formData.append("requiredRank", data.requiredRank);
       formData.append("games", JSON.stringify(uploadedGames));
 
       const result = tournament
@@ -251,6 +258,50 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
                       <FormLabel>Cupo Máximo</FormLabel>
                       <FormControl>
                         <Input {...field} type="number" className="bg-gray-800 border-gray-700" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Category + Rank */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoría</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full bg-gray-800 border border-gray-700 text-white h-10 px-3 rounded-md focus:border-white/20 transition-all appearance-none"
+                        >
+                          {CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat} className="bg-gray-900">{cat}</option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="requiredRank"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nivel Competitivo</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full bg-gray-800 border border-gray-700 text-white h-10 px-3 rounded-md focus:border-white/20 transition-all appearance-none"
+                        >
+                          <option value={RANK_TIERS.AMATEUR} className="bg-gray-900">Amateur</option>
+                          <option value={RANK_TIERS.SEMI_PRO} className="bg-gray-900">Semi-Pro</option>
+                          <option value={RANK_TIERS.PRO} className="bg-gray-900">Pro</option>
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

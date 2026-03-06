@@ -11,6 +11,7 @@ export default async function ProfilePage() {
     where: { id: session.user.id },
     include: {
       stats: true,
+      categoryStats: true,
       registrations: {
         include: { tournament: true },
         orderBy: { registeredAt: "desc" },
