@@ -8,8 +8,9 @@ import { SocialsForm } from "./SocialsForm";
 import { StreamingForm } from "./StreamingForm";
 import { FooterForm } from "./FooterForm";
 import { ChimuCoinSectionForm } from "./ChimuCoinSectionForm";
+import { PlayerProfileBannerForm } from "./PlayerProfileBannerForm";
 import PrizesPageConfig from "../prizes/PrizesPageConfig";
-import { Home, BookOpen, ArrowLeft, ChevronRight, Gift, Gamepad2, ImageIcon, Share2, Video, LayoutTemplate, Coins } from "lucide-react";
+import { Home, BookOpen, ArrowLeft, ChevronRight, Gift, Gamepad2, ImageIcon, Share2, Video, LayoutTemplate, Coins, UserRound } from "lucide-react";
 
 interface SectionsDashboardProps {
   homeContent: any;
@@ -19,13 +20,14 @@ interface SectionsDashboardProps {
   streamingContent: any;
   footerContent: any;
   chimucoinContent: any;
+  profileBannerContent: any;
   prizesData: {
     initialPrizes: any[];
     initialConfig: any;
   };
 }
 
-export function SectionsDashboard({ homeContent, aboutContent, gamingContent, socialsContent, streamingContent, footerContent, chimucoinContent, prizesData }: SectionsDashboardProps) {
+export function SectionsDashboard({ homeContent, aboutContent, gamingContent, socialsContent, streamingContent, footerContent, chimucoinContent, profileBannerContent, prizesData }: SectionsDashboardProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -171,6 +173,23 @@ export function SectionsDashboard({ homeContent, aboutContent, gamingContent, so
         </button>
         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
           <ChimuCoinSectionForm initialContent={chimucoinContent} />
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedSection === "profile_banner") {
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={() => handleSelectSection(null)}
+          className="flex items-center text-gray-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver a Secciones
+        </button>
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+          <PlayerProfileBannerForm initialContent={profileBannerContent} />
         </div>
       </div>
     );
@@ -337,6 +356,25 @@ export function SectionsDashboard({ homeContent, aboutContent, gamingContent, so
           <div className="h-2 w-10 rounded-full bg-yellow-500/30"></div>
           <div className="h-2 w-6 rounded-full bg-gray-700"></div>
           <div className="h-2 w-8 rounded-full bg-yellow-500/30"></div>
+        </div>
+      </div>
+
+      {/* Banner Perfil Jugador Card */}
+      <div
+        onClick={() => handleSelectSection("profile_banner")}
+        className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-5 md:p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10 active:scale-95 md:active:scale-100"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="p-3 bg-fuchsia-500/10 rounded-lg text-fuchsia-400 group-hover:text-fuchsia-300 group-hover:bg-fuchsia-500/20 transition-colors">
+            <UserRound className="w-6 h-6 md:w-8 md:h-8" />
+          </div>
+          <ChevronRight className="text-gray-600 group-hover:text-white transition-colors" />
+        </div>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Banner Perfil Jugador</h3>
+        <p className="text-gray-400 text-sm">Agrega o cambia la foto de portada principal del dashboard de los jugadores.</p>
+        <div className="mt-6 flex gap-2">
+          <div className="h-2 w-14 rounded-full bg-fuchsia-500/30"></div>
+          <div className="h-2 w-8 rounded-full bg-gray-700"></div>
         </div>
       </div>
 

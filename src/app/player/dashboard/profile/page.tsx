@@ -21,5 +21,11 @@ export default async function ProfilePage() {
 
   if (!player) redirect("/player/login");
 
-  return <ProfileForm player={player} />;
+  const profileBannerSection = await db.siteSection.findUnique({
+    where: { key: "player_profile_banner" },
+  });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const bannerUrl = (profileBannerSection?.content as any)?.imageUrl || null;
+
+  return <ProfileForm player={player} profileBannerImage={bannerUrl} />;
 }

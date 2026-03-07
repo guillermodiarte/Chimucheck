@@ -52,6 +52,12 @@ export default async function SectionsPage() {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const prizesConfig = (prizesSection?.content as any) || {};
 
+  const profileBannerSection = await db.siteSection.findUnique({
+    where: { key: "player_profile_banner" },
+  });
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const profileBannerData = (profileBannerSection?.content as any) || null;
+
   const aboutContent = {
     title: aboutData.title || "Nuestra Historia",
     bio: aboutData.bio || "",
@@ -79,6 +85,7 @@ export default async function SectionsPage() {
         streamingContent={streamingData}
         footerContent={footerData}
         chimucoinContent={chimucoinData}
+        profileBannerContent={profileBannerData}
         prizesData={{ initialPrizes: prizes, initialConfig: prizesConfig }}
       />
     </div>
