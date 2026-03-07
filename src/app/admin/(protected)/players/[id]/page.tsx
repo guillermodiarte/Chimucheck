@@ -12,7 +12,10 @@ export default async function EditPlayerPage({ params }: EditPlayerPageProps) {
   const resolvedParams = await params;
   const player = await db.player.findUnique({
     where: { id: resolvedParams.id },
-    include: { stats: true },
+    include: {
+      stats: true,
+      categoryStats: true,
+    },
   });
 
   if (!player) {
