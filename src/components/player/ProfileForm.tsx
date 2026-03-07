@@ -152,7 +152,7 @@ export function ProfileForm({ player, profileBannerImage }: { player: any, profi
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 w-full px-0 sm:px-2 lg:px-4 pb-10">
 
       {/* 1. Profile Header Card (Interactive Avatar) */}
       <div className="relative mb-36 mt-4">
