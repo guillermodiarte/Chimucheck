@@ -306,16 +306,6 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
                         if (isNaN(val)) val = 0;
                         if (val < 0) val = 0;
 
-                        const w1 = Number(form.getValues("winsFirst")) || 0;
-                        const w2 = Number(form.getValues("winsSecond")) || 0;
-                        const w3 = Number(form.getValues("winsThird")) || 0;
-                        const totalPodiums = w1 + w2 + w3;
-
-                        // Strict clamp: cannot be less than total podiums
-                        if (val < totalPodiums) {
-                          val = totalPodiums;
-                        }
-
                         field.onChange(val);
                       }}
                     />
@@ -333,15 +323,6 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
                         if (isNaN(val)) val = 0;
                         if (val < 0) val = 0;
                         field.onChange(val);
-
-                        const currentW2 = Number(form.getValues("winsSecond")) || 0;
-                        const currentW3 = Number(form.getValues("winsThird")) || 0;
-                        const newTotal = val + currentW2 + currentW3;
-
-                        const currentMatches = Number(form.getValues("matchesPlayed")) || 0;
-                        if (newTotal > currentMatches) {
-                          form.setValue("matchesPlayed", newTotal as any, { shouldValidate: true });
-                        }
                       }}
                     />
                   </FormControl>
@@ -358,15 +339,6 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
                         if (isNaN(val)) val = 0;
                         if (val < 0) val = 0;
                         field.onChange(val);
-
-                        const currentW1 = Number(form.getValues("winsFirst")) || 0;
-                        const currentW3 = Number(form.getValues("winsThird")) || 0;
-                        const newTotal = currentW1 + val + currentW3;
-
-                        const currentMatches = Number(form.getValues("matchesPlayed")) || 0;
-                        if (newTotal > currentMatches) {
-                          form.setValue("matchesPlayed", newTotal as any, { shouldValidate: true });
-                        }
                       }}
                     />
                   </FormControl>
@@ -383,15 +355,6 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
                         if (isNaN(val)) val = 0;
                         if (val < 0) val = 0;
                         field.onChange(val);
-
-                        const currentW1 = Number(form.getValues("winsFirst")) || 0;
-                        const currentW2 = Number(form.getValues("winsSecond")) || 0;
-                        const newTotal = currentW1 + currentW2 + val;
-
-                        const currentMatches = Number(form.getValues("matchesPlayed")) || 0;
-                        if (newTotal > currentMatches) {
-                          form.setValue("matchesPlayed", newTotal as any, { shouldValidate: true });
-                        }
                       }}
                     />
                   </FormControl>

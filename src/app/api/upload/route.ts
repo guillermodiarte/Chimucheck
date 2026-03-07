@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
     targetFolder = "avatars";
   } else if (requestedType === "fondo" || requestedFolder === "fondos") {
     targetFolder = "fondos";
+  } else if (requestedType === "juego" || requestedFolder === "juegos") {
+    targetFolder = "juegos";
   } else if (file.type.startsWith("video/")) {
     targetFolder = "videos";
   } else if (file.type.startsWith("image/")) {

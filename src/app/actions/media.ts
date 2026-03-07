@@ -20,6 +20,7 @@ export async function getMediaFiles(): Promise<MediaFile[]> {
     { path: path.join(process.cwd(), "public", "uploads", "imagenes"), urlPrefix: "/uploads/imagenes", canDelete: true },
     { path: path.join(process.cwd(), "public", "uploads", "videos"), urlPrefix: "/uploads/videos", canDelete: true },
     { path: path.join(process.cwd(), "public", "uploads", "avatars"), urlPrefix: "/uploads/avatars", canDelete: true },
+    { path: path.join(process.cwd(), "public", "uploads", "juegos"), urlPrefix: "/uploads/juegos", canDelete: true },
   ];
 
   try {
@@ -96,5 +97,69 @@ export async function deleteMediaFile(url: string) {
   } catch (error) {
     console.error("Error deleting media file:", error);
     return { success: false, error: "Error al eliminar el archivo" };
+  }
+}
+
+export async function moveMediaFile(url: string, targetFolder: string) {
+  try {
+    const validFolders = ["imagenes", "fondos", "avatars", "juegos", "videos"];
+    if (!validFolders.includes(targetFolder)) {
+      return { success: false, error: "Carpeta de destino no válida" };
+    }
+
+    const normalizedUrl = url.startsWith('/') ? url.slice(1) : url;
+    const sourceFilePath = path.join(process.cwd(), "public", normalizedUrl);
+
+    // Security check for source
+    const publicDir = path.join(process.cwd(), "public");
+    if (!sourceFilePath.startsWith(publicDir)) {
+      return { success: false, error: "Ruta de archivo de origen no válida" };
+    }
+
+    try {
+      await fs.access(sourceFilePath);
+    } catch {
+      return { success: false, error: "Archivo original no encontrado" };
+    }
+
+    const fileName = path.basename(sourceFilePath);
+    const targetDirPath = path.join(process.cwd(), "public", "uploads", targetFolder);
+
+    // Ensure target exists
+    try {
+      await fs.mkdir(targetDirPath, { recursive: true });
+    } catch (err) {
+      console.error("Error creating target directory: ", err);
+    }
+
+    const targetFilePath = path.join(targetDirPath, fileName);
+
+    // Security check for target
+    if (!targetFilePath.startsWith(publicDir)) {
+      return { success: false, error: "Ruta de destino no válida" };
+    }
+
+    // Use rename (or copy+unlink if across volumes, but within public/uploads rename is safe)
+    try {
+      await fs.rename(sourceFilePath, targetFilePath);
+    } catch (renameErr: any) {
+      // Fallback for cross-device links (EXDEV)
+      if (renameErr.code === 'EXDEV') {
+        await fs.copyFile(sourceFilePath, targetFilePath);
+        await fs.unlink(sourceFilePath);
+      } else {
+        throw renameErr;
+      }
+    }
+
+    revalidatePath("/admin/media");
+    return {
+      success: true,
+      newUrl: `/uploads/${targetFolder}/${fileName}`
+    };
+
+  } catch (error) {
+    console.error("Error moving media file:", error);
+    return { success: false, error: "Error al mover el archivo" };
   }
 }

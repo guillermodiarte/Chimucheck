@@ -6,7 +6,7 @@ import { Copy, Trash2, Search, FileIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type MediaFile } from "@/app/actions/media";
-import { deleteMediaFile } from "@/app/actions/media";
+import { deleteMediaFile, moveMediaFile } from "@/app/actions/media";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +32,8 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
+  const [fileToMove, setFileToMove] = useState<string | null>(null);
+  const [targetMoveFolder, setTargetMoveFolder] = useState<string>("imagenes");
 
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -58,6 +60,24 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
       toast.error("Ocurrió un error inesperado");
     } finally {
       setFileToDelete(null);
+    }
+  };
+
+  const handleMove = async () => {
+    if (!fileToMove || !targetMoveFolder) return;
+
+    try {
+      const result = await moveMediaFile(fileToMove, targetMoveFolder);
+      if (result.success && result.newUrl) {
+        setFiles(files.map(f => f.url === fileToMove ? { ...f, url: result.newUrl } : f));
+        toast.success("Archivo movido correctamente");
+      } else {
+        toast.error(result.error || "Error al mover el archivo");
+      }
+    } catch (error) {
+      toast.error("Ocurrió un error inesperado");
+    } finally {
+      setFileToMove(null);
     }
   };
 
@@ -166,6 +186,7 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
             <TabsTrigger value="imagenes" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Imágenes</TabsTrigger>
             <TabsTrigger value="fondos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Fondos</TabsTrigger>
             <TabsTrigger value="avatars" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Avatares</TabsTrigger>
+            <TabsTrigger value="juegos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Juegos</TabsTrigger>
             <TabsTrigger value="videos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black">Videos</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -258,6 +279,52 @@ export function MediaGallery({ initialFiles }: MediaGalleryProps) {
                       </AlertDialogContent>
                     </AlertDialog>
                   )}
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-white hover:text-blue-400 hover:bg-black/40"
+                        onClick={() => {
+                          setFileToMove(file.url);
+                          setTargetMoveFolder(selectedFolder);
+                        }}
+                        title="Mover a"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 9 3 3-3 3" /><path d="M8 12h8" /><path d="m16 9 3 3-3 3" /></svg>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Mover archivo</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-400 space-y-4">
+                          <span>Selecciona la carpeta de destino para <strong>{file.name}</strong>:</span>
+                          <select
+                            value={targetMoveFolder}
+                            onChange={(e) => setTargetMoveFolder(e.target.value)}
+                            className="w-full mt-2 bg-black border border-gray-700 text-white p-2 rounded-md focus:border-secondary"
+                          >
+                            <option value="imagenes">Imágenes</option>
+                            <option value="fondos">Fondos</option>
+                            <option value="avatars">Avatares</option>
+                            <option value="juegos">Juegos</option>
+                            <option value="videos">Videos</option>
+                          </select>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-transparent border-gray-700 text-white hover:bg-gray-800">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleMove}
+                          className="bg-blue-600 hover:bg-blue-700 text-white border-0"
+                          disabled={fileToMove === null || targetMoveFolder === selectedFolder}
+                        >
+                          Mover
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
 

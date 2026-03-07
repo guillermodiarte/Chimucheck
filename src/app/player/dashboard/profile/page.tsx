@@ -26,6 +26,8 @@ export default async function ProfilePage() {
   });
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const bannerUrl = (profileBannerSection?.content as any)?.imageUrl || null;
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const backgroundUrl = (profileBannerSection?.content as any)?.backgroundUrl || null;
 
-  return <ProfileForm player={player} profileBannerImage={bannerUrl} />;
+  return <ProfileForm player={player} profileBannerImage={bannerUrl} profileBackgroundImage={backgroundUrl} />;
 }

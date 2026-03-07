@@ -359,7 +359,7 @@ export function SectionsDashboard({ homeContent, aboutContent, gamingContent, so
         </div>
       </div>
 
-      {/* Banner Perfil Jugador Card */}
+      {/* Perfil Jugador Card */}
       <div
         onClick={() => handleSelectSection("profile_banner")}
         className="group relative overflow-hidden rounded-xl bg-gray-900 border border-gray-800 p-5 md:p-6 hover:border-secondary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-secondary/10 active:scale-95 md:active:scale-100"
@@ -370,7 +370,7 @@ export function SectionsDashboard({ homeContent, aboutContent, gamingContent, so
           </div>
           <ChevronRight className="text-gray-600 group-hover:text-white transition-colors" />
         </div>
-        <h3 className="text-lg md:text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Banner Perfil Jugador</h3>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors">Perfil Jugador</h3>
         <p className="text-gray-400 text-sm">Agrega o cambia la foto de portada principal del dashboard de los jugadores.</p>
         <div className="mt-6 flex gap-2">
           <div className="h-2 w-14 rounded-full bg-fuchsia-500/30"></div>
