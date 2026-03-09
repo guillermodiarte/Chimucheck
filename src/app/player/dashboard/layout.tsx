@@ -32,7 +32,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col">
       {/* Content with top padding to account for fixed navbar */}
-      <main className="flex-1 space-y-4 px-4 sm:px-6 md:px-8 pt-36 w-full">
+      <main className="flex-1 w-full pt-20">
         {children}
       </main>
     </div>

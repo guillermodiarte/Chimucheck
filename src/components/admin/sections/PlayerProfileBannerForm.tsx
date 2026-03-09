@@ -154,7 +154,7 @@ export function PlayerProfileBannerForm({ initialContent }: { initialContent: an
         </div>
 
         <div className="space-y-4 flex flex-col h-full">
-          <Label className="text-white">Fondo de Pantalla de Perfil Jugador</Label>
+          <Label className="text-white">Fondo de Pantalla</Label>
           <div className="flex flex-col items-center justify-between gap-6 bg-black/30 p-6 rounded-xl border border-gray-800 flex-1">
 
             <div className="relative group w-full h-40 flex items-center justify-center bg-black/50 rounded-lg border border-gray-700 overflow-hidden">

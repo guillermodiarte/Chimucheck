@@ -115,10 +115,11 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
     winsThird: initialData.stats?.winsThird || 0,
   };
 
-  CATEGORIES.forEach(cat => {
+  // MUST populate categories before passing to useForm
+  CATEGORIES.forEach((cat) => {
     const stat = initialData.categoryStats?.find(s => s.category === cat);
     // @ts-ignore
-    defaultValues[`mmr_${cat}`] = stat?.points || 0;
+    defaultValues[`mmr_${cat}` as keyof PlayerFormValues] = stat?.points || 0;
   });
 
   const form = useForm({

@@ -14,9 +14,10 @@ interface LocalImageUploadProps {
   currentPreview?: string | null;
   className?: string;
   label?: string;
+  defaultFolder?: string;
 }
 
-export function LocalImageUpload({ onFileSelect, onUrlSelect, className, label = "Subir Imagen" }: LocalImageUploadProps) {
+export function LocalImageUpload({ onFileSelect, onUrlSelect, className, label = "Subir Imagen", defaultFolder }: LocalImageUploadProps) {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
 
@@ -79,6 +80,7 @@ export function LocalImageUpload({ onFileSelect, onUrlSelect, className, label =
         onSelect={(url) => {
           if (onUrlSelect) onUrlSelect(url);
         }}
+        defaultFolder={defaultFolder}
       />
     </div>
   );

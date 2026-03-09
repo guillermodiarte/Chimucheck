@@ -15,20 +15,22 @@ interface MediaSelectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (url: string) => void;
+  defaultFolder?: string;
 }
 
-export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelectorModalProps) {
+export function MediaSelectorModal({ open, onOpenChange, onSelect, defaultFolder = "imagenes" }: MediaSelectorModalProps) {
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState("imagenes");
+  const [selectedFolder, setSelectedFolder] = useState(defaultFolder);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       loadFiles();
+      if (defaultFolder) setSelectedFolder(defaultFolder);
     }
-  }, [open]);
+  }, [open, defaultFolder]);
 
   const loadFiles = async () => {
     setLoading(true);
@@ -77,6 +79,7 @@ export function MediaSelectorModal({ open, onOpenChange, onSelect }: MediaSelect
                 <TabsTrigger value="fondos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Fondos</TabsTrigger>
                 <TabsTrigger value="avatars" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Avatares</TabsTrigger>
                 <TabsTrigger value="videos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Videos</TabsTrigger>
+                <TabsTrigger value="juegos" className="text-gray-400 data-[state=active]:bg-secondary data-[state=active]:text-black min-w-[80px]">Juegos</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>

@@ -24,6 +24,16 @@ import { CATEGORIES, RANK_TIERS } from "@/lib/mmr";
 import { LocalImageUpload } from "./LocalImageUpload";
 import { MediaSelectorModal } from "./MediaSelectorModal";
 import { Plus, X, Gamepad2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // --- Types ---
 type GameEntry = {
@@ -49,11 +59,14 @@ const TournamentSchema = z.object({
 
 interface TournamentFormProps {
   tournament?: any;
+  gamesCatalog?: any[];
 }
 
-export default function TournamentForm({ tournament }: TournamentFormProps) {
+export default function TournamentForm({ tournament, gamesCatalog = [] }: TournamentFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCategoryWarning, setShowCategoryWarning] = useState(false);
+  const [pendingCategory, setPendingCategory] = useState("");
 
   // --- Games state ---
   const existingGames: GameEntry[] = (() => {
@@ -69,11 +82,11 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
     if (tournament?.game) {
       return [{ name: tournament.game, image: tournament.image || "", format: tournament.format || "" }];
     }
-    return [{ name: "", image: "", format: "" }];
+    return [];
   })();
 
   const [games, setGames] = useState<GameEntry[]>(existingGames);
-  const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
+  const [selectedGameToAdd, setSelectedGameToAdd] = useState<string>("");
 
   // --- Prizes state ---
   const existingPrizes = (() => {
@@ -106,9 +119,21 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
     },
   });
 
+  const categoryWatch = form.watch("category");
+  const filteredCatalog = gamesCatalog.filter((g) => g.categoryId === categoryWatch);
+
   // --- Game entry helpers ---
-  function addGame() {
-    setGames((prev) => [...prev, { name: "", image: "", format: "" }]);
+  function handleAddGameFromCatalog() {
+    if (!selectedGameToAdd) return;
+    const gameObj = gamesCatalog.find(g => g.id === selectedGameToAdd);
+    if (!gameObj) return;
+
+    let parsedImages = [];
+    try { parsedImages = JSON.parse(gameObj.images); } catch { }
+    const coverImage = Array.isArray(parsedImages) && parsedImages.length > 0 ? parsedImages[0] : "";
+
+    setGames((prev) => [...prev, { name: gameObj.name, image: coverImage, format: "1vs1", gameId: gameObj.id }]);
+    setSelectedGameToAdd("");
   }
 
   function removeGame(index: number) {
@@ -275,7 +300,15 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
                       <FormLabel>Categoría</FormLabel>
                       <FormControl>
                         <select
-                          {...field}
+                          value={field.value}
+                          onChange={(e) => {
+                            if (games.length > 0) {
+                              setPendingCategory(e.target.value);
+                              setShowCategoryWarning(true);
+                            } else {
+                              field.onChange(e);
+                            }
+                          }}
                           className="w-full bg-gray-800 border border-gray-700 text-white h-10 px-3 rounded-md focus:border-white/20 transition-all appearance-none"
                         >
                           {CATEGORIES.map((cat) => (
@@ -301,6 +334,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
                           <option value={RANK_TIERS.AMATEUR} className="bg-gray-900">Amateur</option>
                           <option value={RANK_TIERS.SEMI_PRO} className="bg-gray-900">Semi-Pro</option>
                           <option value={RANK_TIERS.PRO} className="bg-gray-900">Pro</option>
+                          <option value={RANK_TIERS.ALL_VS_ALL} className="bg-gray-900">Todos vs Todos</option>
                         </select>
                       </FormControl>
                       <FormMessage />
@@ -378,21 +412,35 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
                   <Gamepad2 className="w-5 h-5 text-primary" />
                   Juegos del Torneo
                 </h3>
+              </div>
+
+              {/* Game Selector */}
+              <div className="flex gap-2 items-center bg-gray-800/40 p-3 rounded-lg border border-gray-700">
+                <select
+                  value={selectedGameToAdd}
+                  onChange={(e) => setSelectedGameToAdd(e.target.value)}
+                  className="flex-1 bg-gray-900 border border-gray-700 text-white h-10 px-3 rounded-md focus:border-primary/50 transition-all"
+                >
+                  <option value="">Seleccionar del catálogo ({categoryWatch})...</option>
+                  {filteredCatalog.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
                 <Button
                   type="button"
-                  size="sm"
-                  className="bg-primary text-black hover:bg-yellow-400 shadow-[0_0_15px_rgba(255,215,0,0.3)] hover:shadow-[0_0_20px_rgba(255,215,0,0.5)] transition-all font-bold"
-                  onClick={addGame}
+                  onClick={handleAddGameFromCatalog}
+                  disabled={!selectedGameToAdd}
+                  className="bg-primary text-black hover:bg-yellow-400 font-bold"
                 >
-                  <Plus className="w-5 h-5 mr-1" />
-                  Agregar Juego
+                  <Plus className="w-4 h-4 mr-1" />
+                  Añadir
                 </Button>
               </div>
 
               {games.length === 0 && (
                 <div className="text-center py-8 bg-gray-800/50 rounded-lg border border-dashed border-gray-700">
                   <Gamepad2 className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">No hay juegos agregados. Haz click en &quot;Agregar Juego&quot;.</p>
+                  <p className="text-gray-500 text-sm">No hay juegos agregados. Selecciona uno del catálogo.</p>
                 </div>
               )}
 
@@ -400,74 +448,39 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
                 {games.map((game, index) => (
                   <div
                     key={index}
-                    className="relative bg-gray-800/60 border border-gray-700 rounded-lg p-4 space-y-3"
+                    className="relative bg-gray-800/60 border border-gray-700 rounded-lg p-3 flex gap-4 items-center"
                   >
-                    {/* Remove button */}
-                    {games.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeGame(index)}
-                        className="absolute top-3 right-3 text-gray-500 hover:text-red-400 transition-colors"
-                        title="Eliminar juego"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    {/* Game number label */}
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      Juego {index + 1}
-                    </p>
-
-                    {/* Game name + format */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="col-span-2">
-                        <Input
-                          value={game.name}
-                          onChange={(e) => updateGameName(index, e.target.value)}
-                          className="bg-gray-900 border-gray-600"
-                          placeholder="Nombre del juego (ej: Fortnite, CS2...)"
-                        />
-                      </div>
-                      <Input
-                        value={game.format}
-                        onChange={(e) => updateGameFormat(index, e.target.value)}
-                        className="bg-gray-900 border-gray-600"
-                        placeholder="Formato (ej: 1vs1)"
-                      />
+                    {/* Game image preview */}
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border border-gray-700 bg-black flex-shrink-0">
+                      {game.image ? (
+                        <img src={game.image} alt={game.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-600"><Gamepad2 size={24} /></div>
+                      )}
                     </div>
 
-                    {/* Game image preview */}
-                    {game.image && (
-                      <div className="relative aspect-video w-full max-w-xs rounded-lg overflow-hidden border border-gray-700 group">
-                        <img src={game.image} alt={game.name || "Preview"} className="w-full h-full object-cover" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <p className="font-bold text-white text-lg leading-none">{game.name}</p>
                         <button
                           type="button"
-                          onClick={() => updateGameImage(index, "", null)}
-                          className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeGame(index)}
+                          className="text-gray-500 hover:text-red-400 transition-colors"
+                          title="Eliminar juego"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-5 h-5" />
                         </button>
                       </div>
-                    )}
 
-                    {/* Image upload buttons */}
-                    <div className="flex gap-2">
-                      <LocalImageUpload
-                        onFileSelect={(file) => {
-                          const previewUrl = URL.createObjectURL(file);
-                          updateGameImage(index, previewUrl, file);
-                        }}
-                        className="w-auto"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="bg-blue-600 text-white hover:bg-blue-700 border-none text-sm"
-                        onClick={() => setMediaModalIndex(index)}
-                      >
-                        🖼️ Biblioteca
-                      </Button>
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Formato (ej. 1vs1, 5vs5, Solos)</label>
+                        <Input
+                          value={game.format}
+                          onChange={(e) => updateGameFormat(index, e.target.value)}
+                          className="bg-gray-900 border-gray-600 h-8 text-sm w-full max-w-[200px]"
+                          placeholder="Formato"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -527,17 +540,7 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
             />
           </div>
 
-          {/* Media modal for game images */}
-          <MediaSelectorModal
-            open={mediaModalIndex !== null}
-            onOpenChange={(open) => { if (!open) setMediaModalIndex(null); }}
-            onSelect={(url) => {
-              if (mediaModalIndex !== null) {
-                updateGameImage(mediaModalIndex, url, null);
-                setMediaModalIndex(null);
-              }
-            }}
-          />
+          {/* Full-width bottom fields remain unaffected */}
 
           <Button
             type="submit"
@@ -548,6 +551,30 @@ export default function TournamentForm({ tournament }: TournamentFormProps) {
           </Button>
         </form>
       </Form>
+
+      <AlertDialog open={showCategoryWarning} onOpenChange={setShowCategoryWarning}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Desea cambiar la categoría?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Al cambiar de categoría se eliminarán los juegos que ya has añadido al torneo. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-gray-700 hover:bg-gray-800 text-white">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={() => {
+                setGames([]);
+                form.setValue("category", pendingCategory, { shouldValidate: true });
+                setShowCategoryWarning(false);
+              }}
+            >
+              Continuar y Eliminar Juegos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

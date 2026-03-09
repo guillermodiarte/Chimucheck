@@ -152,7 +152,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
 
   return (
     <div
-      className="animate-in fade-in slide-in-from-bottom-4 duration-700 w-full px-0 sm:px-2 lg:px-4 pb-10 min-h-screen bg-cover bg-center bg-fixed relative"
+      className="animate-in fade-in slide-in-from-bottom-4 duration-700 w-full min-h-screen bg-cover bg-center bg-fixed relative flex justify-center"
       style={profileBackgroundImage ? { backgroundImage: `url(${profileBackgroundImage})` } : undefined}
     >
       {/* Dark overlay for readability */}
@@ -161,7 +161,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
       )}
 
       {/* Main content z-index to stay above background overlay */}
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 w-full max-w-screen-2xl px-4 sm:px-6 md:px-8 pb-10">
         {/* 1. Profile Header Card (Interactive Avatar) */}
         <div className="relative mb-36 mt-4">
           <div

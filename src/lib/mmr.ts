@@ -8,7 +8,7 @@ export const CATEGORIES = [
   "SHOOTER",
   "RACING",
   "KOMBAT",
-  "PUZZLE",
+  "SPORTS",
   "BOARD_GAME"
 ] as const;
 
@@ -17,7 +17,8 @@ export type TournamentCategory = typeof CATEGORIES[number];
 export const RANK_TIERS = {
   AMATEUR: "AMATEUR",
   SEMI_PRO: "SEMI_PRO",
-  PRO: "PRO"
+  PRO: "PRO",
+  ALL_VS_ALL: "ALL_VS_ALL",
 } as const;
 
 export type RankTier = keyof typeof RANK_TIERS;
@@ -84,14 +85,18 @@ export function calculateRank(points: number): RankResult {
  * PRO can play ONLY in PRO.
  */
 export function canJoinTournament(playerTier: RankTier, requiredTier: RankTier): boolean {
-  const rankWeights = {
+  if (requiredTier === RANK_TIERS.ALL_VS_ALL) {
+    return true;
+  }
+
+  const rankWeights: Partial<Record<RankTier, number>> = {
     [RANK_TIERS.AMATEUR]: 1,
     [RANK_TIERS.SEMI_PRO]: 2,
     [RANK_TIERS.PRO]: 3,
   };
 
-  const pWeight = rankWeights[playerTier];
-  const tWeight = rankWeights[requiredTier];
+  const pWeight = rankWeights[playerTier] || 1;
+  const tWeight = rankWeights[requiredTier] || 1;
 
   return pWeight <= tWeight;
 }

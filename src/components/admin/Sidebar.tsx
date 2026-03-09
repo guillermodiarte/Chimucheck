@@ -19,6 +19,7 @@ import {
   Radio,
   LayoutTemplate,
   UserCheck,
+  Gamepad2,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -67,6 +68,11 @@ export const sidebarData = [
     title: "Premios",
     href: "/admin/prizes",
     icon: Gift,
+  },
+  {
+    title: "Juegos",
+    href: "/admin/games",
+    icon: Gamepad2,
   },
   {
     title: "Biblioteca",
