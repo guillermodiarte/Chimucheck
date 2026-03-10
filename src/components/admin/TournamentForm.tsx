@@ -40,6 +40,7 @@ type GameEntry = {
   name: string;
   image: string;
   format: string;
+  gameId?: string;
   pendingFile?: File | null;
 };
 
@@ -120,7 +121,11 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
   });
 
   const categoryWatch = form.watch("category");
-  const filteredCatalog = gamesCatalog.filter((g) => g.categoryId === categoryWatch);
+  const filteredCatalog = gamesCatalog.filter((g) => {
+    if (g.categoryId !== categoryWatch) return false;
+    const isAlreadySelected = games.some(selected => selected.gameId === g.id || selected.name === g.name);
+    return !isAlreadySelected;
+  });
 
   // --- Game entry helpers ---
   function handleAddGameFromCatalog() {

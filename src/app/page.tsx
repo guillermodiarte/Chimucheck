@@ -68,7 +68,10 @@ export default async function Home() {
             Pasatiempo | Gaming | Diversión
           </h2>
           <p className="text-xl md:text-2xl text-gray-300 leading-relaxed">
-            Tu destino para lo mejor del gaming, streams y entretenimiento. ¡Sumate a la comunidad!
+            Tu destino para lo mejor del gaming, streams y entretenimiento.
+          </p>
+          <p className="text-xl md:text-2xl text-gray-300 leading-relaxed">
+            ¡Sumate a la comunidad!
           </p>
         </div>
       </section>
