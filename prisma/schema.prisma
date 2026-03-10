@@ -110,7 +110,7 @@ model PlayerStats {
 model PlayerCategoryStats {
   id        String   @id @default(uuid())
   playerId  String
-  category  String // SHOOTER, RACING, KOMBAT, PUZZLE, BOARD_GAME
+  category  String // SHOOTER, RACING, KOMBAT, SPORTS, BOARD_GAME
   points    Int      @default(0) // 0 to 100
   updatedAt DateTime @updatedAt
 

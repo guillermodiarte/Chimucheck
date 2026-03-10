@@ -408,19 +408,35 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                       Editar
                     </Button>
                   ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setIsEditing(false);
-                        form.reset();
-                      }}
-                      className="text-zinc-400 hover:text-white h-8"
-                      disabled={isPending}
-                    >
-                      Cancelar
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsEditing(false);
+                          form.reset();
+                        }}
+                        className="bg-zinc-800 hover:bg-zinc-700 text-white border-white/10 hover:border-primary/50 transition-all h-8"
+                        disabled={isPending}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="button" // Use type="button" and call form.handleSubmit manually since it's outside the <form> tags
+                        size="sm"
+                        onClick={form.handleSubmit(onSubmit)}
+                        disabled={isPending}
+                        className="h-8 bg-gradient-to-r from-primary to-yellow-500 hover:to-primary text-black font-bold shadow-md shadow-primary/20 transition-all"
+                      >
+                        {isPending ? (
+                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Save className="mr-1.5 h-3.5 w-3.5" />
+                        )}
+                        Guardar
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -621,29 +637,11 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                         )}
                       />
                     </div>
-
-                    {isEditing && (
-                      <div className="pt-4">
-                        <Button
-                          type="submit"
-                          disabled={isPending}
-                          className="w-full h-11 bg-gradient-to-r from-primary to-yellow-500 hover:to-primary text-black font-bold shadow-lg shadow-primary/20 transition-all"
-                        >
-                          {isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Save className="mr-2 h-4 w-4" />
-                          )}
-                          Guardar Cambios
-                        </Button>
-                      </div>
-                    )}
                   </form>
                 </Form>
               </CardContent>
             </Card>
           </div>
-
         </div>
       </div>
     </div>
