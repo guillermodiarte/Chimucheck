@@ -68,7 +68,36 @@ export default async function TournamentsPage() {
           </p>
         </div>
 
-        {/* ===== MIS TORNEOS ===== */}
+
+        {/* ===== TORNEOS DISPONIBLES ===== */}
+        <section>
+          <h2 className="text-3xl font-bold text-white uppercase tracking-wider mb-8">Disponibles</h2>
+
+          {available.length === 0 ? (
+            <div className="bg-zinc-900/50 border border-white/10 rounded-xl p-10 text-center">
+              <Gamepad2 className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
+              <p className="text-gray-400">No hay nuevos torneos abiertos para inscripción.</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {available.map((tournament) => (
+                <TournamentCard key={tournament.id} tournament={tournament} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ===== DISPONIBLES ===== */}
+        <div className="relative pt-8 pb-4 mt-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-black px-4 text-sm text-gray-500 uppercase tracking-widest font-bold">Torneos Inscriptos</span>
+          </div>
+        </div>
+
+        {/* ===== DIVIDER DISPONIBLES -> MIS TORNEOS ===== */}
         <section>
           <h2 className="text-3xl font-bold text-white uppercase tracking-wider mb-8">Mis Torneos</h2>
 
@@ -94,35 +123,8 @@ export default async function TournamentsPage() {
           )}
         </section>
 
-        {/* ===== DIVIDER MIS TORNEOS -> DISPONIBLES ===== */}
-        <div className="relative pt-8 pb-4 mt-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-black px-4 text-sm text-gray-500 uppercase tracking-widest font-bold">Inscripción Abierta</span>
-          </div>
-        </div>
 
-        {/* ===== TORNEOS DISPONIBLES ===== */}
-        <section>
-          <h2 className="text-3xl font-bold text-white uppercase tracking-wider mb-8">Disponibles</h2>
-
-          {available.length === 0 ? (
-            <div className="bg-zinc-900/50 border border-white/10 rounded-xl p-10 text-center">
-              <Gamepad2 className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-              <p className="text-gray-400">No hay nuevos torneos abiertos para inscripción.</p>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {available.map((tournament) => (
-                <TournamentCard key={tournament.id} tournament={tournament} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* ===== DIVIDER DISPONIBLES -> FINALIZADOS ===== */}
+        {/* ===== DIVIDER MIS TORNEOS -> FINALIZADOS ===== */}
         <div className="relative pt-8 pb-4 mt-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-white/10" />

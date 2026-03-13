@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImagePlus, X } from "lucide-react";
-import { MediaSelectorModal } from "@/components/admin/MediaSelectorModal";
 import { toast } from "sonner";
 import Image from "next/image";
+import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
 
 interface ChimuCoinContent {
   badge?: string;
@@ -42,7 +42,36 @@ export function ChimuCoinSectionForm({ initialContent }: { initialContent: any }
     ...(initialContent || {}),
   });
   const [loading, setLoading] = useState(false);
-  const [showMediaModal, setShowMediaModal] = useState(false);
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      // Determine folder based on file type
+      const folder = file.type.startsWith("video/") ? "videos" : "imagenes";
+      formData.append("folder", folder);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Error en la subida");
+      const result = await res.json();
+
+      if (result.success && result.url) {
+        setContent(prev => ({ ...prev, imageUrl: result.url }));
+        toast.success("Archivo subido correctamente");
+      } else {
+        toast.error(result.message || "Error al subir archivo");
+      }
+    } catch (error) {
+      toast.error("Error inesperado al subir archivo");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,33 +178,58 @@ export function ChimuCoinSectionForm({ initialContent }: { initialContent: any }
             </div>
           </div>
 
-          {/* Image */}
-          <div className="space-y-2">
-            <Label className="text-gray-300">Imagen de la moneda</Label>
-            <div
-              className="relative w-40 h-40 bg-gray-800 rounded-lg border-2 border-dashed border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-gray-500 transition-colors"
-              onClick={() => setShowMediaModal(true)}
-            >
-              {content.imageUrl ? (
-                <>
-                  <Image src={content.imageUrl} alt="ChimuCoin" fill className="object-contain p-2" />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setContent((prev) => ({ ...prev, imageUrl: "" }));
-                    }}
-                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600 transition-colors z-10"
-                  >
-                    <X size={14} className="text-white" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <ImagePlus size={24} className="text-gray-500 mb-2" />
-                  <span className="text-xs text-center text-gray-500 px-2">Seleccionar Imagen</span>
-                </>
-              )}
+          {/* Image / Video */}
+          <div className="space-y-4">
+            <Label className="text-gray-300">Imagen o Video de la moneda</Label>
+
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              {/* Media Preview */}
+              <div className="relative w-40 h-40 bg-gray-800 rounded-lg border border-gray-700 flex flex-col items-center justify-center flex-shrink-0 overflow-hidden">
+                {content.imageUrl ? (
+                  <>
+                    {(content.imageUrl.toLowerCase().endsWith('.mp4') || content.imageUrl.toLowerCase().endsWith('.webm')) ? (
+                      <video
+                        src={content.imageUrl}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-contain p-2"
+                      />
+                    ) : (
+                      <Image src={content.imageUrl} alt="ChimuCoin" fill className="object-contain p-2" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setContent((prev) => ({ ...prev, imageUrl: "" }));
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600 transition-colors z-10"
+                    >
+                      <X size={14} className="text-white" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500 p-4">
+                    <ImagePlus size={24} className="mx-auto mb-2 opacity-50" />
+                    <span className="text-xs">Sin multimedia</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Controls */}
+              <div className="flex-1 space-y-4">
+                <LocalImageUpload
+                  label="Subir Archivo"
+                  defaultFolder="imagenes"
+                  onFileSelect={handleFileUpload}
+                  onUrlSelect={(url) => setContent(prev => ({ ...prev, imageUrl: url }))}
+                />
+                <p className="text-xs text-gray-400">
+                  Puedes subir una imagen (.jpg, .png) o un video (.mp4, .webm). Los videos se reproducirán automáticamente en bucle infinito.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -184,15 +238,6 @@ export function ChimuCoinSectionForm({ initialContent }: { initialContent: any }
           {loading ? "Guardando..." : "Guardar Cambios"}
         </Button>
       </form>
-
-      <MediaSelectorModal
-        open={showMediaModal}
-        onOpenChange={setShowMediaModal}
-        onSelect={(url) => {
-          setContent((prev) => ({ ...prev, imageUrl: url }));
-          setShowMediaModal(false);
-        }}
-      />
     </>
   );
 }

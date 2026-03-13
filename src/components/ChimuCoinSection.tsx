@@ -86,12 +86,23 @@ export default function ChimuCoinSection({ data }: { data?: ChimuCoinData | null
           >
             <div className="relative aspect-square w-full max-w-md mx-auto">
               <div className="absolute inset-0 bg-secondary/20 rounded-full blur-3xl animate-pulse" />
-              <Image
-                src={imageUrl}
-                alt={titleHighlight}
-                fill
-                className="object-contain drop-shadow-[0_0_50px_rgba(255,215,0,0.3)] z-10"
-              />
+              {imageUrl.toLowerCase().endsWith('.mp4') || imageUrl.toLowerCase().endsWith('.webm') ? (
+                <video
+                  src={imageUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-contain drop-shadow-[0_0_50px_rgba(255,215,0,0.3)] z-10"
+                />
+              ) : (
+                <Image
+                  src={imageUrl}
+                  alt={titleHighlight}
+                  fill
+                  className="object-contain drop-shadow-[0_0_50px_rgba(255,215,0,0.3)] z-10"
+                />
+              )}
             </div>
           </motion.div>
         </div>
