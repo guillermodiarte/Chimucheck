@@ -53,6 +53,67 @@ const COUNTRIES = [
   "Alemania", "Australia", "Canadá", "China", "Corea del Sur", "Francia",
 ].sort();
 
+const renderPolarAngleAxisTick = (props: any) => {
+  const { payload, x, y, cx, cy } = props;
+  const catMapping: Record<string, string> = {
+    "SHOOTER": "disparos.png",
+    "RACING": "carreras.png",
+    "KOMBAT": "combate.png",
+    "SPORTS": "deportes.png",
+    "BOARD GAME": "juegosdemesa.png",
+  };
+
+  const imgName = catMapping[payload.value];
+  const size = 150; // Increased by 25% per user request
+
+  // Specific push-out distances per category to balance them visually
+  // Pushed further away to leave a visible gap between image and vertices
+  const pushOutOffsets: Record<string, number> = {
+    "SHOOTER": 50,       // Top (Disparos)
+    "RACING": 80,        // Right (Carreras)
+    "KOMBAT": 70,        // Bottom Right (Combate)
+    "SPORTS": 70,        // Bottom Left (Deportes)
+    "BOARD GAME": 80,    // Left (Juegos de Mesa)
+  };
+
+  const pushOut = pushOutOffsets[payload.value] ?? 50;
+
+  // The entire pentagon (RadarChart) is at cy="53%".
+  // - RACING and BOARD GAME stay anchored to the vertex (yOffset = 0).
+  // - KOMBAT and SPORTS should be at their original 50% absolute height (yOffset = -13px to fight the 3% drop).
+  // - SHOOTER absolute height is 45% (40% + 5% down). Since vertex is at 53%, it needs yOffset = -34px (8% up).
+  const yOffsets: Record<string, number> = {
+    "SHOOTER": 7,
+    "RACING": 20,
+    "BOARD GAME": 4,
+    "KOMBAT": -13,
+    "SPORTS": -13,
+  };
+  const customYOffset = yOffsets[payload.value] || 0;
+
+  // Calculate vector from center (cx, cy) to handle (x, y) to push it further out
+  const dx = x - cx;
+  const dy = y - cy;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  
+  const finalX = len > 0 ? x + (dx / len) * pushOut : x;
+  const finalY = (len > 0 ? y + (dy / len) * pushOut : y) + customYOffset;
+
+  return (
+    <g>
+      {imgName && (
+        <image
+          href={`/images/categorias/${imgName}`}
+          x={finalX - size / 2}
+          y={finalY - size / 2}
+          height={`${size}px`}
+          width={`${size}px`}
+        />
+      )}
+    </g>
+  );
+};
+
 export function ProfileForm({ player, profileBannerImage, profileBackgroundImage }: { player: any, profileBannerImage?: string, profileBackgroundImage?: string }) {
   const { update } = useSession();
   const [isPending, startTransition] = useTransition();
@@ -330,7 +391,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                 </h3>
 
                 {/* Radar Chart expanded */}
-                <div className="w-full flex-1 min-h-[360px] mb-8 bg-black/40 rounded-xl border border-white/5 relative flex items-center justify-center p-4 shadow-inner">
+                <div className="w-full flex-1 min-h-[420px] mb-8 bg-black/40 rounded-xl border border-white/5 relative flex items-center justify-center p-4 shadow-inner">
                   {(!player.categoryStats || player.categoryStats.length === 0) ? (
                     <div className="text-center space-y-2">
                       <Shield className="w-12 h-12 text-zinc-700 mx-auto" />
@@ -339,7 +400,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" outerRadius="75%" data={CATEGORIES.map(cat => {
+                      <RadarChart cx="50%" cy="53%" outerRadius="70%" data={CATEGORIES.map(cat => {
                         const stat = player.categoryStats?.find((s: any) => s.category === cat);
                         return {
                           subject: cat.replace("_", " "),
@@ -348,7 +409,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                         };
                       })}>
                         <PolarGrid stroke="#3f3f46" strokeDasharray="3 3" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 11, fontWeight: 600 }} />
+                        <PolarAngleAxis dataKey="subject" tick={renderPolarAngleAxisTick} />
                         <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff' }}
