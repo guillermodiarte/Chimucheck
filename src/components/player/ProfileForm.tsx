@@ -53,66 +53,7 @@ const COUNTRIES = [
   "Alemania", "Australia", "Canadá", "China", "Corea del Sur", "Francia",
 ].sort();
 
-const renderPolarAngleAxisTick = (props: any) => {
-  const { payload, x, y, cx, cy } = props;
-  const catMapping: Record<string, string> = {
-    "SHOOTER": "disparos.png",
-    "RACING": "carreras.png",
-    "KOMBAT": "combate.png",
-    "SPORTS": "deportes.png",
-    "BOARD GAME": "juegosdemesa.png",
-  };
-
-  const imgName = catMapping[payload.value];
-  const size = 150; // Increased by 25% per user request
-
-  // Specific push-out distances per category to balance them visually
-  // Pushed further away to leave a visible gap between image and vertices
-  const pushOutOffsets: Record<string, number> = {
-    "SHOOTER": 50,       // Top (Disparos)
-    "RACING": 80,        // Right (Carreras)
-    "KOMBAT": 70,        // Bottom Right (Combate)
-    "SPORTS": 70,        // Bottom Left (Deportes)
-    "BOARD GAME": 80,    // Left (Juegos de Mesa)
-  };
-
-  const pushOut = pushOutOffsets[payload.value] ?? 50;
-
-  // The entire pentagon (RadarChart) is at cy="53%".
-  // - RACING and BOARD GAME stay anchored to the vertex (yOffset = 0).
-  // - KOMBAT and SPORTS should be at their original 50% absolute height (yOffset = -13px to fight the 3% drop).
-  // - SHOOTER absolute height is 45% (40% + 5% down). Since vertex is at 53%, it needs yOffset = -34px (8% up).
-  const yOffsets: Record<string, number> = {
-    "SHOOTER": 7,
-    "RACING": 20,
-    "BOARD GAME": 4,
-    "KOMBAT": -13,
-    "SPORTS": -13,
-  };
-  const customYOffset = yOffsets[payload.value] || 0;
-
-  // Calculate vector from center (cx, cy) to handle (x, y) to push it further out
-  const dx = x - cx;
-  const dy = y - cy;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  
-  const finalX = len > 0 ? x + (dx / len) * pushOut : x;
-  const finalY = (len > 0 ? y + (dy / len) * pushOut : y) + customYOffset;
-
-  return (
-    <g>
-      {imgName && (
-        <image
-          href={`/images/categorias/${imgName}`}
-          x={finalX - size / 2}
-          y={finalY - size / 2}
-          height={`${size}px`}
-          width={`${size}px`}
-        />
-      )}
-    </g>
-  );
-};
+// Custom styles and components moved inside to access player data
 
 export function ProfileForm({ player, profileBannerImage, profileBackgroundImage }: { player: any, profileBannerImage?: string, profileBackgroundImage?: string }) {
   const { update } = useSession();
@@ -125,6 +66,107 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
   const [imageError, setImageError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
+
+  const renderPolarAngleAxisTick = (props: any) => {
+    const { payload, x, y, cx, cy } = props;
+    const catMapping: Record<string, string> = {
+      "SHOOTER": "disparos.png",
+      "RACING": "carreras.png",
+      "KOMBAT": "combate.png",
+      "SPORTS": "deportes.png",
+      "BOARD GAME": "juegosdemesa.png",
+    };
+
+    const catColors: Record<string, string> = {
+      "SHOOTER": "#ef4444",    // Red
+      "RACING": "#38bdf8",     // Light Blue
+      "KOMBAT": "#f97316",     // Orange
+      "SPORTS": "#a855f7",     // Purple
+      "BOARD GAME": "#22c55e", // Green
+    };
+
+    const imgName = catMapping[payload.value];
+    const color = catColors[payload.value] || "#ffffff";
+    const size = 150; 
+
+    // Find score
+    const statKey = payload.value.replace(" ", "_"); // "BOARD GAME" -> "BOARD_GAME"
+    const stat = player.categoryStats?.find((s: any) => s.category === statKey);
+    const score = stat?.points || 0;
+
+    const pushOutOffsets: Record<string, number> = {
+      "SHOOTER": 50,       
+      "RACING": 80,        
+      "KOMBAT": 70,        
+      "SPORTS": 70,        
+      "BOARD GAME": 80,    
+    };
+    const pushOut = pushOutOffsets[payload.value] ?? 50;
+
+    const yOffsets: Record<string, number> = {
+      "SHOOTER":    11,   // sin cambios
+      "RACING":     61,   // subido 2% (≈8px)
+      "BOARD GAME": 61,   // igualado a RACING para alinear imágenes
+      "KOMBAT":      2,   // sin cambios
+      "SPORTS":      2,   // sin cambios
+    };
+    const customYOffset = yOffsets[payload.value] || 0;
+
+    // Extra Y offset applied ONLY to the score label (not the image)
+    // so that all categories have the same gap between image and text as CARRERAS
+    const scoreLabelYOffsets: Record<string, number> = {
+      "SHOOTER":     9,
+      "RACING":      0,  // referencia correcta
+      "KOMBAT":     10,
+      "SPORTS":     10,
+      "BOARD GAME":  0,  // yOffset igual a RACING → sin compensación extra
+    };
+    const scoreLabelExtra = scoreLabelYOffsets[payload.value] ?? 0;
+
+    // Moves ONLY the image box, without touching the score label
+    const imageOnlyYOffset: Record<string, number> = {
+      "SHOOTER":     0,
+      "RACING":       0,
+      "KOMBAT":       0,
+      "SPORTS":       0,
+      "BOARD GAME": -10,  // subido 1% adicional
+    };
+    const imgYExtra = imageOnlyYOffset[payload.value] ?? 0;
+
+    const dx = x - cx;
+    const dy = y - cy;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    
+    const finalX = len > 0 ? x + (dx / len) * pushOut : x;
+    const finalY = (len > 0 ? y + (dy / len) * pushOut : y) + customYOffset;
+
+    return (
+      <g>
+        {imgName && (
+          <image
+            href={`/images/categorias/${imgName}`}
+            x={finalX - size / 2}
+            y={finalY - size / 2 - 25 + imgYExtra}
+            height={`${size}px`}
+            width={`${size}px`}
+          />
+        )}
+        {/* Score Label (Colored with glow) */}
+        <text 
+          x={finalX} 
+          y={finalY + (size / 2) - 50 + scoreLabelExtra} 
+          fill={color} 
+          fontSize={20} 
+          fontWeight={900} 
+          textAnchor="middle"
+          style={{ textShadow: `0 0 10px ${color}` }}
+        >
+          {score}
+          <tspan fill="#a1a1aa" fontSize={14} fontWeight={600} dx={4} style={{ textShadow: 'none' }}> / 100</tspan>
+        </text>
+      </g>
+    );
+  };
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -400,7 +442,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="53%" outerRadius="70%" data={CATEGORIES.map(cat => {
+                      <RadarChart cx="50%" cy="53%" outerRadius="63%" data={CATEGORIES.map(cat => {
                         const stat = player.categoryStats?.find((s: any) => s.category === cat);
                         return {
                           subject: cat.replace("_", " "),
@@ -410,12 +452,19 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                       })}>
                         <PolarGrid stroke="#3f3f46" strokeDasharray="3 3" />
                         <PolarAngleAxis dataKey="subject" tick={renderPolarAngleAxisTick} />
-                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                        <PolarRadiusAxis 
+                          angle={90} 
+                          domain={[0, 100]} 
+                          tick={{ fill: '#a1a1aa', fontSize: 10 }} 
+                          axisLine={false} 
+                          tickCount={6} 
+                        />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff' }}
-                          itemStyle={{ color: '#60a5fa', fontWeight: 'bold' }}
+                          itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
                         />
-                        <Radar name="Puntos" dataKey="puntos" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                        {/* Shaded fill with multiple stops would go here ideally, but using a semi-transparent blue/white glow to match aesthetics */}
+                        <Radar name="Puntos" dataKey="puntos" stroke="#3b82f6" strokeWidth={3} fill="#4f46e5" fillOpacity={0.4} />
                       </RadarChart>
                     </ResponsiveContainer>
                   )}
