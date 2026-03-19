@@ -96,19 +96,19 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
 
     const pushOutOffsets: Record<string, number> = {
       "SHOOTER": 50,       
-      "RACING": 80,        
-      "KOMBAT": 70,        
-      "SPORTS": 70,        
-      "BOARD GAME": 80,    
+      "RACING":  160,       // empujado diagonalmente hacia arriba-derecha
+      "KOMBAT":  70,        
+      "SPORTS":  70,        
+      "BOARD GAME": 160,   // empujado diagonalmente hacia arriba-izquierda
     };
     const pushOut = pushOutOffsets[payload.value] ?? 50;
 
     const yOffsets: Record<string, number> = {
-      "SHOOTER":    11,   // sin cambios
-      "RACING":     61,   // subido 2% (≈8px)
-      "BOARD GAME": 61,   // igualado a RACING para alinear imágenes
-      "KOMBAT":      2,   // sin cambios
-      "SPORTS":      2,   // sin cambios
+      "SHOOTER":    15,   // bajado 1% (≈4px)
+      "RACING":     24,   // bajado 1% (≈4px)
+      "BOARD GAME": 24,   // bajado 1% (≈4px, igualado a RACING)
+      "KOMBAT":     -2,   // subido 1% (≈4px)
+      "SPORTS":     -2,   // subido 1% (≈4px)
     };
     const customYOffset = yOffsets[payload.value] || 0;
 
@@ -133,11 +133,21 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
     };
     const imgYExtra = imageOnlyYOffset[payload.value] ?? 0;
 
+    // Horizontal shift for the entire group (image + score)
+    const xOffsets: Record<string, number> = {
+      "SHOOTER":     0,
+      "RACING":     -80,  // corre 20% a la izquierda
+      "KOMBAT":      0,
+      "SPORTS":      0,
+      "BOARD GAME": +80,  // corre 20% a la derecha
+    };
+    const groupXShift = xOffsets[payload.value] ?? 0;
+
     const dx = x - cx;
     const dy = y - cy;
     const len = Math.sqrt(dx * dx + dy * dy);
     
-    const finalX = len > 0 ? x + (dx / len) * pushOut : x;
+    const finalX = (len > 0 ? x + (dx / len) * pushOut : x) + groupXShift;
     const finalY = (len > 0 ? y + (dy / len) * pushOut : y) + customYOffset;
 
     return (
@@ -442,7 +452,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="53%" outerRadius="63%" data={CATEGORIES.map(cat => {
+                      <RadarChart cx="50%" cy="54%" outerRadius="63%" data={CATEGORIES.map(cat => {
                         const stat = player.categoryStats?.find((s: any) => s.category === cat);
                         return {
                           subject: cat.replace("_", " "),
