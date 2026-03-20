@@ -24,7 +24,8 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { formatDate } from "@/lib/utils";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { calculateRank, CATEGORIES, RANK_TIERS } from "@/lib/mmr";
+import { CATEGORIES } from "@/lib/mmr";
+import { SegmentedCategoryBar } from "@/components/player/SegmentedCategoryBar";
 
 const profileSchema = z.object({
   alias: z.string().min(2, "El alias debe tener al menos 2 caracteres"),
@@ -480,28 +481,17 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                   )}
                 </div>
 
-                {/* Ranks List */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* Ranks List — Segmented Progress Bars */}
+                <div className="flex flex-col gap-4 w-full mt-2">
                   {CATEGORIES.map(cat => {
                     const stat = player.categoryStats?.find((s: any) => s.category === cat);
                     const points = stat?.points || 0;
-                    const rank = calculateRank(points);
-
-                    // Color coding based on tier
-                    const tierColor = rank.tier === RANK_TIERS.PRO ? "text-yellow-400 border-yellow-500/20 bg-yellow-500/10"
-                      : rank.tier === RANK_TIERS.SEMI_PRO ? "text-blue-400 border-blue-500/20 bg-blue-500/10"
-                        : "text-green-400 border-green-500/20 bg-green-500/10";
-
                     return (
-                      <div key={cat} className="flex flex-col p-3 rounded-lg bg-zinc-950 border border-white/5 hover:border-white/10 transition-colors">
-                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1.5">{cat.replace("_", " ")}</span>
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${tierColor}`}>
-                            {rank.label}
-                          </span>
-                          <span className="text-base font-black text-white">{points} <span className="text-[10px] text-zinc-600 font-normal shadow-none">PTS</span></span>
-                        </div>
-                      </div>
+                      <SegmentedCategoryBar
+                        key={cat}
+                        category={cat}
+                        points={points}
+                      />
                     );
                   })}
                 </div>
