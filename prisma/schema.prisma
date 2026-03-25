@@ -92,6 +92,7 @@ model Player {
   stats              PlayerStats?
   categoryStats      PlayerCategoryStats[]
   registrations      TournamentRegistration[]
+  teams              Team[]
 }
 
 model PlayerStats {
@@ -148,8 +149,11 @@ model Tournament {
   updatedAt      DateTime                 @updatedAt
   photos         String?                  @default("[]")
   winners        String?                  @default("[]")
+  isTeamBased    Boolean                  @default(false)
+  teamSize       Int?
   registrations  TournamentRegistration[]
   gamesList      TournamentGame[]
+  teams          Team[]
 }
 
 model TournamentRegistration {
@@ -197,4 +201,19 @@ model TournamentGame {
   game         Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, gameId])
+}
+
+model Team {
+  id           String     @id @default(uuid())
+  name         String
+  image        String?
+  tournamentId String
+  
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  players      Player[]
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([tournamentId, name])
 }

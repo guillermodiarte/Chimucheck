@@ -90,13 +90,15 @@ export function ResultsEditor({ tournament, sortedRegistrations }: ResultsEditor
 
     // Otherwise, auto-assign
     const auto: Record<string, number> = {};
-    sortedPlayers.forEach((reg, idx) => {
-      if (idx < 3) {
-        auto[reg.playerId] = idx + 1;
-      }
-    });
+    if (!tournament.isTeamBased) {
+      sortedPlayers.forEach((reg, idx) => {
+        if (idx < 3) {
+          auto[reg.playerId] = idx + 1;
+        }
+      });
+    }
     return auto;
-  }, [sortedPlayers, positions]);
+  }, [sortedPlayers, positions, tournament.isTeamBased]);
 
   const handleChimucoinsChange = (playerId: string, value: string) => {
     setChimucoinsMap(prev => ({
@@ -122,10 +124,12 @@ export function ResultsEditor({ tournament, sortedRegistrations }: ResultsEditor
         delete newPos[playerId];
         return newPos;
       }
-      // Remove this position from any other player
-      for (const pid of Object.keys(newPos)) {
-        if (newPos[pid] === position) {
-          delete newPos[pid];
+      // If NOT a team tournament, remove this position from any other player
+      if (!tournament.isTeamBased) {
+        for (const pid of Object.keys(newPos)) {
+          if (newPos[pid] === position) {
+            delete newPos[pid];
+          }
         }
       }
       // Assign this position to this player
@@ -136,39 +140,75 @@ export function ResultsEditor({ tournament, sortedRegistrations }: ResultsEditor
 
   const handleSaveResults = () => {
     startSaving(async () => {
+      let scoreEntries: any[] = [];
+      const winners: WinnerEntry[] = [];
+
+      if (tournament.isTeamBased && tournament.teams) {
+        // Expand team results to individual players
+        for (const team of tournament.teams) {
+          const tScore = scores[team.id] ?? 0;
+          const tPos = effectivePositions[team.id];
+          const tCoins = chimucoinsMap[team.id] || 0;
+
+          for (const player of team.players) {
+            scoreEntries.push({
+              playerId: player.id,
+              score: tScore,
+            });
+
+            if (tPos && tPos >= 1 && tPos <= 3) {
+              winners.push({
+                position: tPos,
+                playerId: player.id,
+                playerAlias: player.alias || player.name || "?",
+                chimucoins: tCoins,
+              });
+            } else if (tCoins > 0) {
+              winners.push({
+                position: 0,
+                playerId: player.id,
+                playerAlias: player.alias || player.name || "?",
+                chimucoins: tCoins,
+              });
+            }
+          }
+        }
+      } else {
+        // Individual logic
+        scoreEntries = sortedRegistrations.map(reg => ({
+          playerId: reg.playerId,
+          score: scores[reg.playerId] ?? reg.score,
+        }));
+
+        for (const reg of sortedPlayers) {
+          const pos = effectivePositions[reg.playerId];
+          const coins = chimucoinsMap[reg.playerId] || 0;
+          if (pos && pos >= 1 && pos <= 3) {
+            winners.push({
+              position: pos,
+              playerId: reg.playerId,
+              playerAlias: reg.player.alias || reg.player.name || "",
+              chimucoins: coins,
+            });
+          } else if (coins > 0) {
+            winners.push({
+              position: 0,
+              playerId: reg.playerId,
+              playerAlias: reg.player.alias || reg.player.name || "",
+              chimucoins: coins,
+            });
+          }
+        }
+      }
+
       // 1. Save all scores in bulk
-      const scoreEntries = sortedRegistrations.map(reg => ({
-        playerId: reg.playerId,
-        score: scores[reg.playerId] ?? reg.score,
-      }));
       const scoreResult = await bulkUpdateScores(tournament.id, scoreEntries);
       if (!scoreResult.success) {
         toast.error("Error al guardar puntajes");
         return;
       }
 
-      // 2. Build winner entries from positions
-      const winners: WinnerEntry[] = [];
-      for (const reg of sortedPlayers) {
-        const pos = effectivePositions[reg.playerId];
-        const coins = chimucoinsMap[reg.playerId] || 0;
-        if (pos && pos >= 1 && pos <= 3) {
-          winners.push({
-            position: pos,
-            playerId: reg.playerId,
-            playerAlias: reg.player.alias || reg.player.name || "",
-            chimucoins: coins,
-          });
-        } else if (coins > 0) {
-          // Players with chimucoins but no podium position
-          winners.push({
-            position: 0,
-            playerId: reg.playerId,
-            playerAlias: reg.player.alias || reg.player.name || "",
-            chimucoins: coins,
-          });
-        }
-      }
+
 
       // Sort winners by position
       winners.sort((a, b) => (a.position || 99) - (b.position || 99));
@@ -204,17 +244,106 @@ export function ResultsEditor({ tournament, sortedRegistrations }: ResultsEditor
       )}
 
       {/* Table header */}
-      {sortedRegistrations.length > 0 && (
+      {(tournament.isTeamBased ? tournament.teams?.length > 0 : sortedRegistrations.length > 0) && (
         <div className="flex items-center px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           <div className="w-12 text-center">Puesto</div>
-          <div className="flex-1 ml-4">Jugador</div>
+          <div className="flex-1 ml-4">{tournament.isTeamBased ? "Equipo" : "Jugador"}</div>
           <div className="w-32 text-center">Puntaje</div>
           <div className="w-32 text-center">ChimuCoins</div>
         </div>
       )}
 
-      {/* Player rows sorted by score */}
-      {sortedRegistrations.length === 0 ? (
+      {/* Rows sorted by score */}
+      {tournament.isTeamBased ? (
+        // TEAM MODE RENDER
+        !tournament.teams || tournament.teams.length === 0 ? (
+          <div className="p-12 text-center border border-white/10 rounded-lg bg-zinc-900/50">
+            <p className="text-gray-500">No hay equipos formados en este torneo.</p>
+          </div>
+        ) : (
+          [...tournament.teams]
+            .sort((a, b) => (scores[b.id] ?? 0) - (scores[a.id] ?? 0))
+            .map((team) => {
+              const pos = effectivePositions[team.id] || 0;
+              const posInfo = POSITION_ICONS[pos];
+              return (
+                <div key={team.id} className={`flex items-center p-4 rounded-lg border transition-colors ${pos === 1 ? "bg-yellow-500/10 border-yellow-500/30" :
+                    pos === 2 ? "bg-gray-400/10 border-gray-400/30" :
+                      pos === 3 ? "bg-amber-600/10 border-amber-600/30" :
+                        "bg-zinc-900/50 border-white/5 hover:border-white/10"
+                  }`}>
+                  
+                  {/* Position selector */}
+                  <div className="w-12 flex flex-col items-center gap-1">
+                    {posInfo ? (
+                      <div className={`flex items-center justify-center w-8 h-8 ${posInfo.color}`}>
+                        <posInfo.icon className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center w-8 h-8 text-zinc-600 font-bold text-sm">—</div>
+                    )}
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3].map(p => (
+                        <button
+                          key={p}
+                          onClick={() => handlePositionToggle(team.id, p)}
+                          className={`w-5 h-5 rounded text-[10px] font-bold transition-all ${effectivePositions[team.id] === p
+                              ? p === 1 ? "bg-yellow-500 text-black" : p === 2 ? "bg-gray-400 text-black" : "bg-amber-600 text-white"
+                              : "bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-white"
+                            }`}
+                        >
+                          {p}°
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Team info */}
+                  <div className="flex flex-col gap-1 flex-1 min-w-0 ml-4">
+                    <p className="font-bold text-primary truncate">{team.name}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {team.players.map((p: any) => (
+                        <span key={p.id} className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                          {p.alias || p.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Score field */}
+                  <div className="w-32 flex justify-center">
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-yellow-500">Ptos</span>
+                      <Input
+                        type="number"
+                        value={scores[team.id] ?? 0}
+                        onChange={(e) => handleScoreChange(team.id, e.target.value)}
+                        className="pl-11 w-24 bg-black/40 border-white/10 text-white font-mono text-lg"
+                      />
+                    </div>
+                  </div>
+
+                  {/* ChimuCoins field */}
+                  <div className="w-32 flex justify-center">
+                    <div className="relative">
+                      <Coins className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" />
+                      <Input
+                        type="number"
+                        value={chimucoinsMap[team.id] || 0}
+                        onChange={(e) => handleChimucoinsChange(team.id, e.target.value)}
+                        className="pl-9 w-24 bg-black/40 border-white/10 text-white font-mono text-lg"
+                        min={0}
+                      />
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })
+        )
+      ) : (
+        // INDIVIDUAL MODE RENDER
+        sortedRegistrations.length === 0 ? (
         <div className="p-12 text-center border border-white/10 rounded-lg bg-zinc-900/50">
           <p className="text-gray-500">No hay jugadores inscritos en este torneo.</p>
         </div>
@@ -298,7 +427,8 @@ export function ResultsEditor({ tournament, sortedRegistrations }: ResultsEditor
             </div>
           );
         })
-      )}
+      )
+    )}
     </div>
   );
 }

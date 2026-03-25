@@ -1,0 +1,368 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { Users, Trash2, CheckSquare, Square, Loader2, Image as ImageIcon, Edit } from "lucide-react";
+import { adminCreateTeam, adminUpdateTeam, adminDeleteTeam } from "@/app/actions/tournaments";
+import { MediaSelectorModal } from "@/components/admin/MediaSelectorModal";
+import Image from "next/image";
+
+interface AdminTeamBuilderProps {
+  tournamentId: string;
+  teamSize: number;
+  teams: any[];
+  registrations: any[];
+}
+
+export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations }: AdminTeamBuilderProps) {
+  const [teamName, setTeamName] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [showMediaSelector, setShowMediaSelector] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Edit state
+  const [editingTeam, setEditingTeam] = useState<any>(null);
+  const [editTeamName, setEditTeamName] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
+  const [editSelectedPlayers, setEditSelectedPlayers] = useState<string[]>([]);
+  const [isEditLoading, setIsEditLoading] = useState(false);
+  const [showEditMediaSelector, setShowEditMediaSelector] = useState(false);
+
+  const router = useRouter();
+
+  // Find players not in any team
+  const playersInTeams = new Set<string>();
+  teams.forEach(t => t.players.forEach((p: any) => playersInTeams.add(p.id)));
+
+  const availablePlayers = registrations
+    .map(r => r.player)
+    .filter(p => !playersInTeams.has(p.id));
+
+  const handleTogglePlayer = (playerId: string) => {
+    setSelectedPlayers(prev => {
+      if (prev.includes(playerId)) return prev.filter(id => id !== playerId);
+      if (prev.length < teamSize) return [...prev, playerId];
+      return prev;
+    });
+  };
+
+  const openEditModal = (team: any) => {
+    setEditingTeam(team);
+    setEditTeamName(team.name);
+    setEditImageUrl(team.image || "");
+    setEditSelectedPlayers(team.players.map((p: any) => p.id));
+  };
+
+  const closeEditModal = () => {
+    setEditingTeam(null);
+    setEditTeamName("");
+    setEditImageUrl("");
+    setEditSelectedPlayers([]);
+  };
+
+  const handleCreateTeam = async () => {
+    if (!teamName.trim()) {
+      toast.error("Ingresa un nombre para el equipo");
+      return;
+    }
+    if (selectedPlayers.length === 0 || selectedPlayers.length > teamSize) {
+      toast.error(`Selecciona entre 1 y ${teamSize} jugadores`);
+      return;
+    }
+
+    setIsLoading(true);
+    const result = await adminCreateTeam(tournamentId, teamName, selectedPlayers, imageUrl);
+    setIsLoading(false);
+
+    if (result.success) {
+      toast.success(result.message);
+      setTeamName("");
+      setImageUrl("");
+      setSelectedPlayers([]);
+      router.refresh();
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!confirm("¿Desarmar este equipo? Los jugadores volverán a estar disponibles.")) return;
+
+    const result = await adminDeleteTeam(teamId);
+    if (result.success) {
+      toast.success(result.message);
+      router.refresh();
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  const handleUpdateTeam = async () => {
+    if (!editTeamName.trim()) {
+      toast.error("Ingresa un nombre para el equipo");
+      return;
+    }
+    if (editSelectedPlayers.length === 0 || editSelectedPlayers.length > teamSize) {
+      toast.error(`Selecciona entre 1 y ${teamSize} jugadores`);
+      return;
+    }
+
+    setIsEditLoading(true);
+    const result = await adminUpdateTeam(editingTeam.id, editTeamName, editSelectedPlayers, editImageUrl);
+    setIsEditLoading(false);
+
+    if (result.success) {
+      toast.success(result.message);
+      closeEditModal();
+      router.refresh();
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  return (
+    <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 space-y-6">
+      <div className="flex items-center gap-2 border-b border-white/10 pb-4">
+        <Users className="w-6 h-6 text-primary" />
+        <h2 className="text-xl font-bold text-white">Armador de Equipos</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left Col: Create Team */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-gray-300">Nuevo Equipo ({selectedPlayers.length}/{teamSize})</h3>
+          
+          <div className="flex gap-2">
+            <Input 
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder="Nombre del Equipo"
+              className="bg-black/40 border-white/10 text-white flex-1"
+            />
+            <Button
+              variant="outline"
+              className="bg-black/40 border-white/10 text-gray-300 hover:text-white shrink-0"
+              onClick={() => setShowMediaSelector(true)}
+              title="Foto de Perfil del Equipo"
+            >
+              <ImageIcon className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {imageUrl && (
+            <div className="flex items-center gap-4 bg-black/20 border border-white/5 p-2 rounded-lg">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white/10 shrink-0">
+                <Image src={imageUrl} alt="Team" fill className="object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-400 truncate tracking-tight">{imageUrl.split('/').pop()}</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setImageUrl("")} className="text-red-400 hover:text-red-300">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          <div className="bg-black/30 border border-white/10 rounded-lg p-3 max-h-64 overflow-y-auto space-y-2">
+            {availablePlayers.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">No hay jugadores disponibles.</p>
+            ) : (
+              availablePlayers.map(p => {
+                const isSelected = selectedPlayers.includes(p.id);
+                const isDisabled = !isSelected && selectedPlayers.length >= teamSize;
+
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => handleTogglePlayer(p.id)}
+                    disabled={isDisabled}
+                    className={`w-full flex items-center gap-3 p-2 rounded transition-colors text-left ${
+                      isSelected ? "bg-primary/20 hover:bg-primary/30" : "hover:bg-white/5"
+                    } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                {isSelected ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5 text-gray-500" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{p.alias || p.name}</p>
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      <Button 
+        onClick={handleCreateTeam}
+        disabled={isLoading || selectedPlayers.length === 0 || !teamName.trim()}
+        className="w-full bg-primary hover:bg-primary/80 text-black font-bold"
+      >
+            {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Crear Equipo
+          </Button>
+        </div>
+
+        {/* Right Col: Existing Teams */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-gray-300">Equipos Formados ({teams.length})</h3>
+          
+          <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+            {teams.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-white/10 rounded-lg">
+                Ningún equipo armado aún.
+              </p>
+            ) : (
+              teams.map((team) => (
+                <div key={team.id} className="bg-black/40 border border-white/10 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {team.image ? (
+                        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/10 shrink-0">
+                          <Image src={team.image} alt={team.name} fill className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-800 border border-white/10 shrink-0">
+                          <Users className="w-4 h-4 text-zinc-500" />
+                        </div>
+                      )}
+                      <h4 className="font-bold text-primary truncate">{team.name}</h4>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => openEditModal(team)}
+                        className="text-gray-500 hover:text-blue-400 transition-colors p-1"
+                        title="Editar equipo"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteTeam(team.id)}
+                        className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                        title="Desarmar equipo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {team.players.map((p: any) => (
+                      <span key={p.id} className="text-xs bg-white/5 border border-white/10 text-gray-300 px-2 py-1 rounded-md">
+                        {p.alias || p.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <MediaSelectorModal
+        open={showMediaSelector}
+        onOpenChange={setShowMediaSelector}
+        onSelect={(url) => {
+          setImageUrl(url);
+          setShowMediaSelector(false);
+        }}
+      />
+
+      <MediaSelectorModal
+        open={showEditMediaSelector}
+        onOpenChange={setShowEditMediaSelector}
+        onSelect={(url) => {
+          setEditImageUrl(url);
+          setShowEditMediaSelector(false);
+        }}
+      />
+
+      {editingTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-zinc-900 border border-white/10 p-6 rounded-xl w-full max-w-md space-y-4">
+            <h3 className="text-xl font-bold text-white mb-4">Editar Equipo</h3>
+            
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input 
+                  value={editTeamName}
+                  onChange={(e) => setEditTeamName(e.target.value)}
+                  placeholder="Nombre del Equipo"
+                  className="bg-black/40 border-white/10 text-white flex-1"
+                />
+                <Button
+                  variant="outline"
+                  className="bg-black/40 border-white/10 text-gray-300 hover:text-white shrink-0"
+                  onClick={() => setShowEditMediaSelector(true)}
+                  title="Foto de Perfil del Equipo"
+                >
+                  <ImageIcon className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {editImageUrl && (
+                <div className="flex items-center gap-4 bg-black/20 border border-white/5 p-2 rounded-lg">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white/10 shrink-0">
+                    <Image src={editImageUrl} alt="Team" fill className="object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-400 truncate tracking-tight">{editImageUrl.split('/').pop()}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setEditImageUrl("")} className="text-red-400 hover:text-red-300">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-400">Integrantes ({editSelectedPlayers.length}/{teamSize})</p>
+                <div className="bg-black/30 border border-white/10 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                  {[...editingTeam.players, ...availablePlayers].map((p: any) => {
+                    const isSelected = editSelectedPlayers.includes(p.id);
+                    const isDisabled = !isSelected && editSelectedPlayers.length >= teamSize;
+
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setEditSelectedPlayers(prev => {
+                            if (prev.includes(p.id)) return prev.filter(id => id !== p.id);
+                            if (prev.length < teamSize) return [...prev, p.id];
+                            return prev;
+                          });
+                        }}
+                        disabled={isDisabled}
+                        className={`w-full flex items-center gap-3 p-2 rounded transition-colors text-left ${
+                          isSelected ? "bg-primary/20 hover:bg-primary/30" : "hover:bg-white/5"
+                        } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        {isSelected ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5 text-gray-500" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{p.alias || p.name}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/10">
+              <Button variant="ghost" onClick={closeEditModal} className="text-white hover:bg-white/10">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleUpdateTeam}
+                disabled={isEditLoading || editSelectedPlayers.length === 0 || !editTeamName.trim()}
+                className="bg-primary hover:bg-primary/80 text-black font-bold min-w-[120px]"
+              >
+                {isEditLoading ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : "Guardar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

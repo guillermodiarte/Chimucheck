@@ -15,7 +15,7 @@ import { FinishTournamentButton } from "@/components/admin/FinishTournamentButto
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import TournamentTabs from "@/components/admin/TournamentTabs";
 import Link from "next/link";
-import { Plus, Pencil, Trophy, Power, Gamepad2, Medal, Camera, Lock } from "lucide-react";
+import { Plus, Pencil, Trophy, Power, Gamepad2, Medal, Camera, Lock, Users } from "lucide-react";
 import Image from "next/image";
 import { TournamentActions } from "@/components/admin/TournamentActions";
 import { formatDateTime } from "@/lib/utils";
@@ -157,6 +157,13 @@ export default async function AdminTournamentsPage() {
                           <Power className={`w-4 h-4 ${tournament.active ? "text-green-500" : "text-gray-500"}`} />
                         </Button>
                       </form>
+                      {tournament.isTeamBased && (
+                        <Link href={`/admin/tournaments/results/${tournament.id}`}>
+                          <Button variant="ghost" size="icon" className="text-secondary hover:text-yellow-300 hover:bg-yellow-900/20" title="Gestionar Equipos">
+                            <Users className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      )}
                       <Link href={tournament.status === "EN_JUEGO" ? "#" : `/admin/tournaments/edit/${tournament.id}`} className={tournament.status === "EN_JUEGO" ? "pointer-events-none opacity-50" : ""}>
                         <Button disabled={tournament.status === "EN_JUEGO"} variant="ghost" size="icon" className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20">
                           <Pencil className="w-4 h-4" />

@@ -17,6 +17,8 @@ const TournamentSchema = z.object({
   isRestricted: z.boolean().optional(),
   category: z.string().default("SHOOTER"),
   requiredRank: z.string().default("AMATEUR"),
+  isTeamBased: z.boolean().optional(),
+  teamSize: z.coerce.number().optional().nullable(),
   // Legacy fields (kept for backward compat)
   game: z.string().optional(),
   image: z.string().optional(),
@@ -105,6 +107,8 @@ export async function createTournament(prevState: any, formData: FormData) {
     isRestricted: formData.get("isRestricted") === "true" || formData.get("isRestricted") === "on",
     category: formData.get("category") as string || "SHOOTER",
     requiredRank: formData.get("requiredRank") as string || "AMATEUR",
+    isTeamBased: formData.get("isTeamBased") === "true" || formData.get("isTeamBased") === "on",
+    teamSize: formData.get("teamSize") ? parseInt(formData.get("teamSize") as string, 10) : null,
     game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
     image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
     games: gamesRaw || "[]",
@@ -150,6 +154,8 @@ export async function updateTournament(id: string, prevState: any, formData: For
     isRestricted: formData.get("isRestricted") === "true" || formData.get("isRestricted") === "on",
     category: formData.get("category") as string || "SHOOTER",
     requiredRank: formData.get("requiredRank") as string || "AMATEUR",
+    isTeamBased: formData.get("isTeamBased") === "true" || formData.get("isTeamBased") === "on",
+    teamSize: formData.get("teamSize") ? parseInt(formData.get("teamSize") as string, 10) : null,
     game: games.length > 0 ? games[0].name : (formData.get("game") as string) || undefined,
     image: games.length > 0 ? games[0].image : (formData.get("image") as string) || undefined,
     games: gamesRaw || "[]",
@@ -234,6 +240,71 @@ export async function updateTournament(id: string, prevState: any, formData: For
 
 export async function deleteTournament(id: string) {
   try {
+    const current = await db.tournament.findUnique({
+      where: { id },
+      include: { registrations: true },
+    });
+
+    // Revertir MMR y premios si el torneo estaba finalizado
+    if (current && current.status === "FINALIZADO") {
+      let winners: any[] = [];
+      try { winners = JSON.parse(current.winners as string || "[]"); } catch { }
+
+      // 1. Revertir Chimucoins e Historial Posicional
+      for (const w of winners) {
+        if (!w.playerId) continue;
+        if (w.chimucoins > 0) {
+          await db.player.update({
+            where: { id: w.playerId },
+            data: { chimucoins: { decrement: w.chimucoins } },
+          });
+        }
+        if (w.position >= 1 && w.position <= 3) {
+          const updateData: any = { wins: { decrement: 1 } };
+          if (w.position === 1) updateData.winsFirst = { decrement: 1 };
+          else if (w.position === 2) updateData.winsSecond = { decrement: 1 };
+          else if (w.position === 3) updateData.winsThird = { decrement: 1 };
+          await db.playerStats.update({
+            where: { playerId: w.playerId },
+            data: updateData,
+          }).catch(() => {});
+        }
+      }
+
+      // Revertir matchesPlayed
+      for (const reg of current.registrations) {
+        await db.playerStats.update({
+          where: { playerId: reg.playerId },
+          data: { matchesPlayed: { decrement: 1 } },
+        }).catch(() => {});
+      }
+
+      // 2. Bugfix: Revertir Puntos MMR basado en posiciones
+      for (const reg of current.registrations) {
+        let delta = 5; // A los demás (4º para abajo) se les sumó -5 o perdieron 5, así que revertir es +5.
+        const winnerEntry = winners.find(w => w.playerId === reg.playerId);
+        
+        if (winnerEntry) {
+          if (winnerEntry.position === 1) delta = -15;
+          else if (winnerEntry.position === 2) delta = -10;
+          else if (winnerEntry.position === 3) delta = -5;
+        }
+
+        const currentStats = await db.playerCategoryStats.findUnique({
+          where: { playerId_category: { playerId: reg.playerId, category: current.category } }
+        });
+
+        const currentPoints = currentStats?.points || 0;
+        // Acotar estrictamente entre 0 y 100
+        const newPoints = Math.max(0, Math.min(100, currentPoints + delta));
+
+        await db.playerCategoryStats.update({
+          where: { playerId_category: { playerId: reg.playerId, category: current.category } },
+          data: { points: newPoints }
+        }).catch(() => {});
+      }
+    }
+
     await db.tournament.delete({ where: { id } });
     revalidatePath("/admin/tournaments");
     revalidatePath("/torneos");
@@ -396,6 +467,128 @@ export async function unregisterPlayer(tournamentId: string, playerId: string) {
   }
 }
 
+// --- Admin Team Management ---
+
+export async function adminCreateTeam(tournamentId: string, teamName: string, playerIds: string[], image?: string) {
+  try {
+    const tournament = await db.tournament.findUnique({
+      where: { id: tournamentId },
+      include: {
+        registrations: true,
+        teams: {
+          include: { players: true }
+        }
+      }
+    });
+
+    if (!tournament) return { success: false, message: "Torneo no encontrado" };
+    if (!tournament.isTeamBased) return { success: false, message: "Este torneo no es de equipos" };
+
+    const expectedSize = tournament.teamSize || 2;
+    if (playerIds.length === 0 || playerIds.length > expectedSize) {
+      return { success: false, message: `El equipo debe tener entre 1 y ${expectedSize} jugadores` };
+    }
+
+    // Check if team name exists in this tournament
+    const existingTeam = await db.team.findUnique({
+      where: { tournamentId_name: { tournamentId, name: teamName } }
+    });
+    if (existingTeam) return { success: false, message: "Ese nombre de equipo ya existe en este torneo" };
+
+    const playersInTournament = tournament.registrations.map(r => r.playerId);
+
+    const playersAlreadyInOtherTeams = new Set<string>();
+    for (const t of tournament.teams) {
+      for (const p of t.players) {
+        playersAlreadyInOtherTeams.add(p.id);
+      }
+    }
+
+    // Check if any player is NOT registered or ALREADY in a team
+    for (const pId of playerIds) {
+      if (!playersInTournament.includes(pId)) {
+        return { success: false, message: `Un jugador seleccionado no está inscripto en el torneo` };
+      }
+      if (playersAlreadyInOtherTeams.has(pId)) {
+        return { success: false, message: `Un jugador seleccionado ya pertenece a otro equipo` };
+      }
+    }
+
+    // Create Team connecting the players
+    await db.team.create({
+      data: {
+        name: teamName,
+        image: image || null,
+        tournamentId,
+        players: {
+          connect: playerIds.map(id => ({ id }))
+        }
+      }
+    });
+
+    revalidatePath(`/admin/tournaments/${tournamentId}`);
+    return { success: true, message: "Equipo creado exitosamente" };
+
+  } catch (error) {
+    console.error("Error creating team:", error);
+    return { success: false, message: "Error al crear equipo" };
+  }
+}
+
+export async function adminUpdateTeam(teamId: string, teamName: string, playerIds: string[], image?: string) {
+  try {
+    const team = await db.team.findUnique({
+      where: { id: teamId },
+      include: { tournament: true }
+    });
+    if (!team) return { success: false, message: "Equipo no encontrado" };
+
+    const expectedSize = team.tournament.teamSize || 2;
+    if (playerIds.length === 0 || playerIds.length > expectedSize) {
+      return { success: false, message: `El equipo debe tener entre 1 y ${expectedSize} jugadores` };
+    }
+
+    if (teamName !== team.name) {
+      const existingTeam = await db.team.findFirst({
+        where: { tournamentId: team.tournamentId, name: teamName }
+      });
+      if (existingTeam) return { success: false, message: "Ese nombre de equipo ya existe en este torneo" };
+    }
+
+    await db.team.update({
+      where: { id: teamId },
+      data: {
+        name: teamName,
+        image: image || null,
+        players: {
+          set: playerIds.map(id => ({ id }))
+        }
+      }
+    });
+
+    revalidatePath(`/admin/tournaments/results/${team.tournamentId}`);
+    return { success: true, message: "Equipo actualizado correctamente" };
+  } catch (error) {
+    console.error("Error updating team:", error);
+    return { success: false, message: "Error al actualizar equipo" };
+  }
+}
+
+export async function adminDeleteTeam(teamId: string) {
+  try {
+    const team = await db.team.findUnique({ where: { id: teamId } });
+    if (!team) return { success: false, message: "Equipo no encontrado" };
+
+    await db.team.delete({ where: { id: teamId } });
+
+    revalidatePath(`/admin/tournaments/${team.tournamentId}`);
+    return { success: true, message: "Equipo eliminado" };
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    return { success: false, message: "Error al eliminar equipo" };
+  }
+}
+
 // --- Past Tournaments (Results) ---
 
 export async function getFinishedTournaments() {
@@ -420,17 +613,89 @@ export async function finishTournament(id: string) {
     });
     if (!tournament) return { success: false, message: "Torneo no encontrado" };
 
-    // Sort registrations by score (descending) to find top 3
-    const sorted = [...tournament.registrations].sort((a, b) => b.score - a.score);
-    const top3 = sorted.slice(0, 3).filter(r => r.score > 0);
+    let winners: WinnerEntry[] = [];
+    let mmrDeltas = new Map<string, number>(); // playerId -> delta
 
-    // Build winners array
-    const winners: WinnerEntry[] = top3.map((reg, i) => ({
-      position: i + 1,
-      playerId: reg.playerId,
-      playerAlias: reg.player?.alias || reg.player?.name || "?",
-      chimucoins: 0,
-    }));
+    if (tournament.isTeamBased) {
+      // 1. Group records by Team (We know user belongs to a Team via tournament.teams)
+      // tournament.teams has the players. We can match registration to Team
+      // Wait, we need to fetch teams again if they weren't included. Let's do it safely.
+      const teamsWithPlayers = await db.team.findMany({
+        where: { tournamentId: id },
+        include: { players: true }
+      });
+
+      // Map playerId -> teamId
+      const playerTeamMap = new Map<string, string>();
+      for (const t of teamsWithPlayers) {
+        for (const p of t.players) {
+          playerTeamMap.set(p.id, t.id);
+        }
+      }
+
+      // Group registrations by teamId
+      const teamScores = new Map<string, number>(); // teamId -> totalScore
+      const teamPlayers = new Map<string, typeof tournament.registrations>(); // teamId -> registrations[]
+
+      for (const reg of tournament.registrations) {
+        const tId = playerTeamMap.get(reg.playerId) || "no-team-" + reg.playerId; // Fallback
+        
+        teamScores.set(tId, (teamScores.get(tId) || 0) + reg.score);
+        
+        const arr = teamPlayers.get(tId) || [];
+        arr.push(reg);
+        teamPlayers.set(tId, arr);
+      }
+
+      // Sort teams by total score descending
+      const sortedTeams = Array.from(teamScores.entries()).sort((a, b) => b[1] - a[1]);
+
+      let rankPosition = 1;
+      for (const [tId, totalScore] of sortedTeams) {
+        const teamRegs = teamPlayers.get(tId) || [];
+        
+        let delta = MMR_CONSTANTS.POINTS_LOSS; // -5
+        if (rankPosition === 1) delta = MMR_CONSTANTS.POINTS_1ST;
+        else if (rankPosition === 2) delta = MMR_CONSTANTS.POINTS_2ND;
+        else if (rankPosition === 3) delta = MMR_CONSTANTS.POINTS_3RD;
+
+        for (const reg of teamRegs) {
+          mmrDeltas.set(reg.playerId, delta);
+          
+          if (rankPosition <= 3 && totalScore > 0) {
+            winners.push({
+              position: rankPosition,
+              playerId: reg.playerId,
+              playerAlias: reg.player?.alias || reg.player?.name || "?",
+              chimucoins: 0,
+            });
+          }
+        }
+        rankPosition++;
+      }
+
+    } else {
+      // Original Individual Logic
+      // Sort registrations by score (descending) to find top 3
+      const sorted = [...tournament.registrations].sort((a, b) => b.score - a.score);
+      const top3 = sorted.slice(0, 3).filter(r => r.score > 0);
+
+      // Build winners array
+      winners = top3.map((reg, i) => ({
+        position: i + 1,
+        playerId: reg.playerId,
+        playerAlias: reg.player?.alias || reg.player?.name || "?",
+        chimucoins: 0,
+      }));
+
+      for (let i = 0; i < sorted.length; i++) {
+        let delta = MMR_CONSTANTS.POINTS_LOSS; // -5
+        if (i === 0) delta = MMR_CONSTANTS.POINTS_1ST; // +15
+        else if (i === 1) delta = MMR_CONSTANTS.POINTS_2ND; // +10
+        else if (i === 2) delta = MMR_CONSTANTS.POINTS_3RD; // +5
+        mmrDeltas.set(sorted[i].playerId, delta);
+      }
+    }
 
     await db.tournament.update({
       where: { id },
@@ -457,14 +722,9 @@ export async function finishTournament(id: string) {
     }
 
     // --- MMR Update Logic ---
-    for (let i = 0; i < sorted.length; i++) {
-      const reg = sorted[i];
-
-      let delta = MMR_CONSTANTS.POINTS_LOSS; // -5
-      if (i === 0) delta = MMR_CONSTANTS.POINTS_1ST; // +15
-      else if (i === 1) delta = MMR_CONSTANTS.POINTS_2ND; // +10
-      else if (i === 2) delta = MMR_CONSTANTS.POINTS_3RD; // +5
-
+    for (const reg of tournament.registrations) {
+      const delta = mmrDeltas.get(reg.playerId) || MMR_CONSTANTS.POINTS_LOSS;
+      
       // Fetch current points to safely clamp between 0 and 100
       const currentStats = await db.playerCategoryStats.findUnique({
         where: { playerId_category: { playerId: reg.playerId, category: tournament.category } }

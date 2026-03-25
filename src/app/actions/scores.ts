@@ -120,3 +120,38 @@ export async function bulkUpdateScores(tournamentId: string, entries: BulkScoreE
     return { success: false, message: "Error al actualizar puntajes" };
   }
 }
+
+export async function updateTeamScore({ teamId, tournamentId, newScore }: { teamId: string, tournamentId: string, newScore: number }) {
+  try {
+    const team = await db.team.findUnique({
+      where: { id: teamId },
+      include: { players: true }
+    });
+    if (!team) return { success: false, message: "Equipo no encontrado" };
+
+    for (const player of team.players) {
+      const registration = await db.tournamentRegistration.findUnique({
+        where: { playerId_tournamentId: { playerId: player.id, tournamentId } }
+      });
+      
+      if (registration && registration.score !== newScore) {
+        const history = JSON.parse(registration.scoreHistory || "[]");
+        history.push({ score: registration.score, timestamp: Date.now() });
+        if (history.length > 50) history.shift();
+
+        await db.tournamentRegistration.update({
+          where: { playerId_tournamentId: { playerId: player.id, tournamentId } },
+          data: { score: newScore, scoreHistory: JSON.stringify(history) },
+        });
+      }
+    }
+
+    revalidatePath(`/admin/tournaments/results/${tournamentId}`);
+    revalidatePath(`/admin/tournaments/live/${tournamentId}`);
+    revalidatePath(`/live/${tournamentId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating team score:", error);
+    return { success: false, message: "Error al actualizar puntaje del equipo" };
+  }
+}

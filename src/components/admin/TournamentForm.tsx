@@ -56,6 +56,8 @@ const TournamentSchema = z.object({
   isRestricted: z.boolean().default(false),
   category: z.string().default("SHOOTER"),
   requiredRank: z.string().default("AMATEUR"),
+  isTeamBased: z.boolean().default(false),
+  teamSize: z.coerce.number().optional().nullable(),
 });
 
 interface TournamentFormProps {
@@ -117,6 +119,8 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
       isRestricted: tournament?.isRestricted ?? false,
       category: tournament?.category || "SHOOTER",
       requiredRank: tournament?.requiredRank || "AMATEUR",
+      isTeamBased: tournament?.isTeamBased ?? false,
+      teamSize: tournament?.teamSize || null,
     },
   });
 
@@ -216,6 +220,10 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
       formData.append("isRestricted", String(data.isRestricted));
       formData.append("category", data.category);
       formData.append("requiredRank", data.requiredRank);
+      formData.append("isTeamBased", String(data.isTeamBased));
+      if (data.isTeamBased && data.teamSize) {
+        formData.append("teamSize", String(data.teamSize));
+      }
       formData.append("games", JSON.stringify(uploadedGames));
 
       const result = tournament
@@ -293,6 +301,53 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
                     </FormItem>
                   )}
                 />
+              </div>
+
+              {/* Teams & Team Size */}
+              <div className="grid grid-cols-2 gap-4 bg-gray-800/30 p-3 rounded-lg border border-gray-700 items-center">
+                <FormField
+                  control={form.control}
+                  name="isTeamBased"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        />
+                      </FormControl>
+                      <FormLabel className="font-bold text-white cursor-pointer">
+                        ¿Es torneo por equipos?
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch("isTeamBased") && (
+                  <FormField
+                    control={form.control}
+                    name="teamSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <FormLabel className="whitespace-nowrap text-xs text-gray-300">Jugadores por equ.</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              min={2}
+                              value={field.value || ""}
+                              onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                              className="bg-gray-900 border-gray-600 h-8 w-16"
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {/* Category + Rank */}

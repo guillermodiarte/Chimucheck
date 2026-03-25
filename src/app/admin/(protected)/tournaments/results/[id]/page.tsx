@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ResultsEditor } from "@/components/admin/ResultsEditor";
+import { AdminTeamBuilder } from "@/components/admin/tournaments/AdminTeamBuilder";
 
 interface TournamentResultsPageProps {
   params: Promise<{
@@ -24,6 +25,11 @@ export default async function TournamentResultsPage({ params }: TournamentResult
           score: 'desc'
         }
       },
+      teams: {
+        include: {
+          players: true
+        }
+      }
     },
   });
 
@@ -41,15 +47,26 @@ export default async function TournamentResultsPage({ params }: TournamentResult
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Resultados: {tournament.name}</h1>
-          <p className="text-gray-400">Gestiona los puntajes y ChimuCoins de los jugadores.</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Creacion de Equipos: {tournament.name}</h1>
+          <p className="text-gray-400">Gestiona los equipos de los jugadores.</p>
         </div>
       </div>
 
-      <ResultsEditor
-        tournament={JSON.parse(JSON.stringify(tournament))}
-        sortedRegistrations={JSON.parse(JSON.stringify(sortedRegistrations))}
-      />
+      {tournament.isTeamBased && (
+        <AdminTeamBuilder
+          tournamentId={tournament.id}
+          teamSize={tournament.teamSize || 2}
+          teams={JSON.parse(JSON.stringify(tournament.teams))}
+          registrations={JSON.parse(JSON.stringify(tournament.registrations))}
+        />
+      )}
+
+      {(!tournament.isTeamBased || tournament.status === "FINALIZADO") && (
+        <ResultsEditor
+          tournament={JSON.parse(JSON.stringify(tournament))}
+          sortedRegistrations={JSON.parse(JSON.stringify(sortedRegistrations))}
+        />
+      )}
     </div>
   );
 }

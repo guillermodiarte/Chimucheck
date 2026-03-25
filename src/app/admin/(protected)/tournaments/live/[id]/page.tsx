@@ -9,18 +9,57 @@ export default async function AdminLiveTournamentPage({ params }: { params: Prom
     include: {
       registrations: {
         include: { player: true },
+      },
+      // @ts-ignore
+      teams: {
+        include: { players: true },
       }
     }
   });
 
   if (!tournament) return notFound();
 
-  const initialData = tournament.registrations.map(r => ({
-    playerId: r.playerId,
-    alias: r.player.alias || r.player.name || "Sin Nombre",
-    image: r.player.image || "",
-    score: Number((r as any).score) || 0
-  }));
+  let initialData: any[] = [];
+
+  // @ts-ignore
+  if (tournament.isTeamBased && tournament.teams) {
+    // Generate scores map to read existing scores
+    const playerScores: Record<string, number> = {};
+    // @ts-ignore
+    tournament.registrations.forEach((r: any) => {
+      playerScores[r.playerId] = Number((r as any).score) || 0;
+    });
+
+    // @ts-ignore
+    initialData = tournament.teams.map((team: any) => {
+      // Calculate team score (we assume all members have the same score, or we take the max)
+      const teamScore = team.players.length > 0 
+        ? Math.max(...team.players.map((p: any) => playerScores[p.id] || 0))
+        : 0;
+
+      return {
+        id: team.id,
+        alias: team.name, // Team Name
+        image: team.players[0]?.image || "", // First player's image as fallback
+        score: teamScore,
+        isTeam: true,
+        teamPlayers: team.players.map((p: any) => ({
+          id: p.id,
+          alias: p.alias || p.name
+        }))
+      };
+    });
+  } else {
+    // Individual mode
+    // @ts-ignore
+    initialData = tournament.registrations.map((r: any) => ({
+      id: r.playerId,
+      alias: r.player.alias || r.player.name || "Sin Nombre",
+      image: r.player.image || "",
+      score: Number((r as any).score) || 0,
+      isTeam: false
+    }));
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">

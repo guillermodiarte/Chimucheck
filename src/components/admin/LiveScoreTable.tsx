@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useScoreHistory } from "@/hooks/useScoreHistory";
-import { updatePlayerScore } from "@/app/actions/scores";
+import { updatePlayerScore, updateTeamScore } from "@/app/actions/scores";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Undo2, Redo2, Maximize2, Minimize2, Search, Plus, Minus, Flag, Trophy, Crown, Image as ImageIcon, UploadCloud, Play, Trash2 } from "lucide-react";
@@ -32,18 +32,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type PlayerScore = {
-  playerId: string;
+type LiveItem = {
+  id: string;
   alias: string;
   image: string;
   score: number;
+  isTeam?: boolean;
+  teamPlayers?: { id: string; alias: string }[];
 };
 
-export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, initialData }: { tournamentId: string, tournamentName: string, initialStatus: string, initialData: PlayerScore[] }) {
+export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, initialData }: { tournamentId: string, tournamentName: string, initialStatus: string, initialData: LiveItem[] }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const [players, setPlayers] = useState<PlayerScore[]>(initialData);
+  const [players, setPlayers] = useState<LiveItem[]>(initialData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [status, setStatus] = useState(initialStatus);
@@ -112,24 +114,27 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
     return () => clearInterval(interval);
   }, [router]);
 
-  const handleScoreChange = async (playerId: string, newScore: number) => {
-    const player = players.find(p => p.playerId === playerId);
-    if (!player) return;
+  const handleScoreChange = async (itemId: string, newScore: number) => {
+    const item = players.find(p => p.id === itemId);
+    if (!item) return;
 
-    const previousScore = player.score;
+    const previousScore = item.score;
     if (previousScore === newScore) return;
 
-    addAction({ playerId, previousScore, newScore, timestamp: new Date() });
+    addAction({ playerId: itemId, previousScore, newScore, timestamp: new Date() });
 
     // Optimistic UI Update
-    setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, score: newScore } : p));
-    setPendingValues(prev => { const next = { ...prev }; delete next[playerId]; return next; });
+    setPlayers(prev => prev.map(p => p.id === itemId ? { ...p, score: newScore } : p));
+    setPendingValues(prev => { const next = { ...prev }; delete next[itemId]; return next; });
 
-    const res = await updatePlayerScore({ tournamentId, playerId, newScore });
+    const res = item.isTeam 
+      ? await updateTeamScore({ tournamentId, teamId: itemId, newScore })
+      : await updatePlayerScore({ tournamentId, playerId: itemId, newScore });
+
     if (!res.success) {
       toast.error(res.message);
       // Revert on error
-      setPlayers(prev => prev.map(p => p.playerId === playerId ? { ...p, score: previousScore } : p));
+      setPlayers(prev => prev.map(p => p.id === itemId ? { ...p, score: previousScore } : p));
     } else {
       toast.success(`Puntaje actualizado: ${newScore} pts`);
     }
@@ -139,16 +144,32 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
     const action = undo();
     if (!action) return;
 
-    setPlayers(prev => prev.map(p => p.playerId === action.playerId ? { ...p, score: action.previousScore } : p));
-    await updatePlayerScore({ tournamentId, playerId: action.playerId, newScore: action.previousScore });
+    const item = players.find(p => p.id === action.playerId);
+    if (!item) return;
+
+    setPlayers(prev => prev.map(p => p.id === action.playerId ? { ...p, score: action.previousScore } : p));
+    
+    if (item.isTeam) {
+      await updateTeamScore({ tournamentId, teamId: item.id, newScore: action.previousScore });
+    } else {
+      await updatePlayerScore({ tournamentId, playerId: action.playerId, newScore: action.previousScore });
+    }
   };
 
   const handleRedo = async () => {
     const action = redo();
     if (!action) return;
 
-    setPlayers(prev => prev.map(p => p.playerId === action.playerId ? { ...p, score: action.newScore } : p));
-    await updatePlayerScore({ tournamentId, playerId: action.playerId, newScore: action.newScore });
+    const item = players.find(p => p.id === action.playerId);
+    if (!item) return;
+
+    setPlayers(prev => prev.map(p => p.id === action.playerId ? { ...p, score: action.newScore } : p));
+    
+    if (item.isTeam) {
+      await updateTeamScore({ tournamentId, teamId: item.id, newScore: action.newScore });
+    } else {
+      await updatePlayerScore({ tournamentId, playerId: action.playerId, newScore: action.newScore });
+    }
   };
 
   const handleFinalize = async () => {
@@ -299,7 +320,7 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                key={player.playerId}
+                key={player.id}
                 className={`flex items-center justify-between backdrop-blur-lg rounded-xl p-4 transition-colors shadow-xl ${status === "FINALIZADO" && index === 0 ? "bg-yellow-500/10 border-2 border-yellow-500/50 hover:border-yellow-400" :
                   status === "FINALIZADO" && index === 1 ? "bg-gray-400/10 border-2 border-gray-400/40 hover:border-gray-300" :
                     status === "FINALIZADO" && index === 2 ? "bg-orange-500/10 border-2 border-orange-500/40 hover:border-orange-400" :
@@ -324,6 +345,15 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                   </Avatar>
                   <div className="flex flex-col">
                     <span className="text-xl font-bold text-white uppercase">{player.alias}</span>
+                    {player.isTeam && player.teamPlayers && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {player.teamPlayers.map(p => (
+                          <span key={p.id} className="text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                            {p.alias}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -346,10 +376,10 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                           size="icon"
                           variant="ghost"
                           onClick={() => {
-                            const val = parseInt(sumValues[player.playerId] || "0");
+                            const val = parseInt(sumValues[player.id] || "0");
                             if (!isNaN(val) && val !== 0) {
-                              handleScoreChange(player.playerId, player.score - Math.abs(val));
-                              setSumValues({ ...sumValues, [player.playerId]: "" });
+                              handleScoreChange(player.id, player.score - Math.abs(val));
+                              setSumValues({ ...sumValues, [player.id]: "" });
                             }
                           }}
                           className="text-red-400 hover:text-red-300 hover:bg-red-500/20 h-8 w-8 shrink-0 rounded-md"
@@ -360,14 +390,14 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                         <Input
                           type="number"
                           placeholder="0"
-                          value={sumValues[player.playerId] || ""}
-                          onChange={(e) => setSumValues({ ...sumValues, [player.playerId]: e.target.value })}
+                          value={sumValues[player.id] || ""}
+                          onChange={(e) => setSumValues({ ...sumValues, [player.id]: e.target.value })}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
-                              const val = parseInt(sumValues[player.playerId] || "0");
+                              const val = parseInt(sumValues[player.id] || "0");
                               if (!isNaN(val) && val !== 0) {
-                                handleScoreChange(player.playerId, player.score + val);
-                                setSumValues({ ...sumValues, [player.playerId]: "" });
+                                handleScoreChange(player.id, player.score + val);
+                                setSumValues({ ...sumValues, [player.id]: "" });
                               }
                             }
                           }}
@@ -377,10 +407,10 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
                           size="icon"
                           variant="ghost"
                           onClick={() => {
-                            const val = parseInt(sumValues[player.playerId] || "0");
+                            const val = parseInt(sumValues[player.id] || "0");
                             if (!isNaN(val) && val !== 0) {
-                              handleScoreChange(player.playerId, player.score + Math.abs(val));
-                              setSumValues({ ...sumValues, [player.playerId]: "" });
+                              handleScoreChange(player.id, player.score + Math.abs(val));
+                              setSumValues({ ...sumValues, [player.id]: "" });
                             }
                           }}
                           className="text-green-400 hover:text-green-300 hover:bg-green-500/20 h-8 w-8 shrink-0 rounded-md"
