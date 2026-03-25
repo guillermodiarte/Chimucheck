@@ -23,9 +23,9 @@ function getLevelInfo(segmentIndex: number): LevelInfo {
 }
 
 function getLevelName(segmentIndex: number): string {
-  if (segmentIndex >= TOTAL_LEVELS) return "Profesional 5 (Máx)";
+  if (segmentIndex >= TOTAL_LEVELS) return "Profesional ★★★★★ (Máx)";
   const { tier, level } = getLevelInfo(segmentIndex);
-  return `${tier} ${level}`;
+  return `${tier} ${"★".repeat(level)}`;
 }
 
 export interface RankProgress {

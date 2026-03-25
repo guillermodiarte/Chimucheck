@@ -398,8 +398,8 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                       Ver todos <ChevronRight size={12} />
                     </Link>
                   </div>
-                  <div className="space-y-3">
-                    {player.registrations.slice(0, 4).map((reg: any) => (
+                  <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+                    {player.registrations.map((reg: any) => (
                       <Link
                         key={reg.id}
                         href={`/torneos/${reg.tournament.id}`}
@@ -427,6 +427,30 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                 </CardContent>
               </Card>
             )}
+
+            {/* Leyenda de Niveles */}
+            <Card className="bg-zinc-900 border-white/10 flex-1">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-bold text-white mb-4 relative flex items-center gap-2">
+                  <Shield size={18} className="text-primary" />
+                  Niveles
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-green-400 uppercase tracking-widest">Amateur</span>
+                    <span className="text-green-500 text-xs tracking-[0.2em] drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">★★★★★</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-sky-400 uppercase tracking-widest">Semi Profesional</span>
+                    <span className="text-sky-500 text-xs tracking-[0.2em] drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">★★★★★</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-yellow-400 uppercase tracking-widest">Profesional</span>
+                    <span className="text-yellow-500 text-xs tracking-[0.2em] drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]">★★★★★</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Center Column: Rango Competitivo (MMR Radar Chart) */}
@@ -631,6 +655,11 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                             <FormControl>
                               <Input
                                 {...field}
+                                type="tel"
+                                onChange={(e) => {
+                                  e.target.value = e.target.value.replace(/[^0-9+\s-]/g, '');
+                                  field.onChange(e);
+                                }}
                                 disabled={!isEditing}
                                 className="bg-black/40 border-white/10 text-white h-10 px-3 focus:border-white/20 transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                 placeholder="+54 9 ..."
