@@ -10,8 +10,9 @@ export default function Footer({ socialLinks, footerData }: { socialLinks?: any;
 
   return (
     <footer className="bg-black border-t border-white/10 py-8">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
-        <div className="mb-4 md:mb-0">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
+        {/* Top Row: Logo & Socials */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="relative w-[60px] h-[60px]">
               <Image
@@ -25,12 +26,8 @@ export default function Footer({ socialLinks, footerData }: { socialLinks?: any;
               {title}
             </span>
           </div>
-          <p className="text-gray-500 text-sm mt-1 whitespace-pre-wrap">
-            {subtitle}
-          </p>
-        </div>
 
-        <div className="flex space-x-6">
+          <div className="flex space-x-6">
           {(() => {
             const inst = getSocialConfig(socialLinks, "instagram");
             const fb = getSocialConfig(socialLinks, "facebook");
@@ -86,6 +83,19 @@ export default function Footer({ socialLinks, footerData }: { socialLinks?: any;
               </>
             );
           })()}
+          </div>
+        </div>
+
+        {/* Bottom Row: Text Info */}
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-4 pt-4 border-t border-white/5">
+          <div className="text-gray-500 text-sm text-center md:text-left">
+            <p>Chimucheck © {new Date().getFullYear()}. Todos los derechos reservados.</p>
+            <p>Contacto: <a href="mailto:chimucheck@gmail.com" className="hover:text-primary transition-colors">chimucheck@gmail.com</a></p>
+          </div>
+          <div className="text-gray-500 text-sm text-center md:text-right">
+            <p>Desarrollado por <span className="font-semibold text-white">Guillermo A. Diarte</span></p>
+            <p>Email: <a href="mailto:guillermodiarte@gmail.com" className="hover:text-primary transition-colors">guillermodiarte@gmail.com</a></p>
+          </div>
         </div>
       </div>
     </footer>
