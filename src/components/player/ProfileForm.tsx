@@ -56,7 +56,17 @@ const COUNTRIES = [
 
 // Custom styles and components moved inside to access player data
 
-export function ProfileForm({ player, profileBannerImage, profileBackgroundImage }: { player: any, profileBannerImage?: string, profileBackgroundImage?: string }) {
+export function ProfileForm({ 
+  player, 
+  profileBannerImage, 
+  profileBackgroundImage,
+  isPublic = false 
+}: { 
+  player: any, 
+  profileBannerImage?: string, 
+  profileBackgroundImage?: string,
+  isPublic?: boolean 
+}) {
   const { update } = useSession();
   const [isPending, startTransition] = useTransition();
   const [previewUrl, setPreviewUrl] = useState<string | null>(player.image);
@@ -288,8 +298,8 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
           {/* Floating Interactive Avatar and Identity Details */}
           <div className="absolute -bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center w-full">
             <div
-              className="relative w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-b from-primary to-transparent shadow-[0_0_30px_rgba(255,215,0,0.3)] group cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
+              className={`relative w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-b from-primary to-transparent shadow-[0_0_30px_rgba(255,215,0,0.3)] group ${!isPublic ? "cursor-pointer" : ""}`}
+              onClick={() => { if (!isPublic) fileInputRef.current?.click() }}
             >
               <div className="relative w-full h-full rounded-full overflow-hidden bg-zinc-950 border-4 border-black flex items-center justify-center">
                 {previewUrl && !imageError ? (
@@ -307,15 +317,19 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
                 )}
 
                 {/* Hover Overlay with Camera Icon */}
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                  <Camera className="text-white drop-shadow-lg" size={32} />
-                </div>
+                {!isPublic && (
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                    <Camera className="text-white drop-shadow-lg" size={32} />
+                  </div>
+                )}
               </div>
 
               {/* Status Indicator / Upload Icon */}
-              <div className="absolute bottom-2 right-2 w-8 h-8 bg-zinc-900 border-2 border-primary rounded-full flex items-center justify-center text-primary shadow-lg z-10">
-                <Upload size={14} />
-              </div>
+              {!isPublic && (
+                <div className="absolute bottom-2 right-2 w-8 h-8 bg-zinc-900 border-2 border-primary rounded-full flex items-center justify-center text-primary shadow-lg z-10">
+                  <Upload size={14} />
+                </div>
+              )}
             </div>
 
             <input
@@ -341,8 +355,8 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
           </div>
         </div>
 
-        {/* Grid Principal de 4 Columnas */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 relative z-10 pt-4">
+        {/* Grid Principal de Columnas (4 u 3 dependiento de isPublic) */}
+        <div className={`grid grid-cols-1 ${isPublic ? "lg:grid-cols-3 max-w-5xl mx-auto" : "lg:grid-cols-4"} gap-6 md:gap-8 relative z-10 pt-4`}>
 
           {/* Left Column: Stats + Actividad Reciente */}
           <div className="lg:col-span-1 space-y-6 flex flex-col">
@@ -528,9 +542,10 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
             </Card>
           </div>
 
-          {/* Right Column: Form Inputs */}
-          <div className="lg:col-span-1">
-            <Card className="bg-zinc-900 border-white/10 shadow-2xl overflow-hidden h-full">
+          {/* Right Column: Form Inputs (Hidden if Public) */}
+          {!isPublic && (
+            <div className="lg:col-span-1">
+              <Card className="bg-zinc-900 border-white/10 shadow-2xl overflow-hidden h-full">
               <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -786,6 +801,7 @@ export function ProfileForm({ player, profileBannerImage, profileBackgroundImage
               </CardContent>
             </Card>
           </div>
+          )}
         </div>
       </div>
     </div>
