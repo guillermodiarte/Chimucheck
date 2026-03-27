@@ -221,6 +221,35 @@ export async function updateTournament(id: string, prevState: any, formData: For
               data: { matchesPlayed: { decrement: 1 } },
             }).catch(() => { });
           }
+
+          // Revert MMR points
+          for (const reg of current.registrations) {
+            let delta = -MMR_CONSTANTS.POINTS_LOSS; // Loss revert (+5)
+            let winnerEntry;
+            try { 
+              const parsedWinners = JSON.parse(current.winners as string || "[]");
+              winnerEntry = parsedWinners.find((w: any) => w.playerId === reg.playerId);
+            } catch { }
+            
+            if (winnerEntry) {
+              if (winnerEntry.position === 1) delta = -MMR_CONSTANTS.POINTS_1ST;
+              else if (winnerEntry.position === 2) delta = -MMR_CONSTANTS.POINTS_2ND;
+              else if (winnerEntry.position === 3) delta = -MMR_CONSTANTS.POINTS_3RD;
+            }
+
+            const currentStats = await db.playerCategoryStats.findUnique({
+              where: { playerId_category: { playerId: reg.playerId, category: current.category } }
+            });
+
+            const currentPoints = currentStats?.points || 0;
+            const newPoints = Math.max(MMR_CONSTANTS.MIN_POINTS, Math.min(MMR_CONSTANTS.MAX_POINTS, currentPoints + delta));
+
+            await db.playerCategoryStats.upsert({
+              where: { playerId_category: { playerId: reg.playerId, category: current.category } },
+              create: { playerId: reg.playerId, category: current.category, points: newPoints },
+              update: { points: newPoints }
+            }).catch((e) => console.error("Error reverting MMR stats in updateTournament:", e));
+          }
         }
       }
     }
@@ -814,6 +843,31 @@ export async function reactivateTournament(id: string) {
         where: { playerId: reg.playerId },
         data: { matchesPlayed: { decrement: 1 } },
       }).catch(() => { });
+    }
+
+    // Revert MMR points based on tournament category
+    for (const reg of tournament.registrations) {
+      let delta = -MMR_CONSTANTS.POINTS_LOSS; // Loss revert (+5)
+      const winnerEntry = winners.find(w => w.playerId === reg.playerId);
+      
+      if (winnerEntry) {
+        if (winnerEntry.position === 1) delta = -MMR_CONSTANTS.POINTS_1ST; // -15
+        else if (winnerEntry.position === 2) delta = -MMR_CONSTANTS.POINTS_2ND; // -10
+        else if (winnerEntry.position === 3) delta = -MMR_CONSTANTS.POINTS_3RD; // -5
+      }
+
+      const currentStats = await db.playerCategoryStats.findUnique({
+        where: { playerId_category: { playerId: reg.playerId, category: tournament.category } }
+      });
+
+      const currentPoints = currentStats?.points || 0;
+      const newPoints = Math.max(MMR_CONSTANTS.MIN_POINTS, Math.min(MMR_CONSTANTS.MAX_POINTS, currentPoints + delta));
+
+      await db.playerCategoryStats.upsert({
+        where: { playerId_category: { playerId: reg.playerId, category: tournament.category } },
+        create: { playerId: reg.playerId, category: tournament.category, points: newPoints },
+        update: { points: newPoints }
+      }).catch((e) => console.error("Error reverting MMR stats in reactivateTournament:", e));
     }
 
     await db.tournament.update({
