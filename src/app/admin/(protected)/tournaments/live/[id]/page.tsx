@@ -40,7 +40,7 @@ export default async function AdminLiveTournamentPage({ params }: { params: Prom
       return {
         id: team.id,
         alias: team.name, // Team Name
-        image: team.players[0]?.image || "", // First player's image as fallback
+        image: team.image || team.avatar || "", // Team image rather than player image
         score: teamScore,
         isTeam: true,
         teamPlayers: team.players.map((p: any) => ({

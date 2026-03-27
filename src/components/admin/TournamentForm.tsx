@@ -19,11 +19,11 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { createTournament, updateTournament } from "@/app/actions/tournaments";
+import { createTournament, updateTournament, unregisterPlayer } from "@/app/actions/tournaments";
 import { CATEGORIES, RANK_TIERS } from "@/lib/mmr";
 import { LocalImageUpload } from "./LocalImageUpload";
 import { MediaSelectorModal } from "./MediaSelectorModal";
-import { Plus, X, Gamepad2 } from "lucide-react";
+import { Plus, X, Gamepad2, Users, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,6 +70,7 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryWarning, setShowCategoryWarning] = useState(false);
   const [pendingCategory, setPendingCategory] = useState("");
+  const [playerToDelete, setPlayerToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // --- Games state ---
   const existingGames: GameEntry[] = (() => {
@@ -113,7 +114,10 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
     defaultValues: {
       name: tournament?.name || "",
       description: tournament?.description || "",
-      date: tournament?.date ? new Date(tournament.date).toISOString().slice(0, 16) : "",
+      date: tournament?.date ? (() => {
+        const d = new Date(tournament.date);
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      })() : "",
       maxPlayers: tournament?.maxPlayers || 16,
       active: tournament?.active ?? true,
       isRestricted: tournament?.isRestricted ?? false,
@@ -163,6 +167,22 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
 
   function updateGameFormat(index: number, format: string) {
     setGames((prev) => prev.map((g, i) => (i === index ? { ...g, format } : g)));
+  }
+
+  // --- Players helpers ---
+  async function confirmRemovePlayer() {
+    if (!playerToDelete) return;
+
+    const toastId = toast.loading("Eliminando inscripción...");
+    const result = await unregisterPlayer(tournament.id, playerToDelete.id);
+    
+    if (result.success) {
+      toast.success(result.message, { id: toastId });
+      router.refresh();
+    } else {
+      toast.error(result.message || "Error al eliminar jugador", { id: toastId });
+    }
+    setPlayerToDelete(null);
   }
 
   // --- Submit ---
@@ -600,7 +620,43 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
             />
           </div>
 
-          {/* Full-width bottom fields remain unaffected */}
+          {/* Registered Players List (Edit Mode Only) */}
+          {tournament && tournament.registrations && tournament.registrations.length > 0 && (
+            <div className="space-y-4 pt-4 border-t border-gray-800">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Jugadores Inscriptos ({tournament.registrations.length})
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {tournament.registrations.map((reg: any) => (
+                  <div key={reg.playerId} className="flex items-center justify-between bg-gray-800/40 border border-gray-700 p-3 rounded-lg">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-black shrink-0 relative">
+                         {reg.player?.image ? (
+                           <img src={reg.player.image} alt={reg.player.alias || "Avatar"} className="object-cover w-full h-full" />
+                         ) : (
+                           <Users className="w-4 h-4 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                         )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{reg.player?.alias || reg.player?.name || "Sin nombre"}</p>
+                      </div>
+                    </div>
+                    <Button 
+                       type="button" 
+                       variant="ghost" 
+                       size="icon" 
+                       onClick={() => setPlayerToDelete({ id: reg.playerId, name: reg.player?.alias || reg.player?.name || "Sin nombre" })}
+                       className="text-gray-500 hover:text-red-400 shrink-0 h-8 w-8"
+                       title="Eliminar inscripción"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Button
             type="submit"
@@ -611,6 +667,28 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
           </Button>
         </form>
       </Form>
+
+      <AlertDialog open={!!playerToDelete} onOpenChange={(open) => !open && setPlayerToDelete(null)}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar Inscripción?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              ¿Estás seguro de que deseas eliminar la inscripción de <strong className="text-white">{playerToDelete?.name}</strong>? Esta acción no se puede deshacer y el jugador será removido de su equipo (si lo tuviera).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-gray-700 hover:bg-gray-800 text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={confirmRemovePlayer}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showCategoryWarning} onOpenChange={setShowCategoryWarning}>
         <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Bell, UserPlus, Gamepad2, Check, UserCheck, Trash2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Bell, UserPlus, Gamepad2, Check, UserCheck, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 interface Notification {
@@ -19,6 +20,7 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [restrictRegistration, setRestrictRegistration] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = useCallback(async () => {
@@ -35,7 +37,10 @@ export function NotificationBell() {
     }
   }, []);
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
     return () => clearInterval(interval);
@@ -74,6 +79,7 @@ export function NotificationBell() {
 
   const handleNotificationClick = async (n: Notification) => {
     setIsOpen(false);
+    setSelectedNotification(n);
     if (!n.read) {
       try {
         await fetch("/api/admin/notifications", {
@@ -99,6 +105,8 @@ export function NotificationBell() {
         return <Gamepad2 size={16} className="text-blue-400" />;
       case "PENDING_REGISTRATION":
         return <UserCheck size={16} className="text-yellow-400" />;
+      case "ORPHAN_PLAYERS_ALERT":
+        return <AlertTriangle size={16} className="text-red-500 animate-pulse" />;
       default:
         return <Bell size={16} className="text-gray-400" />;
     }
@@ -107,6 +115,11 @@ export function NotificationBell() {
   const getRedirectUrl = (notification: Notification) => {
     try {
       if (!notification.data) return "/admin/dashboard";
+      
+      if (notification.type === "ORPHAN_PLAYERS_ALERT") {
+        return "/admin/tournaments";
+      }
+
       const payload = JSON.parse(notification.data);
 
       switch (notification.type) {
@@ -187,11 +200,10 @@ export function NotificationBell() {
               </div>
             ) : (
               notifications.map((n) => (
-                <Link
-                  href={getRedirectUrl(n)}
+                <button
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
-                  className={`flex items-start gap-3 p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors ${n.read ? "opacity-60" : "bg-white/2"
+                  className={`w-full text-left flex items-start gap-3 p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors ${n.read ? "opacity-60" : "bg-white/2"
                     }`}
                 >
                   <div className="mt-0.5 p-1.5 rounded-lg bg-white/5 shrink-0">
@@ -205,11 +217,54 @@ export function NotificationBell() {
                   {!n.read && (
                     <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
                   )}
-                </Link>
+                </button>
               ))
             )}
           </div>
         </div>
+      )}
+
+      {selectedNotification && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-start justify-between p-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white/5">
+                  {getIcon(selectedNotification.type)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white leading-tight">
+                    {selectedNotification.title}
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {timeAgo(selectedNotification.createdAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">
+                {selectedNotification.message}
+              </p>
+            </div>
+            <div className="flex items-center justify-end p-4 border-t border-white/5 gap-3 bg-white/[0.02]">
+              <button
+                onClick={() => setSelectedNotification(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:bg-white/5 transition-colors"
+              >
+                Cerrar
+              </button>
+              <Link
+                href={getRedirectUrl(selectedNotification)}
+                onClick={() => setSelectedNotification(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-black hover:bg-primary/90 transition-colors"
+              >
+                Ir a la Sección
+              </Link>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

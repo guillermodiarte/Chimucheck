@@ -382,6 +382,10 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                             status={tournament.status}
                             tournamentId={tournament.id}
                             bannerImages={games.map(g => g.image).filter(Boolean)}
+                            // @ts-ignore
+                            isTeamBased={tournament.isTeamBased}
+                            // @ts-ignore
+                            teams={tournament.teams || []}
                           />
                           {tournament.status === "EN_JUEGO" && (
                             <span className="flex items-center gap-2 text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full border border-green-500/30 font-bold tracking-widest uppercase">
@@ -393,7 +397,15 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                       )}
                     </div>
                   </h3>
-                  <PublicScoreboard registrations={tournament.registrations} status={tournament.status} tournamentId={tournament.id} />
+                  <PublicScoreboard 
+                    registrations={tournament.registrations} 
+                    status={tournament.status} 
+                    tournamentId={tournament.id}
+                    // @ts-ignore
+                    isTeamBased={tournament.isTeamBased}
+                    // @ts-ignore
+                    teams={tournament.teams || []}
+                  />
                 </div>
               </div>
             </div>

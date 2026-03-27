@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,11 +19,15 @@ type Registration = {
 export function PublicScoreboard({
   registrations,
   status,
-  tournamentId
+  tournamentId,
+  isTeamBased = false,
+  teams = []
 }: {
   registrations: Registration[],
   status: string,
-  tournamentId: string
+  tournamentId: string,
+  isTeamBased?: boolean,
+  teams?: any[]
 }) {
   const router = useRouter();
 
@@ -37,6 +41,45 @@ export function PublicScoreboard({
     return () => clearInterval(interval);
   }, [status, router]);
 
+  const isLiveOrFinished = status === "EN_JUEGO" || status === "FINALIZADO";
+
+  // Normalize into standard items depending on Team or Solo mode
+  const displayItems = useMemo(() => {
+    let items = [];
+
+    if (isTeamBased && teams && teams.length > 0) {
+      items = teams.map(team => {
+        const teamPlayerIds = new Set(team.players.map((p: any) => p.id));
+        const teamRegs = registrations.filter(r => teamPlayerIds.has(r.playerId));
+        const totalScore = teamRegs.reduce((sum, r) => sum + r.score, 0);
+        
+        return {
+          id: team.id,
+          name: team.name,
+          image: team.image || null, // Team Avatar
+          score: totalScore,
+          subtitle: team.players.map((p: any) => p.alias || p.name).join(", ")
+        };
+      });
+    } else {
+      items = registrations.map(reg => ({
+        id: reg.playerId,
+        name: reg.player.alias || reg.player.name || "Jugador",
+        image: reg.player.image || null,
+        score: reg.score,
+        subtitle: null
+      }));
+    }
+
+    // Sort by score if live/finished, else by name
+    return items.sort((a, b) => {
+      if (isLiveOrFinished) {
+        if (b.score !== a.score) return b.score - a.score;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [registrations, isTeamBased, teams, isLiveOrFinished]);
+
   if (registrations.length === 0) {
     return (
       <div className="p-8 text-center bg-gray-900/50 border border-white/10 rounded-2xl">
@@ -46,23 +89,11 @@ export function PublicScoreboard({
     );
   }
 
-  const isLiveOrFinished = status === "EN_JUEGO" || status === "FINALIZADO";
-
-  // If live or finished, sort by score descending. Else, keep insertion order (or alphabetical).
-  const sortedRegistrations = [...registrations].sort((a, b) => {
-    if (isLiveOrFinished) {
-      if (b.score !== a.score) return b.score - a.score;
-    }
-    const nameA = a.player.alias || a.player.name || "";
-    const nameB = b.player.alias || b.player.name || "";
-    return nameA.localeCompare(nameB);
-  });
-
   return (
     <div className="grid gap-2">
       <AnimatePresence>
-        {sortedRegistrations.map((reg, index) => {
-          const playerName = reg.player.alias || reg.player.name || "Jugador";
+        {displayItems.map((item, index) => {
+          const itemName = item.name;
           const isFirst = index === 0;
           const isSecond = index === 1;
           const isThird = index === 2;
@@ -100,7 +131,7 @@ export function PublicScoreboard({
               layout
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              key={reg.playerId}
+              key={item.id}
               className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${status === "FINALIZADO" && isFirst ? "bg-yellow-900/10 border-yellow-500/30" : "bg-black/20 border-white/5"
                 }`}
             >
@@ -108,19 +139,24 @@ export function PublicScoreboard({
                 {isLiveOrFinished && rankBadge}
 
                 <Avatar className={`border ${status === "FINALIZADO" && isFirst ? "border-yellow-500/50" : "border-gray-700"}`}>
-                  <AvatarImage src={reg.player.image || ""} alt={playerName} className="object-cover" />
-                  <AvatarFallback className="bg-gray-800 text-gray-400">{playerName[0]?.toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={item.image || ""} alt={itemName} className="object-cover" />
+                  <AvatarFallback className="bg-gray-800 text-gray-400">{itemName[0]?.toUpperCase()}</AvatarFallback>
                 </Avatar>
 
-                <span className={`font-bold ${status === "FINALIZADO" && isFirst ? "text-yellow-400" : "text-white"}`}>
-                  {playerName}
-                </span>
+                <div className="flex flex-col">
+                  <span className={`font-bold ${status === "FINALIZADO" && isFirst ? "text-yellow-400" : "text-white"}`}>
+                    {itemName}
+                  </span>
+                  {item.subtitle && (
+                    <span className="text-xs text-gray-400 font-normal">{item.subtitle}</span>
+                  )}
+                </div>
               </div>
 
               {isLiveOrFinished && (
                 <div className="flex items-center gap-1">
                   <span className={`text-xl font-black ${status === "FINALIZADO" && isFirst ? "text-yellow-500" : "text-white"}`}>
-                    {reg.score}
+                    {item.score}
                   </span>
                   <span className="text-xs text-gray-500 font-bold uppercase mt-1">PTS</span>
                 </div>

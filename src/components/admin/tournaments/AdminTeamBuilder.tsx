@@ -9,6 +9,16 @@ import { Users, Trash2, CheckSquare, Square, Loader2, Image as ImageIcon, Edit }
 import { adminCreateTeam, adminUpdateTeam, adminDeleteTeam } from "@/app/actions/tournaments";
 import { MediaSelectorModal } from "@/components/admin/MediaSelectorModal";
 import Image from "next/image";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface AdminTeamBuilderProps {
   tournamentId: string;
@@ -31,6 +41,7 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
   const [editSelectedPlayers, setEditSelectedPlayers] = useState<string[]>([]);
   const [isEditLoading, setIsEditLoading] = useState(false);
   const [showEditMediaSelector, setShowEditMediaSelector] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -89,16 +100,20 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
     }
   };
 
-  const handleDeleteTeam = async (teamId: string) => {
-    if (!confirm("¿Desarmar este equipo? Los jugadores volverán a estar disponibles.")) return;
-
-    const result = await adminDeleteTeam(teamId);
+  const confirmDeleteTeam = async () => {
+    if (!teamToDelete) return;
+    const result = await adminDeleteTeam(teamToDelete);
     if (result.success) {
       toast.success(result.message);
       router.refresh();
     } else {
       toast.error(result.message);
     }
+    setTeamToDelete(null);
+  };
+
+  const handleDeleteTeam = (teamId: string) => {
+    setTeamToDelete(teamId);
   };
 
   const handleUpdateTeam = async () => {
@@ -248,7 +263,7 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {team.players.map((p: any) => (
-                      <span key={p.id} className="text-xs bg-white/5 border border-white/10 text-gray-300 px-2 py-1 rounded-md">
+                      <span key={p.id} className="text-xs bg-black/40 text-gray-300 px-2 py-1 rounded border border-white/5">
                         {p.alias || p.name}
                       </span>
                     ))}
@@ -260,6 +275,27 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
         </div>
       </div>
 
+      <AlertDialog open={!!teamToDelete} onOpenChange={(open) => !open && setTeamToDelete(null)}>
+        <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Desarmar este equipo?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Los jugadores volverán a estar disponibles para formar otros equipos. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-gray-700 hover:bg-gray-800 text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={confirmDeleteTeam}
+            >
+              Desarmar Equipo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <MediaSelectorModal
         open={showMediaSelector}
         onOpenChange={setShowMediaSelector}

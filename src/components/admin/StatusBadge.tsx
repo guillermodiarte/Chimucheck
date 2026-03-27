@@ -38,7 +38,7 @@ export function StatusBadge({ id, status: initialStatus }: StatusBadgeProps) {
         setStatus(newStatus);
         toast.success(`Estado actualizado a ${statusConfig[newStatus].label}`);
       } else {
-        toast.error("Error al actualizar estado");
+        toast.error(result.message || "Error al actualizar estado");
       }
     });
   };

@@ -83,6 +83,11 @@ export async function getTournamentById(id: string) {
             player: true,
           },
         },
+        teams: {
+          include: {
+            players: true,
+          },
+        },
       },
     });
     return tournament;
@@ -281,13 +286,13 @@ export async function deleteTournament(id: string) {
 
       // 2. Bugfix: Revertir Puntos MMR basado en posiciones
       for (const reg of current.registrations) {
-        let delta = 5; // A los demás (4º para abajo) se les sumó -5 o perdieron 5, así que revertir es +5.
+        let delta = 5; // Loss revert = +5
         const winnerEntry = winners.find(w => w.playerId === reg.playerId);
         
         if (winnerEntry) {
-          if (winnerEntry.position === 1) delta = -15;
-          else if (winnerEntry.position === 2) delta = -10;
-          else if (winnerEntry.position === 3) delta = -5;
+          if (winnerEntry.position === 1) delta = -15; // 1st revert = -15
+          else if (winnerEntry.position === 2) delta = -10; // 2nd revert = -10
+          else if (winnerEntry.position === 3) delta = -5; // 3rd revert = -5
         }
 
         const currentStats = await db.playerCategoryStats.findUnique({
@@ -295,13 +300,13 @@ export async function deleteTournament(id: string) {
         });
 
         const currentPoints = currentStats?.points || 0;
-        // Acotar estrictamente entre 0 y 100
         const newPoints = Math.max(0, Math.min(100, currentPoints + delta));
 
-        await db.playerCategoryStats.update({
+        await db.playerCategoryStats.upsert({
           where: { playerId_category: { playerId: reg.playerId, category: current.category } },
-          data: { points: newPoints }
-        }).catch(() => {});
+          create: { playerId: reg.playerId, category: current.category, points: newPoints },
+          update: { points: newPoints }
+        }).catch((e) => console.error("Error reverting MMR stats in deleteTournament:", e));
       }
     }
 
@@ -439,6 +444,23 @@ export async function unregisterPlayer(tournamentId: string, playerId: string) {
 
     if (!registration) {
       return { success: false, message: "No estás inscrito en este torneo" };
+    }
+
+    // Desvincular al jugador de cualquier equipo que tenga en este torneo
+    const playerTeams = await db.team.findMany({
+      where: {
+        tournamentId,
+        players: { some: { id: playerId } },
+      },
+    });
+
+    for (const team of playerTeams) {
+      await db.team.update({
+        where: { id: team.id },
+        data: {
+          players: { disconnect: { id: playerId } },
+        },
+      });
     }
 
     await db.tournamentRegistration.delete({

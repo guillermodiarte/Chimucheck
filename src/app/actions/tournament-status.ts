@@ -8,9 +8,24 @@ export async function updateTournamentStatus(id: string, newStatus: TournamentSt
   try {
     const tournament = await db.tournament.findUnique({
       where: { id },
-      include: { registrations: { include: { player: true } } },
+      include: {
+        registrations: { include: { player: true } },
+        teams: { include: { players: true } },
+      },
     });
     if (!tournament) return { success: false, message: "Torneo no encontrado" };
+
+    if (newStatus === "EN_JUEGO" && tournament.isTeamBased) {
+      if (tournament.registrations.length === 0) {
+        return { success: false, message: "No puedes iniciar el torneo. No hay jugadores inscriptos." };
+      }
+      const playersWithTeam = new Set(tournament.teams.flatMap(t => t.players.map(p => p.id)));
+      const hasOrphans = tournament.registrations.some(reg => !playersWithTeam.has(reg.playerId));
+
+      if (hasOrphans) {
+        return { success: false, message: "No puedes iniciar el torneo. Hay jugadores sin equipo." };
+      }
+    }
 
     const oldStatus = tournament.status;
 
@@ -88,6 +103,20 @@ export async function updateTournamentStatus(id: string, newStatus: TournamentSt
     }
     // Simple status change (e.g., INSCRIPCION <-> EN_JUEGO)
     else {
+      // Bug 2: Validación de Arranque para torneos por equipos
+      if (newStatus === "EN_JUEGO" && tournament.isTeamBased) {
+        const teams = await db.team.findMany({
+          where: { tournamentId: id },
+          include: { players: true }
+        });
+        const playersWithTeam = new Set(teams.flatMap(t => t.players.map(p => p.id)));
+        const hasOrphans = tournament.registrations.some(reg => !playersWithTeam.has(reg.playerId));
+        
+        if (hasOrphans) {
+          return { success: false, message: "No puedes iniciar el torneo. Hay jugadores sin equipo asignado." };
+        }
+      }
+
       await db.tournament.update({
         where: { id },
         data: { status: newStatus },

@@ -70,22 +70,28 @@ export default function TournamentCard({
         {isFinished && <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-colors z-10" />}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent pointer-events-none z-10" />
 
-        {/* Game Badges */}
-        {games.length > 0 && (
-          <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 justify-end max-w-[70%] z-20 pointer-events-none">
-            {games.map((game, i) => (
-              <div
-                key={i}
-                className="bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 shadow-lg"
-              >
-                <Gamepad2 className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  {game.name}{game.format ? ` · ${game.format}` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Game & Team Badges */}
+        <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 justify-end max-w-[70%] z-20 pointer-events-none">
+          {tournament.isTeamBased && (
+            <div className="bg-blue-600/80 backdrop-blur-md px-3 py-1 rounded-full border border-blue-400/30 flex items-center gap-1.5 shadow-lg">
+              <Users className="w-3.5 h-3.5 text-white" />
+              <span className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider">
+                En Equipos
+              </span>
+            </div>
+          )}
+          {games.map((game, i) => (
+            <div
+              key={i}
+              className="bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5 shadow-lg"
+            >
+              <Gamepad2 className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider">
+                {game.name}{game.format ? ` · ${game.format}` : ""}
+              </span>
+            </div>
+          ))}
+        </div>
 
         {/* Finished Label */}
         {((tournament.status === "FINALIZADO" || new Date(tournament.date) < new Date()) && tournament.status !== "EN_JUEGO") && (

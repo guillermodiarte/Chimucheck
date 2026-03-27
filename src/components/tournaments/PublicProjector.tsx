@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Minimize2, Maximize2, Image as ImageIcon, X, Crown } from "lucide-react";
+import { Trophy, Minimize2, Maximize2, Image as ImageIcon, X, Crown, Share2 } from "lucide-react";
 import Confetti from "react-confetti";
 
 type Registration = {
@@ -24,6 +24,8 @@ interface PublicProjectorProps {
   status: string;
   tournamentId: string;
   bannerImages: string[];
+  isTeamBased?: boolean;
+  teams?: any[];
 }
 
 export function PublicProjector({
@@ -31,6 +33,8 @@ export function PublicProjector({
   status,
   tournamentId,
   bannerImages,
+  isTeamBased = false,
+  teams = [],
 }: PublicProjectorProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -83,12 +87,56 @@ export function PublicProjector({
     return () => clearInterval(interval);
   }, [showBg, bannerImages.length]);
 
-  const sortedRegistrations = [...registrations].sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    const nameA = a.player.alias || a.player.name || "";
-    const nameB = b.player.alias || b.player.name || "";
-    return nameA.localeCompare(nameB);
-  });
+  const displayItems = useMemo(() => {
+    let items = [];
+
+    if (isTeamBased && teams && teams.length > 0) {
+      items = teams.map(team => {
+        const teamPlayerIds = new Set(team.players.map((p: any) => p.id));
+        const teamRegs = registrations.filter(r => teamPlayerIds.has(r.playerId));
+        const totalScore = teamRegs.reduce((sum, r) => sum + r.score, 0);
+        
+        return {
+          id: team.id,
+          name: team.name,
+          image: team.image || null, // Bugfix 2: Avatar de Equipo vs Jugador
+          score: totalScore,
+          subtitle: team.players.map((p: any) => p.alias || p.name).join(", ")
+        };
+      });
+    } else {
+      items = registrations.map(reg => ({
+        id: reg.playerId,
+        name: reg.player.alias || reg.player.name || "Jugador",
+        image: reg.player.image || null,
+        score: reg.score,
+        subtitle: null
+      }));
+    }
+
+    return items.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.name.localeCompare(b.name);
+    });
+  }, [registrations, isTeamBased, teams]);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '¡Resultados del Torneo!',
+          text: `¡Revisa las posiciones finales del Torneo!`,
+          url
+        });
+      } catch (err) {
+        console.log('Error sharing', err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("¡Enlace copiado al portapapeles!");
+    }
+  };
 
   if (!isOpen) {
     return (
@@ -149,8 +197,8 @@ export function PublicProjector({
         {/* Scores */}
         <div className="flex flex-col gap-4 md:gap-5 w-full">
           <AnimatePresence>
-            {sortedRegistrations.map((reg, index) => {
-              const playerName = reg.player.alias || reg.player.name || "Jugador";
+            {displayItems.map((item, index) => {
+              const itemName = item.name;
               const isFirst = index === 0;
               const isSecond = index === 1;
               const isThird = index === 2;
@@ -184,7 +232,7 @@ export function PublicProjector({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  key={reg.playerId}
+                  key={item.id}
                   className={`flex items-center justify-between p-4 md:p-5 rounded-xl border ${borderClass} ${bgClass} backdrop-blur-md`}
                 >
                   <div className="flex items-center gap-4">
@@ -195,14 +243,19 @@ export function PublicProjector({
 
                     {/* Avatar */}
                     <Avatar className={`w-10 h-10 md:w-12 md:h-12 border-2 ${isFinished && isFirst ? "border-yellow-500/50" : "border-gray-700"}`}>
-                      <AvatarImage src={reg.player.image || ""} alt={playerName} className="object-cover" />
-                      <AvatarFallback className="bg-gray-800 text-gray-400 text-lg">{playerName[0]?.toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={item.image || ""} alt={itemName} className="object-cover" />
+                      <AvatarFallback className="bg-gray-800 text-gray-400 text-lg">{itemName[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
 
                     {/* Name */}
-                    <span className={`font-bold text-xl md:text-2xl ${textClass}`}>
-                      {playerName}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className={`font-bold text-xl md:text-2xl ${textClass}`}>
+                        {itemName}
+                      </span>
+                      {item.subtitle && (
+                        <span className="text-xs md:text-sm text-gray-400 font-normal">{item.subtitle}</span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Score + Trophy */}
@@ -212,7 +265,7 @@ export function PublicProjector({
                     )}
                     <div className="flex items-baseline gap-2">
                       <span className={`text-3xl md:text-4xl font-black ${textClass}`}>
-                        {reg.score}
+                        {item.score}
                       </span>
                       <span className="text-sm text-gray-500 font-bold uppercase">PTS</span>
                     </div>
@@ -243,17 +296,24 @@ export function PublicProjector({
               <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 uppercase tracking-tighter drop-shadow-lg">
                 ¡Torneo Finalizado!
               </h2>
-              <p className="text-2xl text-white mt-4 font-light">
+              <p className="text-2xl text-white mt-4 font-light mb-6">
                 Felicitaciones a los ganadores
               </p>
+              <Button
+                onClick={handleShare}
+                className="bg-primary/20 hover:bg-primary/40 text-primary border border-primary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(var(--primary-color-rgb),0.3)] transition-all"
+              >
+                <Share2 className="w-5 h-5 mr-2" />
+                Compartir Podio
+              </Button>
             </motion.div>
 
-            <div className="flex items-end justify-center gap-4 md:gap-12">
+            <div className="flex items-end justify-center gap-2 md:gap-12">
               {(() => {
-                const top3 = sortedRegistrations.slice(0, 3).map((r, i) => ({
-                  alias: r.player.alias || r.player.name || "Jugador",
-                  image: r.player.image,
-                  score: r.score,
+                const top3 = displayItems.slice(0, 3).map((item, i) => ({
+                  alias: item.name,
+                  image: item.image,
+                  score: item.score,
                   position: i + 1,
                 }));
                 const podiumOrder = [
@@ -289,7 +349,7 @@ export function PublicProjector({
 
                       <div className={`w-32 rounded-t-lg flex flex-col items-center justify-start pt-4 text-black font-bold uppercase tracking-widest ${isFirst ? "h-64 bg-gradient-to-b from-yellow-400 to-yellow-600" : isSecond ? "h-48 bg-gradient-to-b from-zinc-300 to-zinc-500" : "h-32 bg-gradient-to-b from-orange-400 to-orange-700"}`}>
                         <span className="text-4xl opacity-50 mb-2">{winner.position}°</span>
-                        <span className="text-sm px-2 text-center line-clamp-1 w-full">{winner.alias}</span>
+                        <span className="text-[10px] md:text-sm px-1 text-center break-words whitespace-normal leading-tight w-full max-w-[120px]">{winner.alias}</span>
                         <span className="mt-auto mb-4 bg-black/20 px-3 py-1 rounded-full text-white text-xs">
                           {winner.score} PTS
                         </span>

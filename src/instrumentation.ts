@@ -10,6 +10,7 @@ export async function register() {
   // Only run in the Node.js runtime (not in the Edge runtime)
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { db } = await import("@/lib/prisma");
+    const { checkIncompleteTeamsBeforeStart } = await import("@/app/actions/cron");
 
     /**
      * Checks and updates tournament statuses:
@@ -30,9 +31,47 @@ export async function register() {
             date: { lte: now },
             autoStarted: false,
           },
+          include: {
+            registrations: true,
+            teams: { include: { players: true } }
+          }
         });
 
         for (const t of toStart) {
+          // Check for incomplete teams in team-based tournaments
+          if (t.isTeamBased && t.registrations.length > 0) {
+            const playersWithTeam = new Set(t.teams.flatMap(team => team.players.map(p => p.id)));
+            const hasOrphans = t.registrations.some(reg => !playersWithTeam.has(reg.playerId));
+
+            if (hasOrphans) {
+              const existingAlert = await db.notification.findFirst({
+                where: {
+                  type: "ORPHAN_PLAYERS_ALERT",
+                  data: t.id,
+                }
+              });
+
+              if (!existingAlert) {
+                await db.notification.create({
+                  data: {
+                    type: "ORPHAN_PLAYERS_ALERT",
+                    title: "⚠️ Arranque Abortado",
+                    message: `El torneo en equipos "${t.name}" no pudo iniciar automáticamente porque existen jugadores inscriptos sin equipo asignado.`,
+                    data: t.id,
+                  }
+                });
+                console.log(
+                  `[Scheduler] Sent orphan players alert for "${t.name}" (${t.id}).`
+                );
+              }
+
+              console.log(
+                `[Scheduler] Blocked auto-start for "${t.name}" (${t.id}). Reason: Orphan players.`
+              );
+              continue; // Skip this tournament, it won't auto-start
+            }
+          }
+
           await db.tournament.update({
             where: { id: t.id },
             data: {
@@ -80,7 +119,11 @@ export async function register() {
 
     // Run immediately on startup, then every 60 seconds
     checkTournamentStatuses();
-    setInterval(checkTournamentStatuses, 60 * 1000);
+    checkIncompleteTeamsBeforeStart();
+    setInterval(() => {
+      checkTournamentStatuses();
+      checkIncompleteTeamsBeforeStart();
+    }, 60 * 1000);
 
     console.log("[Scheduler] Tournament auto-status scheduler started (runs every 60s)");
   }
