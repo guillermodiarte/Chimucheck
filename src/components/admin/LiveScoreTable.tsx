@@ -471,6 +471,7 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
           image: p.image,
           score: p.score,
           position: i + 1,
+          players: p.isTeam ? p.teamPlayers : [],
         }))}
       />
     </>

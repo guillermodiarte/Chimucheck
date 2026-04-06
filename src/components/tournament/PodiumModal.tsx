@@ -18,6 +18,7 @@ interface PodiumModalProps {
     image: string | null;
     score: number;
     position: number;
+    players?: { id: string; alias?: string; name?: string }[];
   }[];
 }
 
@@ -98,6 +99,9 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
 
             if (!winner) return null;
 
+            const maxVisible = isFirst ? 6 : isSecond ? 4 : 3;
+            const needsScroll = winner.players && winner.players.length > maxVisible;
+
             return (
               <motion.div
                 key={winner.alias}
@@ -128,9 +132,48 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
                     "h-36 md:h-44 bg-gradient-to-b from-orange-400 to-orange-700"
                   }`}>
                   <span className="text-3xl md:text-4xl opacity-50 mb-2">{winner.position}°</span>
-                  <span className="text-xs md:text-sm px-1 md:px-2 text-center leading-tight w-full break-words flex-1">
+                  <span className="text-xs md:text-sm px-1 md:px-2 text-center leading-tight w-full break-words">
                     {winner.alias}
                   </span>
+                  
+                  {winner.players && winner.players.length > 0 ? (
+                    <div 
+                      className="flex-1 w-full overflow-hidden flex flex-col mt-2 mb-2 relative"
+                      style={
+                        needsScroll 
+                          ? { 
+                              maskImage: 'linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)',
+                              WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)' 
+                            } 
+                          : {}
+                      }
+                    >
+                      <motion.div
+                        animate={needsScroll ? { y: ["0%", "-50%"] } : { y: 0 }}
+                        transition={needsScroll ? {
+                          repeat: Infinity,
+                          repeatType: "loop",
+                          duration: winner.players.length * 2,
+                          ease: "linear",
+                        } : {}}
+                        className={`flex flex-col items-center gap-0.5 w-full ${needsScroll ? 'absolute top-0 left-0' : ''}`}
+                      >
+                        {winner.players.map(p => (
+                          <span key={p.id} className="text-[10px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
+                            {p.alias || p.name}
+                          </span>
+                        ))}
+                        {needsScroll && winner.players.map(p => (
+                          <span key={`${p.id}-dup`} className="text-[10px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
+                            {p.alias || p.name}
+                          </span>
+                        ))}
+                      </motion.div>
+                    </div>
+                  ) : (
+                    <div className="flex-1" />
+                  )}
+                  
                   <span className="mb-4 bg-black/20 px-3 py-1 rounded-full text-white text-xs whitespace-nowrap">
                     {winner.score} PTS
                   </span>

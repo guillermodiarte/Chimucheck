@@ -101,7 +101,8 @@ export function PublicProjector({
           name: team.name,
           image: team.image || null, // Bugfix 2: Avatar de Equipo vs Jugador
           score: totalScore,
-          subtitle: team.players.map((p: any) => p.alias || p.name).join(", ")
+          subtitle: team.players.map((p: any) => p.alias || p.name).join(", "),
+          players: team.players,
         };
       });
     } else {
@@ -310,11 +311,12 @@ export function PublicProjector({
 
             <div className="flex items-end justify-center gap-2 md:gap-12">
               {(() => {
-                const top3 = displayItems.slice(0, 3).map((item, i) => ({
+                const top3 = displayItems.slice(0, 3).map((item: any, i) => ({
                   alias: item.name,
                   image: item.image,
                   score: item.score,
                   position: i + 1,
+                  players: item.players,
                 }));
                 const podiumOrder = [
                   top3.find(w => w.position === 2),
@@ -350,6 +352,16 @@ export function PublicProjector({
                       <div className={`w-32 rounded-t-lg flex flex-col items-center justify-start pt-4 text-black font-bold uppercase tracking-widest ${isFirst ? "h-64 bg-gradient-to-b from-yellow-400 to-yellow-600" : isSecond ? "h-48 bg-gradient-to-b from-zinc-300 to-zinc-500" : "h-32 bg-gradient-to-b from-orange-400 to-orange-700"}`}>
                         <span className="text-4xl opacity-50 mb-2">{winner.position}°</span>
                         <span className="text-[10px] md:text-sm px-1 text-center break-words whitespace-normal leading-tight w-full max-w-[120px]">{winner.alias}</span>
+                        {winner.players && winner.players.length > 0 && (
+                          <div className="flex flex-col items-center mt-2 mb-2 gap-0.5">
+                            {winner.players.map((p: any) => (
+                              <span key={p.id} className="text-[9px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
+                                {p.alias || p.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex-1" />
                         <span className="mt-auto mb-4 bg-black/20 px-3 py-1 rounded-full text-white text-xs">
                           {winner.score} PTS
                         </span>
