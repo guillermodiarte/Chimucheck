@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "@/app/actions/player-profile";
-import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff, Coins, Gamepad2, ChevronRight, Pencil, Globe, MapPin } from "lucide-react";
+import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff, Coins, Gamepad2, ChevronRight, ChevronLeft, Pencil, Globe, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -285,6 +285,7 @@ export function ProfileForm({
 
       {/* Main content z-index to stay above background overlay */}
       <div className="relative z-10 w-full max-w-screen-2xl px-4 sm:px-6 md:px-8 pb-10">
+
         {/* 1. Profile Header Card (Interactive Avatar) */}
         <div className="relative mb-36 mt-4">
           <div
@@ -296,7 +297,21 @@ export function ProfileForm({
           </div>
 
           {/* Floating Interactive Avatar and Identity Details */}
-          <div className="absolute -bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center w-full">
+          <div className="absolute -bottom-28 left-1/2 -translate-x-1/2 w-full max-w-[1450px] mx-auto flex flex-col items-center lg:px-8">
+            
+            {/* Absolute positioned Volver button aligned horizontally with logo */}
+            {isPublic && (
+              <div className="hidden lg:flex absolute left-4 md:left-8 bottom-4 w-auto z-20 pointer-events-none h-full items-end pb-[2rem]">
+                <Button
+                  onClick={() => router.back()}
+                  className="pointer-events-auto bg-primary text-black hover:bg-primary/80 transition-all shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:shadow-[0_0_25px_rgba(255,215,0,0.6)] rounded-full px-5 h-10 font-bold flex items-center"
+                >
+                  <ChevronLeft size={18} className="mr-1" />
+                  Volver
+                </Button>
+              </div>
+            )}
+
             <div
               className={`relative w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-b from-primary to-transparent shadow-[0_0_30px_rgba(255,215,0,0.3)] group ${!isPublic ? "cursor-pointer" : ""}`}
               onClick={() => { if (!isPublic) fileInputRef.current?.click() }}
@@ -340,10 +355,11 @@ export function ProfileForm({
               onChange={handleFileChange}
             />
 
-            <div className="text-center mt-4 space-y-1">
-              <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter drop-shadow-xl">
+            <div className="text-center mt-4 space-y-1 w-full relative px-4">
+              <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter drop-shadow-xl inline-block">
                 {player.alias || "JUGADOR SIN ALIAS"}
               </h1>
+              
               <div className="flex items-center justify-center gap-2 text-zinc-400">
                 <Mail size={14} />
                 <span className="text-sm">{player.email}</span>
@@ -351,6 +367,19 @@ export function ProfileForm({
                 <Calendar size={14} />
                 <span className="text-sm">Miembro desde {formatDate(player.createdAt)}</span>
               </div>
+              
+              {/* Mobile back button (visible only on small screens) */}
+              {isPublic && (
+                <div className="lg:hidden mt-4 flex justify-center">
+                  <Button
+                    onClick={() => router.back()}
+                    className="bg-primary text-black hover:bg-primary/80 transition-all shadow-[0_0_15px_rgba(255,215,0,0.4)] rounded-full px-5 h-9 font-bold flex items-center"
+                  >
+                    <ChevronLeft size={16} className="mr-1" />
+                    Volver
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -140,16 +140,16 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
   };
 
   return (
-    <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 space-y-6">
-      <div className="flex items-center gap-2 border-b border-white/10 pb-4">
+    <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 md:p-6 flex flex-col mb-4" style={{ minHeight: 'calc(100vh - 12rem)' }}>
+      <div className="flex items-center gap-2 border-b border-white/10 pb-4 shrink-0">
         <Users className="w-6 h-6 text-primary" />
         <h2 className="text-xl font-bold text-white">Armador de Equipos</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 min-h-0 pt-4">
         {/* Left Col: Create Team */}
-        <div className="space-y-4">
-          <h3 className="font-semibold text-gray-300">Nuevo Equipo ({selectedPlayers.length}/{teamSize})</h3>
+        <div className="flex flex-col space-y-4">
+          <h3 className="font-semibold text-gray-300 shrink-0">Nuevo Equipo ({selectedPlayers.length}/{teamSize})</h3>
           
           <div className="flex gap-2">
             <Input 
@@ -169,7 +169,7 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
           </div>
 
           {imageUrl && (
-            <div className="flex items-center gap-4 bg-black/20 border border-white/5 p-2 rounded-lg">
+            <div className="flex items-center gap-4 bg-black/20 border border-white/5 p-2 rounded-lg shrink-0">
               <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white/10 shrink-0">
                 <Image src={imageUrl} alt="Team" fill className="object-cover" />
               </div>
@@ -182,7 +182,7 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
             </div>
           )}
 
-          <div className="bg-black/30 border border-white/10 rounded-lg p-3 max-h-64 overflow-y-auto space-y-2">
+          <div className="bg-black/30 border border-white/10 rounded-lg p-3 flex-1 overflow-y-auto space-y-2 min-h-[300px]">
             {availablePlayers.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">No hay jugadores disponibles.</p>
             ) : (
@@ -212,7 +212,7 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
       <Button 
         onClick={handleCreateTeam}
         disabled={isLoading || selectedPlayers.length === 0 || !teamName.trim()}
-        className="w-full bg-primary hover:bg-primary/80 text-black font-bold"
+        className="w-full bg-primary hover:bg-primary/80 text-black font-bold shrink-0 mt-4"
       >
             {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Crear Equipo
@@ -220,10 +220,10 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
         </div>
 
         {/* Right Col: Existing Teams */}
-        <div className="space-y-4">
-          <h3 className="font-semibold text-gray-300">Equipos Formados ({teams.length})</h3>
+        <div className="flex flex-col space-y-4">
+          <h3 className="font-semibold text-gray-300 shrink-0">Equipos Formados ({teams.length})</h3>
           
-          <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+          <div className="bg-black/20 border border-white/5 rounded-lg p-3 flex-1 overflow-y-auto space-y-3 min-h-[300px] pr-2">
             {teams.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-white/10 rounded-lg">
                 Ningún equipo armado aún.
