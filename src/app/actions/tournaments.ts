@@ -640,6 +640,20 @@ export async function adminDeleteTeam(teamId: string) {
   }
 }
 
+export async function adminResetTournamentScores(tournamentId: string) {
+  try {
+    await db.tournamentRegistration.updateMany({
+      where: { tournamentId },
+      data: { score: 0 }
+    });
+    revalidatePath(`/admin/tournaments/results/${tournamentId}`);
+    return { success: true, message: "Puntajes reseteados a 0" };
+  } catch (error) {
+    console.error("Error resetting scores:", error);
+    return { success: false, message: "Error al resetear puntajes" };
+  }
+}
+
 // --- Past Tournaments (Results) ---
 
 export async function getFinishedTournaments() {
@@ -691,19 +705,19 @@ export async function finishTournament(id: string) {
       for (const reg of tournament.registrations) {
         const tId = playerTeamMap.get(reg.playerId) || "no-team-" + reg.playerId; // Fallback
         
-        teamScores.set(tId, (teamScores.get(tId) || 0) + reg.score);
+        teamScores.set(tId, Math.max(teamScores.get(tId) || 0, reg.score));
         
         const arr = teamPlayers.get(tId) || [];
         arr.push(reg);
         teamPlayers.set(tId, arr);
       }
 
-      // Sort teams by total score descending
       const sortedTeams = Array.from(teamScores.entries()).sort((a, b) => b[1] - a[1]);
+      const uniqueScores = Array.from(new Set(sortedTeams.map(t => t[1])));
 
-      let rankPosition = 1;
       for (const [tId, totalScore] of sortedTeams) {
         const teamRegs = teamPlayers.get(tId) || [];
+        const rankPosition = uniqueScores.indexOf(totalScore) + 1;
         
         let delta = MMR_CONSTANTS.POINTS_LOSS; // -5
         if (rankPosition === 1) delta = MMR_CONSTANTS.POINTS_1ST;
@@ -722,28 +736,35 @@ export async function finishTournament(id: string) {
             });
           }
         }
-        rankPosition++;
       }
 
     } else {
-      // Original Individual Logic
-      // Sort registrations by score (descending) to find top 3
+      // Sort registrations by score (descending)
       const sorted = [...tournament.registrations].sort((a, b) => b.score - a.score);
-      const top3 = sorted.slice(0, 3).filter(r => r.score > 0);
+      const uniqueScores = Array.from(new Set(sorted.map(s => s.score)));
+      
+      for (let i = 0; i < sorted.length; i++) {
+        const reg = sorted[i];
+        if (reg.score === 0) continue;
+        
+        const rankPosition = uniqueScores.indexOf(reg.score) + 1;
 
-      // Build winners array
-      winners = top3.map((reg, i) => ({
-        position: i + 1,
-        playerId: reg.playerId,
-        playerAlias: reg.player?.alias || reg.player?.name || "?",
-        chimucoins: 0,
-      }));
+        if (rankPosition <= 3) {
+          winners.push({
+            position: rankPosition,
+            playerId: reg.playerId,
+            playerAlias: reg.player?.alias || reg.player?.name || "?",
+            chimucoins: 0,
+          });
+        }
+      }
 
       for (let i = 0; i < sorted.length; i++) {
+        const rankPosition = uniqueScores.indexOf(sorted[i].score) + 1;
         let delta = MMR_CONSTANTS.POINTS_LOSS; // -5
-        if (i === 0) delta = MMR_CONSTANTS.POINTS_1ST; // +15
-        else if (i === 1) delta = MMR_CONSTANTS.POINTS_2ND; // +10
-        else if (i === 2) delta = MMR_CONSTANTS.POINTS_3RD; // +5
+        if (rankPosition === 1) delta = MMR_CONSTANTS.POINTS_1ST; // +15
+        else if (rankPosition === 2) delta = MMR_CONSTANTS.POINTS_2ND; // +10
+        else if (rankPosition === 3) delta = MMR_CONSTANTS.POINTS_3RD; // +5
         mmrDeltas.set(sorted[i].playerId, delta);
       }
     }

@@ -94,7 +94,7 @@ export function PublicProjector({
       items = teams.map(team => {
         const teamPlayerIds = new Set(team.players.map((p: any) => p.id));
         const teamRegs = registrations.filter(r => teamPlayerIds.has(r.playerId));
-        const totalScore = teamRegs.reduce((sum, r) => sum + r.score, 0);
+        const totalScore = teamRegs.length > 0 ? Math.max(...teamRegs.map(r => r.score)) : 0;
         
         return {
           id: team.id,
@@ -200,16 +200,21 @@ export function PublicProjector({
           <AnimatePresence>
             {displayItems.map((item, index) => {
               const itemName = item.name;
-              const isFirst = index === 0;
-              const isSecond = index === 1;
-              const isThird = index === 2;
+              const uniqueScores = Array.from(new Set(displayItems.map(i => i.score))).sort((a, b) => b - a);
+              let rankIndex = index;
+              if (status === "FINALIZADO" || status === "EN_JUEGO") {
+                rankIndex = uniqueScores.indexOf(item.score);
+              }
+              const isFirst = rankIndex === 0;
+              const isSecond = rankIndex === 1;
+              const isThird = rankIndex === 2;
               const isFinished = status === "FINALIZADO";
               const isTop3 = isFinished && (isFirst || isSecond || isThird);
 
               let borderClass = "border-white/10";
               let bgClass = "bg-black/40";
               let textClass = "text-white";
-              let rankContent: React.ReactNode = <span className="text-gray-400">{index + 1}</span>;
+              let rankContent: React.ReactNode = <span className="text-gray-400">{rankIndex + 1}</span>;
 
               if (isFinished && isFirst) {
                 borderClass = "border-yellow-500/40";
@@ -354,7 +359,7 @@ export function PublicProjector({
                         <span className="text-[10px] md:text-sm px-1 text-center break-words whitespace-normal leading-tight w-full max-w-[120px]">{winner.alias}</span>
                         {winner.players && winner.players.length > 0 && (
                           <div className="flex flex-col items-center mt-2 mb-2 gap-0.5">
-                            {winner.players.map((p: any) => (
+                            {winner.players.slice(0, 5).map((p: any) => (
                               <span key={p.id} className="text-[9px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
                                 {p.alias || p.name}
                               </span>

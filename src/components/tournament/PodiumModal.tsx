@@ -136,42 +136,14 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
                     {winner.alias}
                   </span>
                   
-                  {winner.players && winner.players.length > 0 ? (
-                    <div 
-                      className="flex-1 w-full overflow-hidden flex flex-col mt-2 mb-2 relative"
-                      style={
-                        needsScroll 
-                          ? { 
-                              maskImage: 'linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)',
-                              WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)' 
-                            } 
-                          : {}
-                      }
-                    >
-                      <motion.div
-                        animate={needsScroll ? { y: ["0%", "-50%"] } : { y: 0 }}
-                        transition={needsScroll ? {
-                          repeat: Infinity,
-                          repeatType: "loop",
-                          duration: winner.players.length * 2,
-                          ease: "linear",
-                        } : {}}
-                        className={`flex flex-col items-center gap-0.5 w-full ${needsScroll ? 'absolute top-0 left-0' : ''}`}
-                      >
-                        {winner.players.map(p => (
-                          <span key={p.id} className="text-[10px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
-                            {p.alias || p.name}
-                          </span>
-                        ))}
-                        {needsScroll && winner.players.map(p => (
-                          <span key={`${p.id}-dup`} className="text-[10px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
-                            {p.alias || p.name}
-                          </span>
-                        ))}
-                      </motion.div>
+                  {winner.players && winner.players.length > 0 && (
+                    <div className="flex flex-col items-center mt-2 mb-2 gap-0.5 h-full max-h-min overflow-hidden justify-center px-1">
+                      {winner.players.slice(0, 5).map(p => (
+                        <span key={p.id} className="text-[9px] md:text-[10px] text-black/80 font-bold truncate max-w-full px-2 text-center leading-tight">
+                          {p.alias || p.name}
+                        </span>
+                      ))}
                     </div>
-                  ) : (
-                    <div className="flex-1" />
                   )}
                   
                   <span className="mb-4 bg-black/20 px-3 py-1 rounded-full text-white text-xs whitespace-nowrap">

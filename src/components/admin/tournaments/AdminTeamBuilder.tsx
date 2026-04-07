@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Users, Trash2, CheckSquare, Square, Loader2, Image as ImageIcon, Edit } from "lucide-react";
-import { adminCreateTeam, adminUpdateTeam, adminDeleteTeam } from "@/app/actions/tournaments";
+import { adminCreateTeam, adminUpdateTeam, adminDeleteTeam, adminResetTournamentScores } from "@/app/actions/tournaments";
 import { MediaSelectorModal } from "@/components/admin/MediaSelectorModal";
 import Image from "next/image";
+import { AlertCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,9 +26,11 @@ interface AdminTeamBuilderProps {
   teamSize: number;
   teams: any[];
   registrations: any[];
+  tournamentStatus: string;
+  totalScore: number;
 }
 
-export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations }: AdminTeamBuilderProps) {
+export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations, tournamentStatus, totalScore }: AdminTeamBuilderProps) {
   const [teamName, setTeamName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [showMediaSelector, setShowMediaSelector] = useState(false);
@@ -42,6 +45,10 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
   const [isEditLoading, setIsEditLoading] = useState(false);
   const [showEditMediaSelector, setShowEditMediaSelector] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
+
+  const [isEditEnabled, setIsEditEnabled] = useState(totalScore === 0);
+  const [showEnableEditModal, setShowEnableEditModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const router = useRouter();
 
@@ -139,8 +146,51 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
     }
   };
 
+  const handleEnableEdit = async () => {
+    setIsResetting(true);
+    const result = await adminResetTournamentScores(tournamentId);
+    setIsResetting(false);
+    
+    if (result.success) {
+      toast.success("Puntos reseteados correctamente. Edición habilitada.");
+      setIsEditEnabled(true);
+      setShowEnableEditModal(false);
+      router.refresh();
+    } else {
+      toast.error(result.message || "Error al resetear puntos.");
+    }
+  };
+
   return (
-    <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 md:p-6 flex flex-col mb-4" style={{ minHeight: 'calc(100vh - 12rem)' }}>
+    <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 md:p-6 flex flex-col mb-4 relative" style={{ minHeight: 'calc(100vh - 12rem)' }}>
+      {/* OVERLAY FOR NON-INSCRIPCION STATUS */}
+      {tournamentStatus !== "INSCRIPCION" && (
+        <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-6 text-center">
+          <AlertCircle className="w-16 h-16 text-yellow-500 mb-4" />
+          <h3 className="text-2xl font-bold text-white mb-2">Edición Desactivada</h3>
+          <p className="text-gray-400 max-w-md">
+            La gestión de equipos no está disponible porque el torneo se encuentra en estado "{tournamentStatus}". Para editar los equipos, el torneo debe estar en modo INSCRIPCIÓN.
+          </p>
+        </div>
+      )}
+
+      {/* OVERLAY FOR NOT ENABLED (HAS SCORES) */}
+      {tournamentStatus === "INSCRIPCION" && !isEditEnabled && (
+        <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-6 text-center">
+          <AlertCircle className="w-16 h-16 text-orange-500 mb-4" />
+          <h3 className="text-2xl font-bold text-white mb-2">Equipos con Puntuación</h3>
+          <p className="text-gray-400 max-w-md mb-6">
+            Los equipos ya tienen puntos asignados. Si decides modificar, armar o desarmar equipos, <strong>todos los puntos se restablecerán a 0</strong> para mantener la consistencia.
+          </p>
+          <Button 
+            onClick={() => setShowEnableEditModal(true)}
+            className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-2"
+          >
+            Habilitar Edición y Resetear Puntos
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 border-b border-white/10 pb-4 shrink-0">
         <Users className="w-6 h-6 text-primary" />
         <h2 className="text-xl font-bold text-white">Armador de Equipos</h2>
@@ -274,6 +324,33 @@ export function AdminTeamBuilder({ tournamentId, teamSize, teams, registrations 
           </div>
         </div>
       </div>
+
+      <AlertDialog open={showEnableEditModal} onOpenChange={setShowEnableEditModal}>
+        <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Habilitar Edición de Equipos</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Estás a punto de habilitar la edición de equipos. <strong className="text-white">Esta acción restablecerá los puntos de TODOS los jugadores/equipos a 0.</strong> ¿Quieres continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-gray-700 hover:bg-gray-800 text-white" disabled={isResetting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              onClick={(e) => {
+                e.preventDefault();
+                handleEnableEdit();
+              }}
+              disabled={isResetting}
+            >
+              {isResetting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Sí, Resetear Puntos y Editar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!teamToDelete} onOpenChange={(open) => !open && setTeamToDelete(null)}>
         <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">

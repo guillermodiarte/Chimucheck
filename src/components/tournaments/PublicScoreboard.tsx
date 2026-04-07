@@ -54,7 +54,7 @@ export function PublicScoreboard({
       items = teams.map(team => {
         const teamPlayerIds = new Set(team.players.map((p: any) => p.id));
         const teamRegs = registrations.filter(r => teamPlayerIds.has(r.playerId));
-        const totalScore = teamRegs.reduce((sum, r) => sum + r.score, 0);
+        const totalScore = teamRegs.length > 0 ? Math.max(...teamRegs.map(r => r.score)) : 0;
         
         return {
           id: team.id,
@@ -121,13 +121,20 @@ export function PublicScoreboard({
         <AnimatePresence mode="popLayout">
           {displayItems.map((item, index) => {
           const itemName = item.name;
-          const isFirst = index === 0;
-          const isSecond = index === 1;
-          const isThird = index === 2;
+          const uniqueScores = Array.from(new Set(displayItems.map(i => i.score))).sort((a, b) => b - a);
+          
+          let rankIndex = index;
+          if (isLiveOrFinished) {
+            rankIndex = uniqueScores.indexOf(item.score);
+          }
+
+          const isFirst = rankIndex === 0;
+          const isSecond = rankIndex === 1;
+          const isThird = rankIndex === 2;
 
           let rankBadge = (
             <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-gray-400 shrink-0">
-              {index + 1}
+              {rankIndex + 1}
             </div>
           );
 

@@ -147,7 +147,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                     <div className="space-y-4 mb-8">
                       <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-2">Ganadores</h2>
                       <div className="grid gap-4">
-                        {winners.map((winner) => {
+                        {winners.map((winner, index) => {
                           const player = playerMap.get(winner.playerId);
                           const isFirst = winner.position === 1;
                           const isSecond = winner.position === 2;
@@ -177,7 +177,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
 
                           return (
                             <div
-                              key={winner.position}
+                              key={`${winner.position}-${winner.playerId || index}`}
                               className={`flex items-center gap-4 p-4 rounded-xl border ${borderColor} ${bgColor} relative overflow-hidden`}
                             >
                               {/* Rank Badge */}

@@ -55,6 +55,8 @@ export default async function TournamentResultsPage({ params }: TournamentResult
       {tournament.isTeamBased && (
         <AdminTeamBuilder
           tournamentId={tournament.id}
+          tournamentStatus={tournament.status}
+          totalScore={sortedRegistrations.reduce((sum, r) => sum + r.score, 0)}
           teamSize={tournament.teamSize || 2}
           teams={JSON.parse(JSON.stringify(tournament.teams))}
           registrations={JSON.parse(JSON.stringify(tournament.registrations))}
