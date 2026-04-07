@@ -361,7 +361,7 @@ export function PublicProjector({
                           const threshold = isFirst ? 8 : isSecond ? 5 : 3;
                           const shouldScroll = winner.players && winner.players.length > threshold;
                           return winner.players && winner.players.length > 0 && (
-                            <div className="w-full flex-[1_1_0%] overflow-hidden relative mt-2 mb-2 flex flex-col items-center justify-start">
+                            <div className="w-full flex-[1_1_0%] min-h-0 overflow-hidden relative mt-2 mb-2 flex flex-col items-center justify-start [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)]">
                               <style>{`
                                 @keyframes scroll-vertical-proj {
                                   0% { transform: translateY(0); }
