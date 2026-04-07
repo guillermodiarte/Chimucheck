@@ -136,15 +136,38 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
                     {winner.alias}
                   </span>
                   
-                  {winner.players && winner.players.length > 0 && (
-                    <div className="flex flex-col items-center mt-2 mb-2 gap-0.5 h-full max-h-min overflow-hidden justify-center px-1">
-                      {winner.players.slice(0, 5).map(p => (
-                        <span key={p.id} className="text-[9px] md:text-[10px] text-black/80 font-bold truncate max-w-full px-2 text-center leading-tight">
-                          {p.alias || p.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    const threshold = isFirst ? 10 : isSecond ? 6 : 4;
+                    const shouldScroll = winner.players && winner.players.length > threshold;
+                    return winner.players && winner.players.length > 0 && (
+                      <div className="w-full flex-1 overflow-hidden relative mt-2 mb-2 flex flex-col items-center justify-start">
+                        <style>{`
+                          @keyframes scroll-vertical {
+                            0% { transform: translateY(0); }
+                            100% { transform: translateY(-50%); }
+                          }
+                          .animate-scroll-v {
+                            animation: scroll-vertical linear infinite;
+                          }
+                        `}</style>
+                        <div
+                          className={`flex flex-col items-center gap-[2px] w-full ${shouldScroll ? "animate-scroll-v" : "justify-center h-full"}`}
+                          style={{ animationDuration: shouldScroll ? `${winner.players.length * 1.5}s` : undefined }}
+                        >
+                          {winner.players.map((p: any) => (
+                            <span key={p.id} className="text-[9px] md:text-[10px] text-black/80 font-bold truncate max-w-full px-2 text-center leading-tight">
+                              {p.alias || p.name}
+                            </span>
+                          ))}
+                          {shouldScroll && winner.players.map((p: any) => (
+                            <span key={`dup-${p.id}`} className="text-[9px] md:text-[10px] text-black/80 font-bold truncate max-w-full px-2 text-center leading-tight">
+                              {p.alias || p.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   
                   <span className="mb-4 bg-black/20 px-3 py-1 rounded-full text-white text-xs whitespace-nowrap">
                     {winner.score} PTS

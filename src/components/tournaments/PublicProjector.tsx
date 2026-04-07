@@ -357,16 +357,39 @@ export function PublicProjector({
                       <div className={`w-32 rounded-t-lg flex flex-col items-center justify-start pt-4 text-black font-bold uppercase tracking-widest ${isFirst ? "h-64 bg-gradient-to-b from-yellow-400 to-yellow-600" : isSecond ? "h-48 bg-gradient-to-b from-zinc-300 to-zinc-500" : "h-32 bg-gradient-to-b from-orange-400 to-orange-700"}`}>
                         <span className="text-4xl opacity-50 mb-2">{winner.position}°</span>
                         <span className="text-[10px] md:text-sm px-1 text-center break-words whitespace-normal leading-tight w-full max-w-[120px]">{winner.alias}</span>
-                        {winner.players && winner.players.length > 0 && (
-                          <div className="flex flex-col items-center mt-2 mb-2 gap-0.5">
-                            {winner.players.slice(0, 5).map((p: any) => (
-                              <span key={p.id} className="text-[9px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
-                                {p.alias || p.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex-1" />
+                        {(() => {
+                          const threshold = isFirst ? 8 : isSecond ? 5 : 3;
+                          const shouldScroll = winner.players && winner.players.length > threshold;
+                          return winner.players && winner.players.length > 0 && (
+                            <div className="w-full flex-[1_1_0%] overflow-hidden relative mt-2 mb-2 flex flex-col items-center justify-start">
+                              <style>{`
+                                @keyframes scroll-vertical-proj {
+                                  0% { transform: translateY(0); }
+                                  100% { transform: translateY(-50%); }
+                                }
+                                .animate-scroll-v-proj {
+                                  animation: scroll-vertical-proj linear infinite;
+                                }
+                              `}</style>
+                              <div
+                                className={`flex flex-col items-center gap-[2px] w-full ${shouldScroll ? "animate-scroll-v-proj" : "justify-center h-full"}`}
+                                style={{ animationDuration: shouldScroll ? `${winner.players.length * 1.5}s` : undefined }}
+                              >
+                                {winner.players.map((p: any) => (
+                                  <span key={p.id} className="text-[9px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
+                                    {p.alias || p.name}
+                                  </span>
+                                ))}
+                                {shouldScroll && winner.players.map((p: any) => (
+                                  <span key={`dup-${p.id}`} className="text-[9px] md:text-xs text-black/70 font-semibold truncate max-w-full px-2 text-center leading-tight">
+                                    {p.alias || p.name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        <div className="flex-none" />
                         <span className="mt-auto mb-4 bg-black/20 px-3 py-1 rounded-full text-white text-xs">
                           {winner.score} PTS
                         </span>
