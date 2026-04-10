@@ -41,7 +41,7 @@ type LiveItem = {
   teamPlayers?: { id: string; alias: string }[];
 };
 
-export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, initialData }: { tournamentId: string, tournamentName: string, initialStatus: string, initialData: LiveItem[] }) {
+export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, initialData, prizePool }: { tournamentId: string, tournamentName: string, initialStatus: string, initialData: LiveItem[], prizePool?: string }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -473,6 +473,7 @@ export function LiveScoreTable({ tournamentId, tournamentName, initialStatus, in
           position: i + 1,
           players: p.isTeam ? p.teamPlayers : [],
         }))}
+        prizePool={prizePool}
       />
     </>
   );

@@ -20,9 +20,10 @@ interface PodiumModalProps {
     position: number;
     players?: { id: string; alias?: string; name?: string }[];
   }[];
+  prizePool?: string;
 }
 
-export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
+export function PodiumModal({ isOpen, onClose, winners, prizePool }: PodiumModalProps) {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [confettiKey, setConfettiKey] = useState(0);
 
@@ -49,6 +50,18 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
     top3.find(w => w.position === 1),
     top3.find(w => w.position === 3),
   ].filter(Boolean);
+
+  let parsedPrizes = { type: "TEXTO", first: "", second: "", third: "", chimucoinsFirst: "", chimucoinsSecond: "", chimucoinsThird: "" };
+  if (prizePool) {
+    try {
+      const p = JSON.parse(prizePool);
+      if (typeof p === "object" && p !== null) {
+        parsedPrizes = { ...parsedPrizes, ...p };
+      }
+    } catch {
+      parsedPrizes.first = prizePool;
+    }
+  }
 
   const handleShare = async () => {
     const shareData = {
@@ -173,7 +186,31 @@ export function PodiumModal({ isOpen, onClose, winners }: PodiumModalProps) {
                     <span className="mt-auto mb-4 bg-black/20 px-3 py-1 rounded-full text-white text-xs whitespace-nowrap">
                       {winner.score} PTS
                     </span>
+
                   </div>
+
+                  {(() => {
+                    const prizeTextRaw = isFirst ? parsedPrizes.first : isSecond ? parsedPrizes.second : parsedPrizes.third;
+                    const prizeChimuRaw = isFirst ? parsedPrizes.chimucoinsFirst : isSecond ? parsedPrizes.chimucoinsSecond : parsedPrizes.chimucoinsThird;
+                    
+                    const prizeText = (parsedPrizes.type === "TEXTO" || parsedPrizes.type === "AMBOS") ? prizeTextRaw : "";
+                    const prizeChimu = (parsedPrizes.type === "CHIMUCOINS" || parsedPrizes.type === "AMBOS") ? prizeChimuRaw : "";
+
+                    if (!prizeText && !prizeChimu) return null;
+
+                    return (
+                      <div className="mt-3 flex flex-col items-center gap-1 w-full px-2">
+                        <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Premio:</span>
+                        {prizeText && <span className="text-[10px] md:text-xs text-white/90 font-bold px-2 py-0.5 rounded bg-white/10 text-center leading-tight truncate w-full shadow-sm border border-white/5">{prizeText}</span>}
+                        {prizeChimu && (
+                          <span className="text-[11px] md:text-sm font-bold text-white bg-blue-500/20 border border-blue-500/30 px-3 py-1 rounded-full flex items-center justify-center gap-1.5 shadow-sm w-fit mt-0.5">
+                            <img src="/chimucoin.png" className="w-4 h-4" alt="Chimucoins" />
+                            {prizeChimu}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               );
             })}

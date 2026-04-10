@@ -98,14 +98,22 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
       try {
         const parsed = JSON.parse(tournament.prizePool);
         if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-          return { first: parsed.first || "", second: parsed.second || "", third: parsed.third || "" };
+          return { 
+            type: parsed.type || "TEXTO",
+            first: parsed.first || "", 
+            second: parsed.second || "", 
+            third: parsed.third || "",
+            chimucoinsFirst: parsed.chimucoinsFirst || "",
+            chimucoinsSecond: parsed.chimucoinsSecond || "",
+            chimucoinsThird: parsed.chimucoinsThird || ""
+          };
         }
       } catch {
         // Legacy string value — treat as first place prize
-        return { first: tournament.prizePool, second: "", third: "" };
+        return { type: "TEXTO", first: tournament.prizePool, second: "", third: "", chimucoinsFirst: "", chimucoinsSecond: "", chimucoinsThird: "" };
       }
     }
-    return { first: "", second: "", third: "" };
+    return { type: "TEXTO", first: "", second: "", third: "", chimucoinsFirst: "", chimucoinsSecond: "", chimucoinsThird: "" };
   })();
   const [prizes, setPrizes] = useState(existingPrizes);
 
@@ -231,9 +239,13 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
       formData.append("maxPlayers", String(data.maxPlayers));
       // Build prizes JSON
       const prizesJson = JSON.stringify({
+        type: prizes.type,
         first: prizes.first.trim(),
         second: prizes.second.trim(),
         third: prizes.third.trim(),
+        chimucoinsFirst: prizes.chimucoinsFirst,
+        chimucoinsSecond: prizes.chimucoinsSecond,
+        chimucoinsThird: prizes.chimucoinsThird,
       });
       formData.append("prizePool", prizesJson);
       formData.append("active", String(data.active));
@@ -425,48 +437,123 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
 
               {/* Prizes */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-white">Premios</label>
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">
-                    {prizes.second ? "🥇 Primer Puesto" : "🏆 Premio del Evento"}
-                  </label>
-                  <Input
-                    value={prizes.first}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setPrizes((p) => ({
-                        first: val,
-                        second: val ? p.second : "",
-                        third: val && p.second ? p.third : "",
-                      }));
-                    }}
-                    className="bg-gray-800 border-gray-700"
-                    placeholder="Ej: $100.000 + Skins"
-                  />
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-white">Premios</label>
+                  <select
+                    value={prizes.type}
+                    onChange={(e) => setPrizes(p => ({ ...p, type: e.target.value }))}
+                    className="bg-gray-800 border border-gray-700 text-white text-xs h-8 px-2 rounded-md focus:border-white/20 transition-all appearance-none"
+                  >
+                    <option value="TEXTO">Texto (Clásico)</option>
+                    <option value="CHIMUCOINS">Chimucoins</option>
+                    <option value="AMBOS">Ambos</option>
+                  </select>
                 </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">🥈 Segundo Puesto (opcional)</label>
-                  <Input
-                    value={prizes.second}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setPrizes((p) => ({ ...p, second: val, third: val ? p.third : "" }));
-                    }}
-                    disabled={!prizes.first}
-                    className="bg-gray-800 border-gray-700 disabled:opacity-40"
-                    placeholder={prizes.first ? "Ej: $50.000" : "Completá Primer Puesto primero"}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">🥉 Tercer Puesto (opcional)</label>
-                  <Input
-                    value={prizes.third}
-                    onChange={(e) => setPrizes((p) => ({ ...p, third: e.target.value }))}
-                    disabled={!prizes.first || !prizes.second}
-                    className="bg-gray-800 border-gray-700 disabled:opacity-40"
-                    placeholder={!prizes.first || !prizes.second ? "Completá Primer y Segundo Puesto" : "Ej: $25.000"}
-                  />
-                </div>
+                
+                {/* Texto Block */}
+                {(prizes.type === "TEXTO" || prizes.type === "AMBOS") && (
+                  <div className="space-y-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                    <label className="text-xs font-semibold text-gray-300 block mb-1">Premios en Texto</label>
+                    <div>
+                      <label className="text-_2xs text-gray-400 mb-1 block">
+                        {prizes.second ? "🥇 Primer Puesto" : "🏆 Premio del Evento"}
+                      </label>
+                      <Input
+                        value={prizes.first}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPrizes((p) => ({
+                            ...p,
+                            first: val,
+                            second: val ? p.second : "",
+                            third: val && p.second ? p.third : "",
+                          }));
+                        }}
+                        className="bg-gray-800 border-gray-700"
+                        placeholder="Ej: $100.000 + Skins"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-_2xs text-gray-400 mb-1 block">🥈 Segundo Puesto (opcional)</label>
+                      <Input
+                        value={prizes.second}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPrizes((p) => ({ ...p, second: val, third: val ? p.third : "" }));
+                        }}
+                        disabled={!prizes.first}
+                        className="bg-gray-800 border-gray-700 disabled:opacity-40"
+                        placeholder={prizes.first ? "Ej: $50.000" : "Completá Primer Puesto primero"}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-_2xs text-gray-400 mb-1 block">🥉 Tercer Puesto (opcional)</label>
+                      <Input
+                        value={prizes.third}
+                        onChange={(e) => setPrizes((p) => ({ ...p, third: e.target.value }))}
+                        disabled={!prizes.first || !prizes.second}
+                        className="bg-gray-800 border-gray-700 disabled:opacity-40"
+                        placeholder={!prizes.first || !prizes.second ? "Completá Primer y Segundo Puesto" : "Ej: $25.000"}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Chimucoins Block */}
+                {(prizes.type === "CHIMUCOINS" || prizes.type === "AMBOS") && (
+                  <div className="space-y-3 p-3 bg-blue-900/10 rounded-lg border border-blue-800/30">
+                    <label className="text-xs font-semibold text-blue-400 block flex items-center gap-2">
+                      <span>💎 Premios en Chimucoins</span>
+                      <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">Se entregan auto. al finalizar</span>
+                    </label>
+                    <div>
+                      <label className="text-_2xs text-blue-200/70 mb-1 block">🥇 Primer Puesto</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={prizes.chimucoinsFirst}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPrizes((p) => ({
+                            ...p,
+                            chimucoinsFirst: val,
+                            chimucoinsSecond: val ? p.chimucoinsSecond : "",
+                            chimucoinsThird: val && p.chimucoinsSecond ? p.chimucoinsThird : "",
+                          }));
+                        }}
+                        className="bg-gray-800 border-gray-700 font-mono"
+                        placeholder="Ej: 100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-_2xs text-blue-200/70 mb-1 block">🥈 Segundo Puesto (opcional)</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={prizes.chimucoinsSecond}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPrizes((p) => ({ ...p, chimucoinsSecond: val, chimucoinsThird: val ? p.chimucoinsThird : "" }));
+                        }}
+                        disabled={!prizes.chimucoinsFirst}
+                        className="bg-gray-800 border-gray-700 font-mono disabled:opacity-40"
+                        placeholder={prizes.chimucoinsFirst ? "Ej: 50" : "Completá Primer Puesto primero"}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-_2xs text-blue-200/70 mb-1 block">🥉 Tercer Puesto (opcional)</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={prizes.chimucoinsThird}
+                        onChange={(e) => setPrizes((p) => ({ ...p, chimucoinsThird: e.target.value }))}
+                        disabled={!prizes.chimucoinsFirst || !prizes.chimucoinsSecond}
+                        className="bg-gray-800 border-gray-700 font-mono disabled:opacity-40"
+                        placeholder={!prizes.chimucoinsFirst || !prizes.chimucoinsSecond ? "Completá Primer y Segundo Puesto" : "Ej: 25"}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Description */}

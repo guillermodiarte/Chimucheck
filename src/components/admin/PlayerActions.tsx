@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { getPlayersForExport, importPlayers } from "@/app/actions/players";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,9 +14,12 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export function PlayerActions() {
+  const [mounted, setMounted] = useState(false);
   const [isExporting, startExportTransition] = useTransition();
   const [isImporting, setIsImporting] = useState(false);
   const router = useRouter();
+
+  useEffect(() => setMounted(true), []);
 
   const handleExport = () => {
     startExportTransition(async () => {
@@ -80,6 +83,16 @@ export function PlayerActions() {
       e.target.value = "";
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center">
+        <Button className="bg-zinc-800 text-white border border-zinc-700 opacity-50 cursor-not-allowed">
+          Cargando...
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center">

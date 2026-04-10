@@ -681,6 +681,23 @@ export async function finishTournament(id: string) {
     let winners: WinnerEntry[] = [];
     let mmrDeltas = new Map<string, number>(); // playerId -> delta
 
+    let chimucoinsFirst = 0;
+    let chimucoinsSecond = 0;
+    let chimucoinsThird = 0;
+
+    if (tournament.prizePool) {
+      try {
+        const prizeData = JSON.parse(tournament.prizePool);
+        if (prizeData.type === "CHIMUCOINS" || prizeData.type === "AMBOS") {
+          chimucoinsFirst = parseInt(prizeData.chimucoinsFirst) || 0;
+          chimucoinsSecond = parseInt(prizeData.chimucoinsSecond) || 0;
+          chimucoinsThird = parseInt(prizeData.chimucoinsThird) || 0;
+        }
+      } catch (e) {
+        console.error("Error parsing prizePool", e);
+      }
+    }
+
     if (tournament.isTeamBased) {
       // 1. Group records by Team (We know user belongs to a Team via tournament.teams)
       // tournament.teams has the players. We can match registration to Team
@@ -727,12 +744,12 @@ export async function finishTournament(id: string) {
         for (const reg of teamRegs) {
           mmrDeltas.set(reg.playerId, delta);
           
-          if (rankPosition <= 3 && totalScore > 0) {
+          if (rankPosition <= 3) {
             winners.push({
               position: rankPosition,
               playerId: reg.playerId,
               playerAlias: reg.player?.alias || reg.player?.name || "?",
-              chimucoins: 0,
+              chimucoins: rankPosition === 1 ? chimucoinsFirst : rankPosition === 2 ? chimucoinsSecond : rankPosition === 3 ? chimucoinsThird : 0,
             });
           }
         }
@@ -745,7 +762,6 @@ export async function finishTournament(id: string) {
       
       for (let i = 0; i < sorted.length; i++) {
         const reg = sorted[i];
-        if (reg.score === 0) continue;
         
         const rankPosition = uniqueScores.indexOf(reg.score) + 1;
 
@@ -754,7 +770,7 @@ export async function finishTournament(id: string) {
             position: rankPosition,
             playerId: reg.playerId,
             playerAlias: reg.player?.alias || reg.player?.name || "?",
-            chimucoins: 0,
+            chimucoins: rankPosition === 1 ? chimucoinsFirst : rankPosition === 2 ? chimucoinsSecond : rankPosition === 3 ? chimucoinsThird : 0,
           });
         }
       }
@@ -783,7 +799,7 @@ export async function finishTournament(id: string) {
       });
     }
 
-    // Increment positional wins for top 3
+    // Increment positional wins and chimucoins for top 3
     for (const winner of winners) {
       const field = winner.position === 1 ? "winsFirst" : winner.position === 2 ? "winsSecond" : "winsThird";
       await db.playerStats.upsert({
@@ -791,6 +807,13 @@ export async function finishTournament(id: string) {
         create: { playerId: winner.playerId, [field]: 1, wins: 1, matchesPlayed: 0 },
         update: { [field]: { increment: 1 }, wins: { increment: 1 } },
       });
+
+      if (winner.chimucoins > 0) {
+        await db.player.update({
+          where: { id: winner.playerId },
+          data: { chimucoins: { increment: winner.chimucoins } },
+        });
+      }
     }
 
     // --- MMR Update Logic ---

@@ -159,6 +159,7 @@ export default function LiveTournamentPage({ params }: LiveTournamentPageProps) 
           isOpen={showPodium}
           onClose={() => setShowPodium(false)}
           winners={rankingData.slice(0, 3)}
+          prizePool={tournament.prizePool}
         />
       </div>
     </div>
