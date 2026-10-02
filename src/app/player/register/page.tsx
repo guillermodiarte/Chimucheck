@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+
 export default function RegisterPage() {
   // Enforcing fresh build for Confirm Password field
   const [state, action, isPending] = useActionState(registerPlayer, null);
@@ -43,15 +45,17 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-black px-4 py-12 relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-yellow-900/20 via-black to-black opacity-50 z-0 pointer-events-none"></div>
 
-      <div className="w-full max-w-md space-y-8 bg-zinc-950 p-8 rounded-2xl border border-white/10 backdrop-blur-sm relative z-10 shadow-2xl shadow-yellow-900/10">
+      <div className="w-full max-w-md space-y-6 bg-zinc-950 p-8 rounded-2xl border border-white/10 backdrop-blur-sm relative z-10 shadow-2xl shadow-yellow-900/10">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white tracking-tight">Únete al Juego</h2>
           <p className="mt-2 text-sm text-gray-400">Crea tu perfil de jugador en ChimuCheck</p>
         </div>
+
+        <SocialAuthButtons mode="register" callbackUrl={callbackUrl || "/player/dashboard"} />
 
         <form action={action} onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">

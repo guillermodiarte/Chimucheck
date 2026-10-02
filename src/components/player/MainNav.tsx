@@ -37,6 +37,14 @@ export function MainNav({
       </Link>
 
       <Link
+        href="/player/dashboard/raffles"
+        className={linkClass("/player/dashboard/raffles")}
+      >
+        Sorteos
+        <span className={underlineClass("/player/dashboard/raffles")}></span>
+      </Link>
+
+      <Link
         href="/player/dashboard/profile"
         className={linkClass("/player/dashboard/profile")}
       >

@@ -20,6 +20,7 @@ import {
   LayoutTemplate,
   UserCheck,
   Gamepad2,
+  Ticket,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -48,6 +49,11 @@ export const sidebarData = [
     title: "Torneos",
     href: "/admin/tournaments",
     icon: Trophy,
+  },
+  {
+    title: "Sorteos",
+    href: "/admin/raffles",
+    icon: Ticket,
   },
   {
     title: "Solicitudes",

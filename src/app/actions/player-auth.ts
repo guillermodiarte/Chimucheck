@@ -34,6 +34,13 @@ export async function loginPlayer(prevState: string | undefined, formData: FormD
         }
       }
 
+      if (
+        error.message.includes("LOGIN_WITH_OAUTH") ||
+        (error.cause?.err as any)?.message === "LOGIN_WITH_OAUTH"
+      ) {
+        return "Esta cuenta fue creada con inicio de sesión social. Por favor inicia sesión con Google, Discord, Twitch, X o Facebook.";
+      }
+
       switch (error.type) {
         case "CredentialsSignin":
           return "Credenciales inválidas.";

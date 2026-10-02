@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
-import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut, MessageCircle, Twitter, Facebook } from "lucide-react";
+import { Menu, X, Instagram, Youtube, Twitch, Monitor, User, LogOut, MessageCircle, Twitter, Facebook, Ticket, Trophy } from "lucide-react";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -84,10 +84,17 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                 </Link>
                 <Link
                   href="/torneos"
-                  className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/torneos" ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
+                  className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/torneos" || pathname.startsWith("/torneos") ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
                 >
                   Torneos
-                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/torneos" ? "w-full" : "w-0 group-hover:w-full"}`}></span>
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/torneos" || pathname.startsWith("/torneos") ? "w-full" : "w-0 group-hover:w-full"}`}></span>
+                </Link>
+                <Link
+                  href="/sorteos"
+                  className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${pathname === "/sorteos" || pathname.startsWith("/sorteos") || pathname.startsWith("/player/dashboard/raffles") ? "text-primary" : "text-gray-300 hover:text-primary hover:scale-110"}`}
+                >
+                  Sorteos
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${pathname === "/sorteos" || pathname.startsWith("/sorteos") || pathname.startsWith("/player/dashboard/raffles") ? "w-full" : "w-0 group-hover:w-full"}`}></span>
                 </Link>
                 <Link
                   href="/acerca-de"
@@ -187,10 +194,24 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                       </span>
                     </Link>
                     {/* Dropdown */}
-                    <div className="absolute right-0 top-full mt-2 w-44 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden z-50">
+                      <Link
+                        href="/player/dashboard/raffles"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-primary transition-colors"
+                      >
+                        <Ticket size={14} className="text-secondary" />
+                        Sorteos
+                      </Link>
+                      <Link
+                        href="/player/dashboard/tournaments"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-primary transition-colors border-t border-white/5"
+                      >
+                        <Trophy size={14} className="text-yellow-400" />
+                        Mis Torneos
+                      </Link>
                       <Link
                         href="/player/dashboard/profile"
-                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-primary transition-colors"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-primary transition-colors border-t border-white/5"
                       >
                         <User size={14} />
                         Datos Personales
@@ -259,10 +280,17 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                 </Link>
                 <Link
                   href="/torneos"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === "/torneos" ? "text-primary" : "text-white hover:text-primary"}`}
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === "/torneos" || pathname.startsWith("/torneos") ? "text-primary" : "text-white hover:text-primary"}`}
                   onClick={() => setIsOpen(false)}
                 >
                   Torneos
+                </Link>
+                <Link
+                  href="/sorteos"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${pathname === "/sorteos" || pathname.startsWith("/sorteos") || pathname.startsWith("/player/dashboard/raffles") ? "text-primary" : "text-white hover:text-primary"}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sorteos
                 </Link>
                 <Link
                   href="/acerca-de"
@@ -276,6 +304,22 @@ export default function Navbar({ logoUrl, logoText, session: initialSession, soc
                 </Link>
                 {session?.user ? (
                   <>
+                    <Link
+                      href="/player/dashboard/raffles"
+                      className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-secondary"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Ticket size={18} />
+                      Sorteos
+                    </Link>
+                    <Link
+                      href="/player/dashboard/tournaments"
+                      className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Trophy size={18} className="text-yellow-400" />
+                      Mis Torneos
+                    </Link>
                     <Link
                       href="/player/dashboard/profile"
                       className="hover:text-primary block px-3 py-2 rounded-md text-base font-medium flex items-center gap-3 text-gray-300"

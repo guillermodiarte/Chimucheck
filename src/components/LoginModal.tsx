@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, X, Gamepad2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
         // Here we show the actual string thrown from Auth.js or fallback
         const message = result.error.includes("ACCESO_DENEGADO") || result.error.includes("en revisión")
           ? "Tu cuenta se encuentra en revisión. Aguarda a que un administrador la apruebe."
+          : result.error.includes("LOGIN_WITH_OAUTH")
+          ? "Esta cuenta fue creada con inicio de sesión social. Usa los botones correspondientes."
           : "Credenciales inválidas.";
         toast.error(message);
       } else {
@@ -56,11 +59,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
     >
-      <div className="w-full max-w-sm mx-4 bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl shadow-primary/5 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-sm mx-auto bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl shadow-primary/5 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-4 text-center">
+        <div className="relative px-6 pt-6 pb-2 text-center">
           <button
             onClick={onClose}
             className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors cursor-pointer"
@@ -74,8 +77,12 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
           <p className="text-sm text-gray-400 mt-1">Ingresa a tu cuenta</p>
         </div>
 
+        <div className="px-6 pt-2">
+          <SocialAuthButtons mode="login" callbackUrl="/player/dashboard" />
+        </div>
+
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4 pt-1">
           <div className="space-y-2">
             <Label htmlFor="modal-email" className="text-gray-300 text-sm">
               Email

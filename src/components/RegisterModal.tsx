@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, X, Gamepad2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
         {/* Content */}
         {showPendingScreen ? (
           <div className="px-6 pb-8 text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mx-auto w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-2 animate-pulse rounded-full border border-yellow-500/20">
+            <div className="mx-auto w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-2 animate-pulse border border-yellow-500/20">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-500"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             </div>
             <h4 className="text-xl font-bold text-white">Cuenta en revisión</h4>
@@ -105,7 +106,9 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
             </Button>
           </div>
         ) : (
-          <form action={handleSubmit} className="px-6 pb-6 space-y-4">
+          <div className="px-6 pb-6 space-y-3">
+            <SocialAuthButtons mode="register" callbackUrl="/player/dashboard" />
+            <form action={handleSubmit} className="space-y-4 pt-1">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="reg-alias" className="text-gray-300 text-sm">Alias (Usuario)</Label>
@@ -206,6 +209,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
               </button>
             </p>
           </form>
+          </div>
         )}
       </div>
     </div>
