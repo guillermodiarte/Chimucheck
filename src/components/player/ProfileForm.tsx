@@ -82,11 +82,11 @@ export function ProfileForm({
     const { payload, x, y, cx, cy } = props;
 
     const catMapping: Record<string, string> = {
-      "SHOOTER":    "disparos.png",
-      "RACING":     "carreras.png",
-      "KOMBAT":     "combate.png",
-      "SPORTS":     "deportes.png",
-      "BOARD GAME": "juegosdemesa.png",
+      "SHOOTER":    "disparos.webp",
+      "RACING":     "carreras.webp",
+      "KOMBAT":     "combate.webp",
+      "SPORTS":     "deportes.webp",
+      "BOARD GAME": "juegosdemesa.webp",
     };
     const catColors: Record<string, string> = {
       "SHOOTER":    "#ef4444",

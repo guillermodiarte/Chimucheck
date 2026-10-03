@@ -204,7 +204,7 @@ export function PodiumModal({ isOpen, onClose, winners, prizePool }: PodiumModal
                         {prizeText && <span className="text-[10px] md:text-xs text-white/90 font-bold px-2 py-0.5 rounded bg-white/10 text-center leading-tight truncate w-full shadow-sm border border-white/5">{prizeText}</span>}
                         {prizeChimu && (
                           <span className="text-[11px] md:text-sm font-bold text-white bg-blue-500/20 border border-blue-500/30 px-3 py-1 rounded-full flex items-center justify-center gap-1.5 shadow-sm w-fit mt-0.5">
-                            <img src="/chimucoin.png" className="w-4 h-4" alt="Chimucoins" />
+                            <img src="/chimucoin.webp" className="w-4 h-4" alt="Chimucoins" />
                             {prizeChimu}
                           </span>
                         )}
