@@ -79,6 +79,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 # Copy start script
 COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
+# Copy conversion script and node_modules (needed for sharp + prisma in script)
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
