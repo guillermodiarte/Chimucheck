@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "npx prisma db push && next build && mkdir -p .next/standalone/.next && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
     "start": "chmod +x start.sh && ./start.sh",
-    "lint": "eslint"
+    "lint": "eslint",
+    "convert-media": "node scripts/convert-to-webp.mjs"
   },
   "engines": {
     "node": ">=20.9.0"

@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
+import sharp from "sharp";
+
+// ── Configuración de resoluciones por tipo de carpeta ───────────────────────
+const FOLDER_CONFIG: Record<string, { width: number; height: number; fit: "cover" | "inside" | "contain"; quality: number }> = {
+  avatars:  { width: 400,  height: 400,  fit: "cover",  quality: 85 },
+  fondos:   { width: 1920, height: 1080, fit: "inside", quality: 82 },
+  imagenes: { width: 1280, height: 720,  fit: "inside", quality: 85 },
+  juegos:   { width: 800,  height: 1100, fit: "inside", quality: 85 },
+  default:  { width: 1280, height: 1280, fit: "inside", quality: 85 },
+};
 
 export async function POST(request: NextRequest) {
   const data = await request.formData();
@@ -20,9 +30,9 @@ export async function POST(request: NextRequest) {
 
   // Determine target folder based on file type and requested type
   const requestedFolder = data.get("folder") as string;
-  const requestedType = data.get("type") as string;
+  const requestedType   = data.get("type") as string;
 
-  let targetFolder = "imagenes"; // default for generic images
+  let targetFolder = "imagenes"; // default
 
   if (requestedType === "avatar" || requestedFolder === "avatars") {
     targetFolder = "avatars";
@@ -36,24 +46,13 @@ export async function POST(request: NextRequest) {
     targetFolder = "imagenes";
   }
 
-  // Ensure uploads directory exists
-  // We no longer use sanitizedFolder from the user input generic folder to enforce standardized paths
   const sanitizedFolder = targetFolder.replace(/[^a-zA-Z0-9-_]/g, "");
 
-  // Determine upload path
-  const isProd = process.env.NODE_ENV === "production";
-  const baseDir = isProd ? "/app/public" : join(process.cwd(), "public");
-
-  // Force all uploads inside public/uploads/...
+  const isProd   = process.env.NODE_ENV === "production";
+  const baseDir  = isProd ? "/app/public" : join(process.cwd(), "public");
   const uploadDir = join(baseDir, "uploads", sanitizedFolder);
 
-  console.log("Upload Debug Info:", {
-    processCwd: process.cwd(),
-    isProd,
-    baseDir,
-    uploadDir,
-    exists: existsSync(uploadDir)
-  });
+  console.log("Upload Debug Info:", { processCwd: process.cwd(), isProd, baseDir, uploadDir, exists: existsSync(uploadDir) });
 
   if (!existsSync(uploadDir)) {
     try {
@@ -64,45 +63,82 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Create unique filename
-  // Sanitize filename: normalize, remove accents, replace spaces/special chars with -
+  // Sanitizar nombre base
   const customName = data.get("customName") as string;
-  const baseName = customName || file.name.replace(/\.[^/.]+$/, ""); // remove extension if not custom
+  const baseName   = customName || file.name.replace(/\.[^/.]+$/, "");
 
   const sanitized = baseName
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove accents
-    .replace(/[^a-zA-Z0-9]/g, "-")   // replace non-alphanumeric with -
-    .replace(/-+/g, "-")             // collapse multiple -
-    .replace(/^-|-$/g, "")           // remove leading/trailing -
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
     .toLowerCase();
 
   const uniqueSuffix = Date.now();
-  const ext = file.name.split('.').pop()?.toLowerCase() || '';
-  const filename = `${sanitized}-${uniqueSuffix}.${ext}`;
+  const isVideo      = file.type.startsWith("video/");
+
+  // ── Procesamiento de IMAGEN → WebP ────────────────────────────────────────
+  if (!isVideo) {
+    const filename = `${sanitized}-${uniqueSuffix}.webp`;
+    const filepath = join(uploadDir, filename);
+
+    try {
+      const config = FOLDER_CONFIG[sanitizedFolder] ?? FOLDER_CONFIG.default;
+
+      console.log(`Convirtiendo imagen a WebP [${config.width}x${config.height}] → ${filepath}`);
+
+      await sharp(buffer)
+        .resize(config.width, config.height, { fit: config.fit, withoutEnlargement: true })
+        .webp({ quality: config.quality })
+        .toFile(filepath);
+
+      if (!existsSync(filepath)) {
+        throw new Error("Archivo WebP no fue creado");
+      }
+
+      console.log("Imagen WebP guardada:", filepath);
+
+      const url = `/uploads/${sanitizedFolder}/${filename}`;
+      return NextResponse.json({ success: true, url });
+    } catch (error) {
+      console.error("Error procesando imagen:", error);
+      return NextResponse.json({
+        success: false,
+        message: `Error al procesar imagen: ${(error as any)?.message || "Unknown error"}`
+      }, { status: 500 });
+    }
+  }
+
+  // ── Procesamiento de VIDEO ────────────────────────────────────────────────
+  // Para videos aceptamos WebM directamente (ya optimizado)
+  // Si es mp4/otro formato se guarda tal cual (la conversión se hace vía el script batch o manualmente)
+  // En el futuro se puede agregar fluent-ffmpeg aquí para conversión server-side
+  const ext      = file.name.split(".").pop()?.toLowerCase() || "mp4";
+  const isWebm   = ext === "webm";
+  const filename = `${sanitized}-${uniqueSuffix}.${isWebm ? "webm" : ext}`;
   const filepath = join(uploadDir, filename);
 
   try {
-    console.log("Attempting to write file to:", filepath);
+    console.log("Guardando video:", filepath);
     await writeFile(filepath, buffer);
-    console.log("File written successfully to:", filepath);
+    console.log("Video guardado:", filepath);
 
-    // Verify visibility in standalone public directory
-    const standalonePath = join(process.cwd(), "public", "uploads", sanitizedFolder, filename);
-    const isVisibleInStandalone = existsSync(standalonePath);
-    console.log("Verification - File visible in standalone path?", {
-      standalonePath,
-      isVisible: isVisibleInStandalone
-    });
+    if (!isWebm) {
+      console.warn(`⚠️  Video guardado como .${ext}. Se recomienda subir videos en formato .webm para mayor eficiencia.`);
+    }
 
     const url = `/uploads/${sanitizedFolder}/${filename}`;
-    return NextResponse.json({ success: true, url });
+    return NextResponse.json({
+      success: true,
+      url,
+      ...(isWebm ? {} : { warning: "Se recomienda subir videos en formato .webm para menor peso." })
+    });
   } catch (error) {
-    console.error("Error saving file:", error);
-    // Return specific permission error if applicable
+    console.error("Error saving video:", error);
     return NextResponse.json({
       success: false,
-      message: `Error al guardar archivo: ${(error as any)?.message || 'Unknown error'}`
+      message: `Error al guardar video: ${(error as any)?.message || "Unknown error"}`
     }, { status: 500 });
   }
 }
