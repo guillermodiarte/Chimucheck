@@ -2,8 +2,7 @@ import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import Discord from "next-auth/providers/discord";
-import Twitch from "next-auth/providers/twitch";
+
 import Twitter from "next-auth/providers/twitter";
 import Facebook from "next-auth/providers/facebook";
 import { z } from "zod";
@@ -274,16 +273,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
-    Discord({
-      clientId: process.env.AUTH_DISCORD_ID || process.env.DISCORD_CLIENT_ID,
-      clientSecret: process.env.AUTH_DISCORD_SECRET || process.env.DISCORD_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
-    Twitch({
-      clientId: process.env.AUTH_TWITCH_ID || process.env.TWITCH_CLIENT_ID,
-      clientSecret: process.env.AUTH_TWITCH_SECRET || process.env.TWITCH_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
+
     Twitter({
       clientId: process.env.AUTH_TWITTER_ID || process.env.TWITTER_CLIENT_ID,
       clientSecret: process.env.AUTH_TWITTER_SECRET || process.env.TWITTER_CLIENT_SECRET,
