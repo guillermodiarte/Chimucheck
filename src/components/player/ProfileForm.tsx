@@ -275,7 +275,7 @@ export function ProfileForm({
 
   return (
     <div
-      className="animate-in fade-in slide-in-from-bottom-4 duration-700 w-full min-h-screen bg-cover bg-center bg-fixed relative flex justify-center"
+      className="animate-in fade-in slide-in-from-bottom-4 duration-700 w-full min-h-screen bg-cover bg-center bg-fixed relative flex justify-center overflow-x-hidden"
       style={profileBackgroundImage ? { backgroundImage: `url(${profileBackgroundImage})` } : undefined}
     >
       {/* Dark overlay for readability */}
@@ -284,7 +284,7 @@ export function ProfileForm({
       )}
 
       {/* Main content z-index to stay above background overlay */}
-      <div className="relative z-10 w-full max-w-screen-2xl px-4 sm:px-6 md:px-8 pb-10">
+      <div className="relative z-10 w-full max-w-screen-2xl px-4 sm:px-6 md:px-8 pb-10 overflow-x-hidden">
 
         {/* 1. Profile Header Card (Interactive Avatar) */}
         <div className="relative mb-36 mt-4">
@@ -509,8 +509,8 @@ export function ProfileForm({
                   <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest border border-white/10 px-2 py-1 rounded">MMR System</span>
                 </h3>
 
-                {/* Radar Chart — overflow-visible elimina el clip del SVG */}
-                <div className="w-full flex-1 min-h-[560px] mb-6 bg-black/40 rounded-xl border border-white/5 relative flex items-center justify-center shadow-inner [&_svg]:overflow-visible">
+                {/* Radar Chart — overflow-hidden previene que el SVG desborde la pantalla en móviles */}
+                <div className="w-full max-w-full flex-1 min-h-[500px] md:min-h-[560px] mb-6 bg-black/40 rounded-xl border border-white/5 relative flex items-center justify-center shadow-inner overflow-hidden">
                   {(!player.categoryStats || player.categoryStats.length === 0) ? (
                     <div className="text-center space-y-2">
                       <Shield className="w-12 h-12 text-zinc-700 mx-auto" />
