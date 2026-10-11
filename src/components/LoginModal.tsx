@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -23,6 +23,16 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Redirect to profile only if logging in from Home (/) or History (/acerca-de)
+  // On all other pages (Premios, Torneos, Sorteos, Votaciones, etc.), stay right where the user is
+  const isHomeOrAbout = pathname === "/" || pathname === "/acerca-de";
+  const targetCallbackUrl = isHomeOrAbout
+    ? "/player/dashboard/profile"
+    : typeof window !== "undefined"
+    ? `${window.location.pathname}${window.location.search}`
+    : pathname || "/";
 
   if (!isOpen) return null;
 
@@ -48,7 +58,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
       } else {
         toast.success("¡Bienvenido!");
         onClose();
-        router.refresh();
+        if (isHomeOrAbout) {
+          router.push("/player/dashboard/profile");
+        } else {
+          router.refresh();
+        }
       }
     } catch (error) {
       toast.error("Algo salió mal.");
@@ -78,7 +92,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
         </div>
 
         <div className="px-6 pt-2">
-          <SocialAuthButtons mode="login" callbackUrl="/player/dashboard" />
+          <SocialAuthButtons mode="login" callbackUrl={targetCallbackUrl} />
         </div>
 
         {/* Form */}

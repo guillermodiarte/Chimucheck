@@ -8,7 +8,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { Loader2, X, Gamepad2 } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 
 interface RegisterModalProps {
@@ -20,11 +20,19 @@ interface RegisterModalProps {
 export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModalProps) {
   const [state, action, isPending] = useActionState(registerPlayer, null);
   const router = useRouter();
+  const pathname = usePathname();
   const [confirmPassword, setConfirmPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmError, setConfirmError] = useState("");
   const [showPendingScreen, setShowPendingScreen] = useState(false);
   const successHandled = useRef(false);
+
+  const isHomeOrAbout = pathname === "/" || pathname === "/acerca-de";
+  const targetCallbackUrl = isHomeOrAbout
+    ? "/player/dashboard/profile"
+    : typeof window !== "undefined"
+    ? `${window.location.pathname}${window.location.search}`
+    : pathname || "/";
 
   useEffect(() => {
     // Reset success handling flag when the modal is freshly opened
@@ -107,7 +115,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
           </div>
         ) : (
           <div className="px-6 pb-6 space-y-3">
-            <SocialAuthButtons mode="register" callbackUrl="/player/dashboard" />
+            <SocialAuthButtons mode="register" callbackUrl={targetCallbackUrl} />
             <form action={handleSubmit} className="space-y-4 pt-1">
             <div className="space-y-4">
               <div className="space-y-2">

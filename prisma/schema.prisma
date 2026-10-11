@@ -95,6 +95,7 @@ model Player {
   teams              Team[]
   accounts           Account[]
   raffleEntries      RaffleEntry[]
+  votes              Vote[]
 }
 
 model Account {
@@ -288,3 +289,42 @@ model RaffleEntry {
   @@unique([raffleId, playerId])
 }
 
+
+// ─── Voting System ────────────────────────────────────────────────────────────
+
+model VotingContest {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String        @default("DRAFT") // DRAFT | ACTIVE | FINISHED
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  entries     VotingEntry[]
+}
+
+model VotingEntry {
+  id               String        @id @default(uuid())
+  contestId        String
+  imageUrl         String
+  instagramAccount String?
+  authorName       String?
+  createdAt        DateTime      @default(now())
+
+  contest          VotingContest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  votes            Vote[]
+}
+
+model Vote {
+  id        String      @id @default(uuid())
+  entryId   String
+  playerId  String
+  createdAt DateTime    @default(now())
+
+  entry     VotingEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  player    Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, playerId])
+}

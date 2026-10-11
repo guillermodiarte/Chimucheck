@@ -45,6 +45,14 @@ export function MainNav({
       </Link>
 
       <Link
+        href="/votaciones"
+        className={linkClass("/votaciones")}
+      >
+        Votaciones
+        <span className={underlineClass("/votaciones")}></span>
+      </Link>
+
+      <Link
         href="/player/dashboard/profile"
         className={linkClass("/player/dashboard/profile")}
       >

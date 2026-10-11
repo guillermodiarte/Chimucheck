@@ -21,6 +21,7 @@ import {
   UserCheck,
   Gamepad2,
   Ticket,
+  Vote,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -54,6 +55,11 @@ export const sidebarData = [
     title: "Sorteos",
     href: "/admin/raffles",
     icon: Ticket,
+  },
+  {
+    title: "Votaciones",
+    href: "/admin/voting",
+    icon: Vote,
   },
   {
     title: "Solicitudes",
