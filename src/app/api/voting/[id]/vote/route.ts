@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
-// POST /api/voting/[id]/vote – toggle vote on an entry
+// POST /api/voting/[id]/vote – toggle vote on an entry, strictly enforcing 1 vote per contest
 export async function POST(req: NextRequest, { params }: Params) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -44,16 +44,38 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const playerId = session.user.id;
 
-  // Toggle: if already voted → remove, otherwise → add
-  const existingVote = await db.vote.findUnique({
-    where: { entryId_playerId: { entryId, playerId } },
+  // Check if player has an existing vote in this contest
+  const existingVote = await db.vote.findFirst({
+    where: {
+      playerId,
+      entry: { contestId },
+    },
+    include: {
+      entry: true,
+    },
   });
 
   if (existingVote) {
-    await db.vote.delete({ where: { id: existingVote.id } });
-    return NextResponse.json({ voted: false });
+    if (existingVote.entryId === entryId) {
+      // Toggle off: removing vote on the same entry
+      await db.vote.delete({ where: { id: existingVote.id } });
+      return NextResponse.json({ voted: false, unvotedEntryId: entryId });
+    } else {
+      // Switch vote: remove old vote and assign to new entry atomically
+      await db.$transaction([
+        db.vote.delete({ where: { id: existingVote.id } }),
+        db.vote.create({ data: { entryId, playerId } }),
+      ]);
+      return NextResponse.json({
+        voted: true,
+        switched: true,
+        previousEntryId: existingVote.entryId,
+        newEntryId: entryId,
+      });
+    }
   } else {
+    // Brand new vote in this contest
     await db.vote.create({ data: { entryId, playerId } });
-    return NextResponse.json({ voted: true });
+    return NextResponse.json({ voted: true, newEntryId: entryId });
   }
 }
