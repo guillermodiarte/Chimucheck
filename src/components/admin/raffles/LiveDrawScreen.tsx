@@ -722,17 +722,8 @@ export function LiveDrawScreen({
 
               {/* SLOT MACHINE VIEWFINDER */}
               <div className="relative w-full max-w-lg bg-zinc-950 border-4 border-yellow-500 rounded-3xl p-6 md:p-8 shadow-[0_0_80px_rgba(234,179,8,0.4)] overflow-hidden">
-                <div className="absolute top-1/2 -left-3 -translate-y-1/2 z-30 text-yellow-400 text-lg drop-shadow">
-                  ▶
-                </div>
-                <div className="absolute top-1/2 -right-3 -translate-y-1/2 z-30 text-yellow-400 text-lg drop-shadow">
-                  ◀
-                </div>
-
                 <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-zinc-950 to-transparent z-20 pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-zinc-950 to-transparent z-20 pointer-events-none" />
-
-                <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 h-24 border-2 border-yellow-400 bg-yellow-400/10 rounded-2xl z-10 pointer-events-none shadow-[0_0_20px_rgba(234,179,8,0.3)]" />
 
                 {eligibleParticipants[activeSlotIndex] && (
                   <motion.div

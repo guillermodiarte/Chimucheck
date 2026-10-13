@@ -790,9 +790,38 @@ export async function updateRaffleStatus(id: string, status: "DRAFT" | "ACTIVE" 
   try {
     await verifyAdmin();
 
+    const currentRaffle = await db.raffle.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+
+    const isMovingAwayFromFinished = currentRaffle?.status === "FINISHED" && status !== "FINISHED";
+
+    if (isMovingAwayFromFinished) {
+      // Clear winners and timestamps from all prizes
+      await db.rafflePrize.updateMany({
+        where: { raffleId: id },
+        data: {
+          winnerId: null,
+          winnerAlias: null,
+          winnerImage: null,
+          drawnAt: null,
+        },
+      });
+    }
+
     const raffle = await db.raffle.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        ...(isMovingAwayFromFinished
+          ? {
+              winnerId: null,
+              winnerAlias: null,
+              winnerImage: null,
+            }
+          : {}),
+      },
       include: {
         prizes: {
           orderBy: { order: "asc" },
@@ -804,8 +833,18 @@ export async function updateRaffleStatus(id: string, status: "DRAFT" | "ACTIVE" 
     revalidatePath(`/admin/raffles/${id}`);
     revalidatePath(`/admin/raffles/${id}/live`);
     revalidatePath("/player/dashboard/raffles");
+    revalidatePath(`/player/dashboard/raffles/${id}`);
+    revalidatePath("/sorteos");
+    revalidatePath(`/sorteos/${id}`);
 
-    return { success: true, raffle };
+    return {
+      success: true,
+      raffle,
+      resetWinners: isMovingAwayFromFinished,
+      message: isMovingAwayFromFinished
+        ? "El sorteo ha sido reiniciado como nuevo y los ganadores fueron eliminados."
+        : `Estado cambiado a ${status}`,
+    };
   } catch (error: any) {
     console.error("Error updating raffle status:", error);
     return { success: false, message: error.message || "Error al actualizar estado del sorteo" };

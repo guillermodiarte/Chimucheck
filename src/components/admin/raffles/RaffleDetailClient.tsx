@@ -28,7 +28,19 @@ import {
   X,
   Trophy,
   ExternalLink,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   addPlayersToRaffle,
   addAllApprovedPlayers,
@@ -96,6 +108,8 @@ export function RaffleDetailClient({
   const [modalSearch, setModalSearch] = useState("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<"DRAFT" | "ACTIVE" | "DRAWING" | "FINISHED" | null>(null);
+  const [isResetStatusModalOpen, setIsResetStatusModalOpen] = useState(false);
 
   const entries = raffle.entries || [];
   const filteredEntries = entries.filter((e) => {
@@ -114,12 +128,48 @@ export function RaffleDetailClient({
     return alias.includes(term) || name.includes(term) || email.includes(term);
   });
 
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Borrador",
+  ACTIVE: "Activo",
+  DRAWING: "En Sorteo",
+  FINISHED: "Finalizado",
+};
+
+  const handleStatusClick = (newStatus: "DRAFT" | "ACTIVE" | "DRAWING" | "FINISHED") => {
+    if (newStatus === raffle.status) return;
+
+    // If current status is FINISHED and moving away, prompt confirmation
+    if (raffle.status === "FINISHED" && newStatus !== "FINISHED") {
+      setPendingStatus(newStatus);
+      setIsResetStatusModalOpen(true);
+      return;
+    }
+
+    handleStatusChange(newStatus);
+  };
+
+  const handleConfirmResetStatus = async () => {
+    if (!pendingStatus) return;
+    const targetStatus = pendingStatus;
+    setLoadingAction(true);
+    const res = await updateRaffleStatus(raffle.id, targetStatus);
+    setLoadingAction(false);
+    if (res.success) {
+      toast.success(res.message || `Estado cambiado a ${STATUS_LABELS[targetStatus] || targetStatus}`);
+      setIsResetStatusModalOpen(false);
+      setPendingStatus(null);
+      router.refresh();
+    } else {
+      toast.error(res.message || "Error al actualizar estado");
+    }
+  };
+
   const handleStatusChange = async (newStatus: "DRAFT" | "ACTIVE" | "DRAWING" | "FINISHED") => {
     setLoadingAction(true);
     const res = await updateRaffleStatus(raffle.id, newStatus);
     setLoadingAction(false);
     if (res.success) {
-      toast.success(`Estado cambiado a ${newStatus}`);
+      toast.success(res.message || `Estado cambiado a ${STATUS_LABELS[newStatus] || newStatus}`);
       router.refresh();
     } else {
       toast.error(res.message || "Error al actualizar estado");
@@ -416,7 +466,7 @@ export function RaffleDetailClient({
             <button
               type="button"
               disabled={loadingAction}
-              onClick={() => handleStatusChange("DRAFT")}
+              onClick={() => handleStatusClick("DRAFT")}
               className={`text-xs h-9 px-2 rounded-lg font-bold border transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center ${
                 raffle.status === "DRAFT"
                   ? "bg-zinc-700 hover:bg-zinc-600 text-white border-zinc-500 shadow-sm"
@@ -428,7 +478,7 @@ export function RaffleDetailClient({
             <button
               type="button"
               disabled={loadingAction}
-              onClick={() => handleStatusChange("ACTIVE")}
+              onClick={() => handleStatusClick("ACTIVE")}
               className={`text-xs h-9 px-2 rounded-lg font-bold border transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center ${
                 raffle.status === "ACTIVE"
                   ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400 shadow-md shadow-emerald-600/25"
@@ -440,7 +490,7 @@ export function RaffleDetailClient({
             <button
               type="button"
               disabled={loadingAction}
-              onClick={() => handleStatusChange("DRAWING")}
+              onClick={() => handleStatusClick("DRAWING")}
               className={`text-xs h-9 px-2 rounded-lg font-bold border transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center ${
                 raffle.status === "DRAWING"
                   ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-400 shadow-md shadow-purple-600/25 animate-pulse"
@@ -452,7 +502,7 @@ export function RaffleDetailClient({
             <button
               type="button"
               disabled={loadingAction}
-              onClick={() => handleStatusChange("FINISHED")}
+              onClick={() => handleStatusClick("FINISHED")}
               className={`text-xs h-9 px-2 rounded-lg font-bold border transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center ${
                 raffle.status === "FINISHED"
                   ? "bg-yellow-500 hover:bg-yellow-400 text-black border-yellow-300 shadow-md shadow-yellow-500/25"
@@ -719,6 +769,76 @@ export function RaffleDetailClient({
           </div>
         </div>
       )}
+
+      {/* Modal de confirmación para cambiar estado desde Finalizado */}
+      <AlertDialog
+        open={isResetStatusModalOpen}
+        onOpenChange={(open) => {
+          if (!open && !loadingAction) {
+            setIsResetStatusModalOpen(false);
+            setPendingStatus(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-md">
+          <AlertDialogHeader>
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 mx-auto sm:mx-0 mb-1">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <AlertDialogTitle className="text-xl font-bold text-white">
+              ¿Reiniciar sorteo y cambiar estado?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300 text-sm space-y-3 pt-1">
+              <span className="block text-gray-300">
+                Este sorteo se encuentra actualmente en estado{" "}
+                <span className="text-yellow-400 font-bold">FINALIZADO</span>.
+              </span>
+              <span className="block text-rose-300 bg-rose-950/30 border border-rose-800/40 rounded-xl p-3 text-xs leading-relaxed">
+                ⚠️ <strong className="text-rose-200">¡Advertencia importante!</strong>
+                <br />
+                Al cambiar a estado{" "}
+                <strong className="text-white underline font-bold">
+                  {STATUS_LABELS[pendingStatus || "DRAFT"]}
+                </strong>
+                ,{" "}
+                <strong>se borrarán todos los ganadores asignados a los premios</strong>. El sorteo volverá a quedar como nuevo para poder realizarse otra vez.
+              </span>
+              <span className="block text-gray-400 text-xs">
+                ¿Estás seguro de que deseas continuar con esta acción?
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4 gap-2">
+            <AlertDialogCancel
+              disabled={loadingAction}
+              onClick={() => {
+                setIsResetStatusModalOpen(false);
+                setPendingStatus(null);
+              }}
+              className="bg-transparent border-gray-700 hover:bg-gray-800 text-gray-300 hover:text-white"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={loadingAction}
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmResetStatus();
+              }}
+              className="bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer"
+            >
+              {loadingAction ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Restableciendo...
+                </>
+              ) : (
+                "Sí, borrar ganadores y cambiar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
