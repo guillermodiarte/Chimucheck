@@ -24,6 +24,19 @@ export default async function PublicRaffleDetailPage({
       prizes: {
         orderBy: { order: "asc" },
       },
+      entries: {
+        orderBy: { enteredAt: "asc" },
+        include: {
+          player: {
+            select: {
+              id: true,
+              alias: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
     },
   });
 

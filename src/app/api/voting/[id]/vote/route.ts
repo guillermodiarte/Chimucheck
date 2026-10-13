@@ -62,20 +62,53 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ voted: false, unvotedEntryId: entryId });
     } else {
       // Switch vote: remove old vote and assign to new entry atomically
-      await db.$transaction([
+      const [, newVote] = await db.$transaction([
         db.vote.delete({ where: { id: existingVote.id } }),
-        db.vote.create({ data: { entryId, playerId } }),
+        db.vote.create({
+          data: { entryId, playerId },
+          include: {
+            player: {
+              select: { id: true, alias: true, name: true, image: true },
+            },
+          },
+        }),
       ]);
       return NextResponse.json({
         voted: true,
         switched: true,
         previousEntryId: existingVote.entryId,
         newEntryId: entryId,
+        voter: {
+          id: newVote.id,
+          playerId: newVote.playerId,
+          alias: newVote.player?.alias || null,
+          name: newVote.player?.name || null,
+          image: newVote.player?.image || null,
+          createdAt: newVote.createdAt.toISOString(),
+        },
       });
     }
   } else {
     // Brand new vote in this contest
-    await db.vote.create({ data: { entryId, playerId } });
-    return NextResponse.json({ voted: true, newEntryId: entryId });
+    const newVote = await db.vote.create({
+      data: { entryId, playerId },
+      include: {
+        player: {
+          select: { id: true, alias: true, name: true, image: true },
+        },
+      },
+    });
+    return NextResponse.json({
+      voted: true,
+      newEntryId: entryId,
+      voter: {
+        id: newVote.id,
+        playerId: newVote.playerId,
+        alias: newVote.player?.alias || null,
+        name: newVote.player?.name || null,
+        image: newVote.player?.image || null,
+        createdAt: newVote.createdAt.toISOString(),
+      },
+    });
   }
 }

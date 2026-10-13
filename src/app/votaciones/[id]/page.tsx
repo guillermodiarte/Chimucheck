@@ -3,9 +3,8 @@ import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import { Calendar, Heart, ImageIcon, ArrowLeft, Instagram, Clock } from "lucide-react";
 import Link from "next/link";
-import { VotingGallery } from "@/components/voting/VotingGallery";
-import { VotingPodium } from "@/components/voting/VotingPodium";
-import { LoginCTABanner, GalleryLoginHint } from "@/components/voting/LoginCTA";
+import { VotingContestClient } from "@/components/voting/VotingContestClient";
+import { LoginCTABanner } from "@/components/voting/LoginCTA";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -33,14 +32,22 @@ async function getContest(id: string, playerId?: string) {
     orderBy: { createdAt: "asc" },
     include: {
       _count: { select: { votes: true } },
-      ...(playerId
-        ? {
-            votes: {
-              where: { playerId },
-              select: { id: true },
+      votes: {
+        select: {
+          id: true,
+          playerId: true,
+          createdAt: true,
+          player: {
+            select: {
+              id: true,
+              alias: true,
+              name: true,
+              image: true,
             },
-          }
-        : {}),
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -50,7 +57,15 @@ async function getContest(id: string, playerId?: string) {
     instagramAccount: e.instagramAccount,
     authorName: e.authorName,
     voteCount: e._count.votes,
-    hasVoted: playerId ? ((e as any).votes?.length > 0) : false,
+    hasVoted: playerId ? e.votes.some((v) => v.playerId === playerId) : false,
+    voters: e.votes.map((v) => ({
+      id: v.id,
+      playerId: v.playerId,
+      alias: v.player?.alias || null,
+      name: v.player?.name || null,
+      image: v.player?.image || null,
+      createdAt: v.createdAt.toISOString(),
+    })),
   }));
 
   return {
@@ -87,22 +102,21 @@ export default async function VotacionDetailPage({ params }: PageProps) {
   const session = await auth();
   const playerId = session?.user?.id;
 
+  const currentUser = session?.user
+    ? {
+        id: session.user.id,
+        name: session.user.name || null,
+        alias: (session.user as any).alias || null,
+        image: (session.user as any).image || session.user.image || null,
+      }
+    : null;
+
   const data = await getContest(id, playerId);
   if (!data) notFound();
 
   const { contest, entries, totalVotes } = data;
   const isActive = contest.status === "ACTIVE";
   const isFinished = contest.status === "FINISHED";
-
-  // Top 3 sorted by vote count (for podium)
-  const top3 = [...entries]
-    .sort((a, b) => b.voteCount - a.voteCount)
-    .slice(0, 3);
-
-  // Remaining entries (rank 4+) for finished contests
-  const restEntries = isFinished
-    ? [...entries].sort((a, b) => b.voteCount - a.voteCount).slice(3)
-    : entries;
 
   return (
     <div className="relative min-h-screen pt-44 pb-20 px-4 md:px-8">
@@ -180,90 +194,15 @@ export default async function VotacionDetailPage({ params }: PageProps) {
         {/* Login CTA for non-logged users during active contest */}
         {isActive && !playerId && <LoginCTABanner />}
 
-        {/* ── FINISHED: Podium + Full ranking ── */}
-        {isFinished && top3.length > 0 && (
-          <div className="space-y-14">
-            <VotingPodium top3={top3} />
-
-            {/* Full ranking table */}
-            {restEntries.length > 0 && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-300 uppercase tracking-wider">
-                  Ranking completo
-                </h3>
-                <div className="space-y-3">
-                  {restEntries.map((entry, idx) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center gap-4 bg-zinc-900/60 border border-white/10 rounded-xl p-3"
-                    >
-                      <span className="text-gray-500 font-mono font-bold w-8 text-center">
-                        {idx + 4}°
-                      </span>
-                      <img
-                        src={entry.imageUrl}
-                        alt={entry.authorName || "Imagen"}
-                        className="w-12 h-12 object-cover rounded-lg border border-white/10"
-                      />
-                      <div className="flex-1 min-w-0">
-                        {entry.instagramAccount && (
-                          <p className="text-pink-400 text-xs font-bold flex items-center gap-1">
-                            <Instagram className="w-3 h-3" />
-                            {entry.instagramAccount}
-                          </p>
-                        )}
-                        {entry.authorName && (
-                          <p className="text-gray-300 text-sm">{entry.authorName}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-red-400 font-bold">
-                        <Heart className="w-4 h-4 fill-red-400" />
-                        <span>{entry.voteCount}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Gallery with static vote counts */}
-            <div className="space-y-6 pt-4 border-t border-white/10">
-              <h3 className="text-xl font-bold text-gray-300 uppercase tracking-wider">
-                Todas las imágenes
-              </h3>
-              <VotingGallery
-                contestId={contest.id}
-                entries={entries}
-                isLoggedIn={!!playerId}
-                isActive={false}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ── ACTIVE: Gallery with vote buttons ── */}
-        {isActive && (
-          <div className="space-y-6">
-            {!playerId && <GalleryLoginHint />}
-            <VotingGallery
-              contestId={contest.id}
-              entries={entries}
-              isLoggedIn={!!playerId}
-              isActive={true}
-            />
-          </div>
-        )}
-
-        {/* Empty state */}
-        {entries.length === 0 && (
-          <div className="text-center py-20 space-y-3">
-            <div className="text-5xl">📷</div>
-            <p className="text-xl font-bold text-white">Próximamente</p>
-            <p className="text-gray-400">
-              Estamos cargando las imágenes de la comunidad. ¡Volvé pronto!
-            </p>
-          </div>
-        )}
+        {/* Interactive Contest Body (Podium, Ranking, Gallery and Detail Modal) */}
+        <VotingContestClient
+          contest={contest}
+          initialEntries={entries}
+          isLoggedIn={!!playerId}
+          isActive={isActive}
+          isFinished={isFinished}
+          currentUser={currentUser}
+        />
       </div>
     </div>
   );

@@ -15,14 +15,20 @@ export async function GET(
     where: { id },
     include: {
       _count: { select: { entries: true } },
-      ...(playerId
-        ? {
-            entries: {
-              where: { playerId },
-              select: { id: true, enteredAt: true },
+      prizes: { orderBy: { order: "asc" } },
+      entries: {
+        orderBy: { enteredAt: "asc" },
+        include: {
+          player: {
+            select: {
+              id: true,
+              alias: true,
+              name: true,
+              image: true,
             },
-          }
-        : {}),
+          },
+        },
+      },
     },
   });
 
@@ -30,13 +36,13 @@ export async function GET(
     return NextResponse.json({ error: "Sorteo no encontrado" }, { status: 404 });
   }
 
-  const isEntered = playerId ? (raffle.entries && raffle.entries.length > 0) : false;
-  const myEntryDate = playerId && raffle.entries?.[0]?.enteredAt ? raffle.entries[0].enteredAt : null;
+  const isEntered = playerId ? raffle.entries.some((e) => e.playerId === playerId) : false;
+  const myEntry = playerId ? raffle.entries.find((e) => e.playerId === playerId) : null;
+  const myEntryDate = myEntry?.enteredAt || null;
 
   return NextResponse.json({
     raffle: {
       ...raffle,
-      entries: undefined, // Protect full participant list from being exposed
       isEntered,
       myEntryDate,
     },

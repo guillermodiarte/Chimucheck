@@ -15,6 +15,12 @@ export default async function PlayerRaffleDetailPage({
 
   const { id } = await params;
   const playerId = session.user.id;
+  const currentUser = {
+    id: session.user.id,
+    name: session.user.name || null,
+    alias: (session.user as any).alias || null,
+    image: (session.user as any).image || session.user.image || null,
+  };
 
   const raffle = await db.raffle.findUnique({
     where: { id },
@@ -25,12 +31,19 @@ export default async function PlayerRaffleDetailPage({
       prizes: {
         orderBy: { order: "asc" },
       },
-      entries: playerId
-        ? {
-            where: { playerId },
-            select: { id: true, enteredAt: true },
-          }
-        : false,
+      entries: {
+        orderBy: { enteredAt: "asc" },
+        include: {
+          player: {
+            select: {
+              id: true,
+              alias: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -38,8 +51,9 @@ export default async function PlayerRaffleDetailPage({
     notFound();
   }
 
-  const isEntered = playerId ? !!(raffle.entries && raffle.entries.length > 0) : false;
-  const myEntryDate = playerId && raffle.entries?.[0]?.enteredAt ? raffle.entries[0].enteredAt : null;
+  const isEntered = playerId ? raffle.entries.some((e) => e.playerId === playerId) : false;
+  const myEntry = playerId ? raffle.entries.find((e) => e.playerId === playerId) : null;
+  const myEntryDate = myEntry?.enteredAt || null;
 
   return (
     <div className="relative min-h-[calc(100vh-80px)] pt-6 pb-20 px-4 md:px-8">
@@ -58,6 +72,7 @@ export default async function PlayerRaffleDetailPage({
             myEntryDate,
           } as any}
           isLoggedIn={true}
+          currentUser={currentUser}
         />
       </div>
     </div>

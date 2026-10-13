@@ -33,14 +33,22 @@ export async function GET(_req: NextRequest, { params }: Params) {
     orderBy: { createdAt: "asc" },
     include: {
       _count: { select: { votes: true } },
-      ...(playerId
-        ? {
-            votes: {
-              where: { playerId },
-              select: { id: true },
+      votes: {
+        select: {
+          id: true,
+          playerId: true,
+          createdAt: true,
+          player: {
+            select: {
+              id: true,
+              alias: true,
+              name: true,
+              image: true,
             },
-          }
-        : {}),
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -54,7 +62,15 @@ export async function GET(_req: NextRequest, { params }: Params) {
     authorName: e.authorName,
     createdAt: e.createdAt,
     voteCount: e._count.votes,
-    hasVoted: playerId ? ((e as any).votes?.length > 0) : false,
+    hasVoted: playerId ? e.votes.some((v) => v.playerId === playerId) : false,
+    voters: e.votes.map((v) => ({
+      id: v.id,
+      playerId: v.playerId,
+      alias: v.player?.alias || null,
+      name: v.player?.name || null,
+      image: v.player?.image || null,
+      createdAt: v.createdAt.toISOString(),
+    })),
   }));
 
   return NextResponse.json({

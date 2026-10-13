@@ -448,6 +448,9 @@ export async function enterRaffle(raffleId: string) {
     });
 
     revalidatePath("/player/dashboard/raffles");
+    revalidatePath(`/player/dashboard/raffles/${raffleId}`);
+    revalidatePath("/sorteos");
+    revalidatePath(`/sorteos/${raffleId}`);
     revalidatePath(`/admin/raffles/${raffleId}`);
     revalidatePath(`/admin/raffles/${raffleId}/live`);
 
@@ -488,6 +491,9 @@ export async function leaveRaffle(raffleId: string) {
     });
 
     revalidatePath("/player/dashboard/raffles");
+    revalidatePath(`/player/dashboard/raffles/${raffleId}`);
+    revalidatePath("/sorteos");
+    revalidatePath(`/sorteos/${raffleId}`);
     revalidatePath(`/admin/raffles/${raffleId}`);
     revalidatePath(`/admin/raffles/${raffleId}/live`);
 

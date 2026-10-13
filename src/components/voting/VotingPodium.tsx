@@ -2,16 +2,19 @@
 
 import { Instagram, Heart, User } from "lucide-react";
 
-interface PodiumEntry {
+export interface PodiumEntry {
   id: string;
   imageUrl: string;
   instagramAccount: string | null;
   authorName: string | null;
   voteCount: number;
+  hasVoted?: boolean;
+  voters?: any[];
 }
 
 interface VotingPodiumProps {
   top3: PodiumEntry[];
+  onSelectEntry?: (entry: PodiumEntry) => void;
 }
 
 const PODIUM_CONFIG = [
@@ -62,7 +65,7 @@ const PODIUM_CONFIG = [
   },
 ];
 
-export function VotingPodium({ top3 }: VotingPodiumProps) {
+export function VotingPodium({ top3, onSelectEntry }: VotingPodiumProps) {
   if (top3.length === 0) return null;
 
   // Arrange: 2nd, 1st, 3rd
@@ -101,7 +104,13 @@ export function VotingPodium({ top3 }: VotingPodiumProps) {
                 className={`flex flex-col items-center gap-3 ${cfg.order} ${cfg.zIndex}`}
               >
                 {/* Image card */}
-                <div className={`relative ${cfg.imageSize} rounded-2xl overflow-hidden border-2 ${cfg.border} ${cfg.glow} transition-all duration-500 group`}>
+                <div
+                  onClick={() => onSelectEntry?.(item)}
+                  className={`relative ${cfg.imageSize} rounded-2xl overflow-hidden border-2 ${cfg.border} ${cfg.glow} transition-all duration-500 group ${
+                    onSelectEntry ? "cursor-pointer hover:scale-105 active:scale-95" : ""
+                  }`}
+                  title={onSelectEntry ? "Clic para ver en detalle y ver votantes" : undefined}
+                >
                   <img
                     src={item.imageUrl}
                     alt={item.authorName || cfg.label}
