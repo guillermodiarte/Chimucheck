@@ -8,17 +8,17 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToRegister?: () => void;
+  customCallbackUrl?: string | null;
 }
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export default function LoginModal({ isOpen, onClose, customCallbackUrl }: LoginModalProps) {
   const pathname = usePathname();
 
-  const isHomeOrAbout = pathname === "/" || pathname === "/acerca-de";
-  const targetCallbackUrl = isHomeOrAbout
-    ? "/player/dashboard/profile"
-    : typeof window !== "undefined"
-    ? `${window.location.pathname}${window.location.search}`
-    : pathname || "/";
+  const targetCallbackUrl =
+    customCallbackUrl ||
+    (typeof window !== "undefined"
+      ? `${window.location.pathname}${window.location.search}`
+      : pathname || "/");
 
   if (!isOpen) return null;
 

@@ -12,7 +12,8 @@ interface SocialAuthButtonsProps {
 }
 
 export default function SocialAuthButtons({
-  callbackUrl = "/player/dashboard",
+  callbackUrl,
+  mode = "login",
   showDivider = false,
 }: SocialAuthButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
@@ -20,8 +21,14 @@ export default function SocialAuthButtons({
   const handleOAuthSignIn = async (provider: string) => {
     try {
       setLoadingProvider(provider);
+      const effectiveCallbackUrl =
+        callbackUrl ||
+        (typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/");
+
       await signIn(provider, {
-        callbackUrl: callbackUrl || "/player/dashboard",
+        callbackUrl: effectiveCallbackUrl,
       });
     } catch (error) {
       console.error(`Error logging in with ${provider}:`, error);

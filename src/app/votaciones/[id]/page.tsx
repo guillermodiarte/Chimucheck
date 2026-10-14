@@ -8,6 +8,7 @@ import { LoginCTABanner } from "@/components/voting/LoginCTA";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ entry?: string }>;
 }
 
 async function getContest(id: string, playerId?: string) {
@@ -97,8 +98,9 @@ function formatCountdown(endDate: Date) {
   return `${minutes}m restantes`;
 }
 
-export default async function VotacionDetailPage({ params }: PageProps) {
+export default async function VotacionDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { entry } = (await searchParams) || {};
   const session = await auth();
   const playerId = session?.user?.id;
 
@@ -198,6 +200,7 @@ export default async function VotacionDetailPage({ params }: PageProps) {
         <VotingContestClient
           contest={contest}
           initialEntries={entries}
+          initialSelectedEntryId={entry || null}
           isLoggedIn={!!playerId}
           isActive={isActive}
           isFinished={isFinished}

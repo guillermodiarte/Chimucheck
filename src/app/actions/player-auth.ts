@@ -19,7 +19,7 @@ export async function loginPlayer(prevState: string | undefined, formData: FormD
     const callbackUrl = formData.get("callbackUrl") as string | null;
     await signIn("credentials", {
       ...Object.fromEntries(formData),
-      redirectTo: callbackUrl || "/player/dashboard",
+      redirectTo: callbackUrl || "/",
     });
   } catch (error) {
     if (error instanceof AuthError) {

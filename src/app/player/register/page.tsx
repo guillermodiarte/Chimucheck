@@ -55,7 +55,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-sm text-gray-400">Crea tu perfil de jugador en ChimuCheck</p>
         </div>
 
-        <SocialAuthButtons mode="register" callbackUrl={callbackUrl || "/player/dashboard"} />
+        <SocialAuthButtons mode="register" callbackUrl={callbackUrl || "/"} />
 
         <form action={action} onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">

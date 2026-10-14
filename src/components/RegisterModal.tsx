@@ -27,12 +27,10 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const [showPendingScreen, setShowPendingScreen] = useState(false);
   const successHandled = useRef(false);
 
-  const isHomeOrAbout = pathname === "/" || pathname === "/acerca-de";
-  const targetCallbackUrl = isHomeOrAbout
-    ? "/player/dashboard/profile"
-    : typeof window !== "undefined"
-    ? `${window.location.pathname}${window.location.search}`
-    : pathname || "/";
+  const targetCallbackUrl =
+    typeof window !== "undefined"
+      ? `${window.location.pathname}${window.location.search}`
+      : pathname || "/";
 
   useEffect(() => {
     // Reset success handling flag when the modal is freshly opened

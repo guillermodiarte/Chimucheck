@@ -29,6 +29,7 @@ interface CurrentUser {
 interface VotingContestClientProps {
   contest: ContestData;
   initialEntries: Entry[];
+  initialSelectedEntryId?: string | null;
   isLoggedIn: boolean;
   isActive: boolean;
   isFinished: boolean;
@@ -38,6 +39,7 @@ interface VotingContestClientProps {
 export function VotingContestClient({
   contest,
   initialEntries,
+  initialSelectedEntryId,
   isLoggedIn,
   isActive,
   isFinished,
@@ -45,13 +47,40 @@ export function VotingContestClient({
 }: VotingContestClientProps) {
   const router = useRouter();
   const [entries, setEntries] = useState<Entry[]>(initialEntries);
-  const [selectedDetailEntryId, setSelectedDetailEntryId] = useState<string | null>(null);
+  const [selectedDetailEntryId, setSelectedDetailEntryId] = useState<string | null>(
+    initialSelectedEntryId || null
+  );
   const [pendingEntryId, setPendingEntryId] = useState<string | null>(null);
 
-  // Sync state if props change
+  // Sync state if props change or on initial load with ?entry=
   useEffect(() => {
     setEntries(initialEntries);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const entryId = params.get("entry");
+      if (entryId && initialEntries.some((e) => e.id === entryId)) {
+        setSelectedDetailEntryId(entryId);
+      }
+    }
   }, [initialEntries]);
+
+  const openDetailModal = (entryId: string) => {
+    setSelectedDetailEntryId(entryId);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("entry", entryId);
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
+  const closeDetailModal = () => {
+    setSelectedDetailEntryId(null);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("entry");
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
 
   // Modal state for switching vote
   const [switchModalOpen, setSwitchModalOpen] = useState(false);
@@ -65,7 +94,14 @@ export function VotingContestClient({
   // Handle vote click on an entry (from gallery card or from detail modal)
   const handleVoteClick = (targetEntry: Entry) => {
     if (!isLoggedIn) {
-      window.dispatchEvent(new CustomEvent("open-login-modal"));
+      openDetailModal(targetEntry.id);
+      window.dispatchEvent(
+        new CustomEvent("open-login-modal", {
+          detail: {
+            callbackUrl: `${window.location.pathname}?entry=${targetEntry.id}`,
+          },
+        })
+      );
       return;
     }
     if (!isActive) return;
@@ -204,7 +240,7 @@ export function VotingContestClient({
         <div className="space-y-14">
           <VotingPodium
             top3={top3}
-            onSelectEntry={(entry) => setSelectedDetailEntryId(entry.id)}
+            onSelectEntry={(entry) => openDetailModal(entry.id)}
           />
 
           {/* Full ranking table */}
@@ -224,7 +260,7 @@ export function VotingContestClient({
                 {restEntries.map((entry, idx) => (
                   <div
                     key={entry.id}
-                    onClick={() => setSelectedDetailEntryId(entry.id)}
+                    onClick={() => openDetailModal(entry.id)}
                     className="group flex items-center gap-4 bg-zinc-900/60 hover:bg-zinc-900 border border-white/10 hover:border-white/30 rounded-2xl p-3.5 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-[0_0_25px_rgba(255,255,255,0.05)]"
                   >
                     <span className="text-gray-500 font-mono font-bold w-8 text-center text-sm">
@@ -285,7 +321,7 @@ export function VotingContestClient({
               entries={entries}
               isLoggedIn={isLoggedIn}
               isActive={false}
-              onSelectEntry={(entry) => setSelectedDetailEntryId(entry.id)}
+              onSelectEntry={(entry) => openDetailModal(entry.id)}
               onVote={handleVoteClick}
               pendingEntryId={pendingEntryId}
             />
@@ -302,7 +338,7 @@ export function VotingContestClient({
             entries={entries}
             isLoggedIn={isLoggedIn}
             isActive={true}
-            onSelectEntry={(entry) => setSelectedDetailEntryId(entry.id)}
+            onSelectEntry={(entry) => openDetailModal(entry.id)}
             onVote={handleVoteClick}
             pendingEntryId={pendingEntryId}
           />
@@ -323,10 +359,10 @@ export function VotingContestClient({
       {/* Detail Image & Voters Modal */}
       <VotingDetailModal
         isOpen={!!selectedDetailEntry}
-        onClose={() => setSelectedDetailEntryId(null)}
+        onClose={closeDetailModal}
         entry={selectedDetailEntry}
         entries={entries}
-        onSelectEntry={(entry) => setSelectedDetailEntryId(entry.id)}
+        onSelectEntry={(entry) => openDetailModal(entry.id)}
         onVote={handleVoteClick}
         isLoggedIn={isLoggedIn}
         isActive={isActive}

@@ -49,7 +49,10 @@ export default function Navbar({
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const pathname = usePathname();
 
-  const openLogin = useCallback(() => {
+  const [loginCallbackUrl, setLoginCallbackUrl] = useState<string | null>(null);
+
+  const openLogin = useCallback((param?: string | React.MouseEvent) => {
+    setLoginCallbackUrl(typeof param === "string" ? param : null);
     setShowRegisterModal(false);
     setShowLoginModal(true);
   }, []);
@@ -59,9 +62,12 @@ export default function Navbar({
     setShowRegisterModal(true);
   }, []);
 
-  // Listen for custom event from other components (e.g. tournament page)
+  // Listen for custom event from other components (e.g. tournament page, voting)
   useEffect(() => {
-    const handler = () => openLogin();
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<{ callbackUrl?: string }>;
+      openLogin(customEvent.detail?.callbackUrl);
+    };
     window.addEventListener("open-login-modal", handler);
     return () => window.removeEventListener("open-login-modal", handler);
   }, [openLogin]);
@@ -687,8 +693,12 @@ export default function Navbar({
 
       <LoginModal
         isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
+        onClose={() => {
+          setShowLoginModal(false);
+          setLoginCallbackUrl(null);
+        }}
         onSwitchToRegister={openRegister}
+        customCallbackUrl={loginCallbackUrl}
       />
       {/* RegisterModal oculto según solicitud — registro solo vía OAuth */}
       {/* <RegisterModal

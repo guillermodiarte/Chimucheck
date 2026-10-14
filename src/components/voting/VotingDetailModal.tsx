@@ -304,7 +304,15 @@ export function VotingDetailModal({
                   !isLoggedIn ? (
                     <button
                       type="button"
-                      onClick={() => window.dispatchEvent(new CustomEvent("open-login-modal"))}
+                      onClick={() =>
+                        window.dispatchEvent(
+                          new CustomEvent("open-login-modal", {
+                            detail: {
+                              callbackUrl: `${window.location.pathname}?entry=${entry.id}`,
+                            },
+                          })
+                        )
+                      }
                       className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-white/5 hover:bg-white/10 border border-white/15 text-gray-200 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm group"
                     >
                       <LogIn className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />

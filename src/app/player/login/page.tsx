@@ -84,7 +84,7 @@ export default function LoginPage() {
 
           {/* Social Auth Buttons */}
           <div className="px-8 pb-10">
-            <SocialAuthButtons mode="login" callbackUrl={callbackUrl || "/player/dashboard"} />
+            <SocialAuthButtons mode="login" callbackUrl={callbackUrl || "/"} />
           </div>
 
           {/* Bottom accent */}
