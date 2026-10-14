@@ -9,7 +9,6 @@ import {
   Heart,
   Instagram,
   User,
-  ExternalLink,
   Users,
   Search,
   LogIn,
@@ -197,17 +196,6 @@ export function VotingDetailModal({
             </div>
 
             <div className="flex items-center gap-2">
-              <a
-                href={entry.imageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Abrir imagen original en nueva pestaña"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors cursor-pointer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Ver original</span>
-              </a>
-
               <button
                 type="button"
                 onClick={onClose}
@@ -222,13 +210,27 @@ export function VotingDetailModal({
           {/* Modal Main Content */}
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
             {/* Left Column: Image Viewer */}
-            <div className="relative flex-1 bg-black/80 flex items-center justify-center p-3 sm:p-6 overflow-hidden min-h-[280px] sm:min-h-[380px] md:min-h-0 select-none group">
+            <div
+              onContextMenu={(e) => e.preventDefault()}
+              className="relative flex-1 bg-black/80 flex items-center justify-center p-3 sm:p-6 overflow-hidden min-h-[280px] sm:min-h-[380px] md:min-h-0 select-none group"
+            >
               {/* Image with natural aspect ratio and max height */}
-              <div className="relative max-h-full max-w-full flex items-center justify-center">
+              <div
+                onContextMenu={(e) => e.preventDefault()}
+                className="relative max-h-full max-w-full flex items-center justify-center select-none"
+              >
                 <img
                   src={entry.imageUrl}
                   alt={entry.authorName || "Imagen del concurso"}
-                  className="max-h-[46vh] sm:max-h-[55vh] md:max-h-[74vh] w-auto max-w-full object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="max-h-[46vh] sm:max-h-[55vh] md:max-h-[74vh] w-auto max-w-full object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10 pointer-events-none select-none"
+                />
+                {/* Transparent overlay protecting against right click and direct interaction */}
+                <div
+                  className="absolute inset-0 z-5 select-none"
+                  onContextMenu={(e) => e.preventDefault()}
                 />
               </div>
 
@@ -238,7 +240,7 @@ export function VotingDetailModal({
                   type="button"
                   onClick={handlePrev}
                   aria-label="Imagen anterior"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/70 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center shadow-xl backdrop-blur-xs hover:scale-105 active:scale-95 transition-all cursor-pointer opacity-90 hover:opacity-100 z-10"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/70 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center shadow-xl backdrop-blur-xs hover:scale-105 active:scale-95 transition-all cursor-pointer opacity-90 hover:opacity-100 z-20"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
@@ -250,7 +252,7 @@ export function VotingDetailModal({
                   type="button"
                   onClick={handleNext}
                   aria-label="Imagen siguiente"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/70 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center shadow-xl backdrop-blur-xs hover:scale-105 active:scale-95 transition-all cursor-pointer opacity-90 hover:opacity-100 z-10"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/70 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center shadow-xl backdrop-blur-xs hover:scale-105 active:scale-95 transition-all cursor-pointer opacity-90 hover:opacity-100 z-20"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>

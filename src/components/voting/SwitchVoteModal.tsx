@@ -94,12 +94,17 @@ export function SwitchVoteModal({
                 Voto anterior (-1)
               </span>
 
-              <div className="relative w-28 h-28 sm:w-24 sm:h-24 rounded-xl overflow-hidden mt-2 mb-2 bg-black border border-white/10 shadow-md">
+              <div
+                onContextMenu={(e) => e.preventDefault()}
+                className="relative w-28 h-28 sm:w-24 sm:h-24 rounded-xl overflow-hidden mt-2 mb-2 bg-black border border-white/10 shadow-md select-none"
+              >
                 <Image
                   src={previousEntry.imageUrl}
                   alt={previousEntry.authorName || "Imagen anterior"}
                   fill
-                  className="object-cover"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="object-cover pointer-events-none select-none"
                 />
                 <div className="absolute inset-0 bg-red-900/20" />
               </div>
@@ -137,12 +142,17 @@ export function SwitchVoteModal({
                 Nuevo voto (+1)
               </span>
 
-              <div className="relative w-28 h-28 sm:w-24 sm:h-24 rounded-xl overflow-hidden mt-2 mb-2 bg-black border border-primary/40 shadow-md">
+              <div
+                onContextMenu={(e) => e.preventDefault()}
+                className="relative w-28 h-28 sm:w-24 sm:h-24 rounded-xl overflow-hidden mt-2 mb-2 bg-black border border-primary/40 shadow-md select-none"
+              >
                 <Image
                   src={newEntry.imageUrl}
                   alt={newEntry.authorName || "Nueva imagen"}
                   fill
-                  className="object-cover"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="object-cover pointer-events-none select-none"
                 />
               </div>
 

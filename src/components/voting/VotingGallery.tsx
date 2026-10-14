@@ -211,13 +211,17 @@ export function VotingGallery({
               {/* Clickable Image Thumbnail */}
               <div
                 onClick={() => handleOpenEntry(entry)}
-                className="relative aspect-square overflow-hidden bg-zinc-900 cursor-pointer"
+                onContextMenu={(e) => e.preventDefault()}
+                className="relative aspect-square overflow-hidden bg-zinc-900 cursor-pointer select-none"
                 title="Clic para ver en pantalla completa y ver quiénes votaron"
               >
                 <img
                   src={entry.imageUrl}
                   alt={entry.authorName || "Imagen del concurso"}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none select-none"
                   loading="lazy"
                 />
 

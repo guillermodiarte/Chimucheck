@@ -267,11 +267,17 @@ export function VotingContestClient({
                       {idx + 4}°
                     </span>
 
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-black">
+                    <div
+                      onContextMenu={(e) => e.preventDefault()}
+                      className="relative w-14 h-14 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-black select-none"
+                    >
                       <img
                         src={entry.imageUrl}
                         alt={entry.authorName || "Imagen"}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
+                        onDragStart={(e) => e.preventDefault()}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 pointer-events-none select-none"
                       />
                     </div>
 

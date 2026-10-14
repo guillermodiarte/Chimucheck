@@ -163,6 +163,26 @@ export function RaffleDetailPlayerView({
     });
   }, [participants, searchQuery]);
 
+  const PAGE_SIZE = 32;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchQuery]);
+
+  const displayedParticipants = useMemo(() => {
+    return filteredParticipants.slice(0, visibleCount);
+  }, [filteredParticipants, visibleCount]);
+
+  const hasMore = visibleCount < filteredParticipants.length;
+
+  const handleScrollParticipants = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 100 && hasMore) {
+      setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredParticipants.length));
+    }
+  };
+
   const handleEnter = async () => {
     if (!isLoggedIn) {
       window.dispatchEvent(
@@ -234,7 +254,7 @@ export function RaffleDetailPlayerView({
   const backUrl = isLoggedIn ? "/player/dashboard/raffles" : "/sorteos";
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-8 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
       {/* Top Header Row with Back Link and Status Badges */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">
         <Link
@@ -384,147 +404,15 @@ export function RaffleDetailPlayerView({
               </div>
             </div>
           )}
-
-          {/* ── PARTICIPANTES INSCRIPTOS (Directly below images!) ── */}
-          <div className="bg-zinc-950/80 border border-white/10 rounded-2xl p-5 backdrop-blur-md space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-secondary/15 border border-secondary/30 flex items-center justify-center text-secondary shrink-0">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-white">
-                      Participantes Inscriptos
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-secondary/20 border border-secondary/35 text-secondary text-xs font-black">
-                      {raffle._count.entries}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-400">
-                    {raffle.maxEntries
-                      ? `Cupo: ${raffle._count.entries} de ${raffle.maxEntries} inscriptos`
-                      : "Todos los jugadores registrados para este sorteo"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Search filter */}
-              {participants.length > 3 && (
-                <div className="relative w-full sm:w-56">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar participante..."
-                    className="w-full bg-zinc-900 border border-white/10 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-secondary/60 transition-colors"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Participants Content */}
-            {participants.length === 0 ? (
-              <div className="py-10 text-center space-y-2">
-                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-gray-500">
-                  <Ticket className="w-6 h-6 text-secondary/60" />
-                </div>
-                <p className="text-sm font-bold text-white">
-                  Aún no hay participantes inscriptos
-                </p>
-                <p className="text-xs text-gray-400 max-w-xs mx-auto">
-                  {canEnter
-                    ? "¡Sé el primero en inscribirte y asegurar tu número en este sorteo!"
-                    : "Los participantes inscriptos aparecerán aquí una vez que comiencen las inscripciones."}
-                </p>
-                {canEnter && (
-                  <div className="pt-1">
-                    <Button
-                      onClick={handleEnter}
-                      disabled={loadingAction}
-                      className="bg-secondary text-black hover:bg-yellow-400 font-bold px-4 py-1.5 text-xs rounded-xl cursor-pointer"
-                    >
-                      Inscribirme ahora
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : filteredParticipants.length === 0 ? (
-              <div className="py-6 text-center text-xs text-gray-500">
-                No se encontraron participantes que coincidan con &ldquo;{searchQuery}&rdquo;
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[460px] overflow-y-auto pr-1.5 custom-scrollbar">
-                {filteredParticipants.map((entry, idx) => {
-                  const isMe = currentUser?.id && entry.playerId === currentUser.id;
-                  const originalIndex = participants.findIndex((p) => p.id === entry.id);
-                  const ticketNumber = originalIndex >= 0 ? originalIndex + 1 : idx + 1;
-                  const initial =
-                    (entry.player?.alias || entry.player?.name || "J")[0]?.toUpperCase() || "J";
-
-                  return (
-                    <div
-                      key={entry.id}
-                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all ${
-                        isMe
-                          ? "bg-emerald-500/10 border-emerald-500/40 shadow-sm ring-1 ring-emerald-500/30"
-                          : "bg-white/[0.03] border-white/5 hover:border-white/15 hover:bg-white/[0.06]"
-                      }`}
-                    >
-                      {/* Ticket # */}
-                      <span className="text-gray-500 font-mono font-bold text-xs w-6 shrink-0 text-center">
-                        #{ticketNumber}
-                      </span>
-
-                      {/* Avatar */}
-                      <Avatar className="w-8 h-8 border border-white/10 shrink-0">
-                        <AvatarImage
-                          src={entry.player?.image || ""}
-                          alt={entry.player?.alias || "Jugador"}
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-secondary/30 to-purple-600/30 text-white font-bold text-[11px]">
-                          {initial}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      {/* Names & Date */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-bold text-xs text-white truncate">
-                            {entry.player?.alias || entry.player?.name || "Sin alias"}
-                          </p>
-                          {isMe && (
-                            <span className="px-1.5 py-0.2 rounded bg-emerald-500 text-black text-[9px] font-black shrink-0">
-                              TÚ
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-gray-500 font-mono">
-                          {formatEntryTime(entry.enteredAt)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* ── RIGHT COLUMN (5 cols): Sticky Sidebar with Details, Prizes & Actions ── */}
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
           {/* Main Info & Action Card */}
           <div className="bg-zinc-950/90 border border-white/10 rounded-2xl p-5 md:p-6 backdrop-blur-md shadow-2xl space-y-5">
-            {/* Title & Main Prize */}
+            {/* Title */}
             <div className="space-y-1.5 border-b border-white/10 pb-4">
-              <span className="text-[11px] uppercase font-mono tracking-widest text-secondary font-bold flex items-center gap-1.5">
-                <Gift className="w-3.5 h-3.5" /> Premio en Juego
-              </span>
-              <h2 className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-300 drop-shadow">
-                {raffle.prize}
-              </h2>
-              <h1 className="text-base font-bold text-white">
+              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
                 {raffle.title}
               </h1>
             </div>
@@ -672,43 +560,210 @@ export function RaffleDetailPlayerView({
             </div>
           </div>
 
-          {/* Multiple Prizes Breakdown Card */}
-          {raffle.prizes && raffle.prizes.length > 1 && (
+          {/* Premios por Puestos Card */}
+          {((raffle.prizes && raffle.prizes.length > 0) || raffle.prize) && (
             <div className="bg-zinc-950/90 border border-white/10 rounded-2xl p-4 md:p-5 backdrop-blur-md shadow-xl space-y-3">
               <span className="text-[11px] uppercase font-mono tracking-wider text-secondary font-bold flex items-center gap-1.5">
-                <Trophy className="w-4 h-4 text-secondary" /> Premios por Puestos ({raffle.prizes.length})
+                <Trophy className="w-4 h-4 text-secondary" /> Premios por Puestos ({raffle.prizes?.length || 1})
               </span>
               <div className="space-y-2">
-                {[...raffle.prizes]
-                  .sort((a, b) => a.order - b.order)
-                  .map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60 border border-white/5 text-xs"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 ${
-                            p.order === 1
-                              ? "bg-yellow-400 text-black shadow-sm"
-                              : p.order === 2
-                              ? "bg-zinc-300 text-black"
-                              : p.order === 3
-                              ? "bg-amber-600 text-white"
-                              : "bg-zinc-800 text-gray-300"
-                          }`}
-                        >
-                          {p.order === 1 ? "🥇 1º" : p.order === 2 ? "🥈 2º" : p.order === 3 ? "🥉 3º" : `🎖️ ${p.order}º`}
-                        </span>
-                        <span className="font-bold text-white truncate">{p.title}</span>
-                      </div>
-                      {p.winnerAlias && (
-                        <span className="font-bold text-yellow-400 text-[11px] font-mono shrink-0 pl-2">
-                          🏆 {p.winnerAlias}
-                        </span>
-                      )}
+                {(raffle.prizes && raffle.prizes.length > 0
+                  ? [...raffle.prizes].sort((a, b) => a.order - b.order)
+                  : [
+                      {
+                        id: "main",
+                        order: 1,
+                        title: raffle.prize,
+                        winnerAlias: raffle.winnerAlias,
+                      },
+                    ]
+                ).map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/60 border border-white/5 text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 ${
+                          p.order === 1
+                            ? "bg-yellow-400 text-black shadow-sm"
+                            : p.order === 2
+                            ? "bg-zinc-300 text-black"
+                            : p.order === 3
+                            ? "bg-amber-600 text-white"
+                            : "bg-zinc-800 text-gray-300"
+                        }`}
+                      >
+                        {p.order === 1 ? "🥇 1º" : p.order === 2 ? "🥈 2º" : p.order === 3 ? "🥉 3º" : `🎖️ ${p.order}º`}
+                      </span>
+                      <span className="font-bold text-white truncate">{p.title}</span>
                     </div>
-                  ))}
+                    {p.winnerAlias && (
+                      <span className="font-bold text-yellow-400 text-[11px] font-mono shrink-0 pl-2">
+                        🏆 {p.winnerAlias}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── PARTICIPANTES INSCRIPTOS (Full Width Panel) ── */}
+      <div className="bg-zinc-950/90 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-md space-y-4 shadow-2xl">
+        {/* Header with Title, Count and Search */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-secondary/15 border border-secondary/30 flex items-center justify-center text-secondary shrink-0 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-lg font-bold text-white tracking-tight">
+                  Participantes Inscriptos
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-secondary/20 border border-secondary/35 text-secondary text-xs font-black">
+                  {raffle._count.entries}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {raffle.maxEntries
+                  ? `Cupo: ${raffle._count.entries} de ${raffle.maxEntries} inscriptos`
+                  : "Todos los jugadores registrados para este sorteo"}
+              </p>
+            </div>
+          </div>
+
+          {/* Search filter & Live Counter */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {searchQuery && (
+              <span className="text-xs text-gray-400 hidden md:inline font-mono">
+                {filteredParticipants.length} encontrados
+              </span>
+            )}
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por nombre o alias..."
+                className="w-full bg-zinc-900/90 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-secondary/60 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-0.5 rounded-full hover:bg-white/10"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Participants Content with Stable Fixed Height */}
+        <div className="h-[380px] min-h-[380px] flex flex-col">
+          {participants.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center space-y-2 p-6">
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-gray-500">
+                <Ticket className="w-6 h-6 text-secondary/60" />
+              </div>
+              <p className="text-sm font-bold text-white">
+                Aún no hay participantes inscriptos
+              </p>
+              <p className="text-xs text-gray-400 max-w-xs mx-auto">
+                {canEnter
+                  ? "¡Sé el primero en inscribirte y asegurar tu número en este sorteo!"
+                  : "Los participantes inscriptos aparecerán aquí una vez que comiencen las inscripciones."}
+              </p>
+              {canEnter && (
+                <div className="pt-2">
+                  <Button
+                    onClick={handleEnter}
+                    disabled={loadingAction}
+                    className="bg-secondary text-black hover:bg-yellow-400 font-bold px-4 py-1.5 text-xs rounded-xl cursor-pointer"
+                  >
+                    Inscribirme ahora
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : filteredParticipants.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-xs text-gray-400 space-y-1">
+              <Search className="w-8 h-8 text-gray-600 mb-1" />
+              <p className="text-sm font-medium text-gray-300">Sin resultados</p>
+              <p className="text-xs text-gray-500">
+                No se encontraron participantes que coincidan con &ldquo;{searchQuery}&rdquo;
+              </p>
+            </div>
+          ) : (
+            <div
+              onScroll={handleScrollParticipants}
+              className="flex-1 overflow-y-auto pr-2 custom-scrollbar"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
+                {displayedParticipants.map((entry, idx) => {
+                  const isMe = currentUser?.id && entry.playerId === currentUser.id;
+                  const originalIndex = participants.findIndex((p) => p.id === entry.id);
+                  const ticketNumber = originalIndex >= 0 ? originalIndex + 1 : idx + 1;
+                  const initial =
+                    (entry.player?.alias || entry.player?.name || "J")[0]?.toUpperCase() || "J";
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all ${
+                        isMe
+                          ? "bg-emerald-500/10 border-emerald-500/40 shadow-sm ring-1 ring-emerald-500/30"
+                          : "bg-white/[0.03] border-white/5 hover:border-white/15 hover:bg-white/[0.06]"
+                      }`}
+                    >
+                      {/* Ticket # */}
+                      <span className="text-secondary font-mono font-bold text-xs w-7 shrink-0 text-center bg-secondary/10 py-1 rounded-md border border-secondary/20">
+                        #{ticketNumber}
+                      </span>
+
+                      {/* Avatar */}
+                      <Avatar className="w-8 h-8 border border-white/10 shrink-0">
+                        <AvatarImage
+                          src={entry.player?.image || ""}
+                          alt={entry.player?.alias || "Jugador"}
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-secondary/30 to-purple-600/30 text-white font-bold text-[11px]">
+                          {initial}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      {/* Names & Date */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-xs text-white truncate">
+                            {entry.player?.alias || entry.player?.name || "Sin alias"}
+                          </p>
+                          {isMe && (
+                            <span className="px-1.5 py-0.2 rounded bg-emerald-500 text-black text-[9px] font-black shrink-0">
+                              TÚ
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
+                          <Clock className="w-3 h-3 shrink-0" />
+                          <span>{formatEntryTime(entry.enteredAt)}</span>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {hasMore && (
+                  <div className="col-span-full py-3 text-center text-xs text-gray-500">
+                    Desplázate hacia abajo para cargar más participantes...
+                  </div>
+                )}
               </div>
             </div>
           )}
