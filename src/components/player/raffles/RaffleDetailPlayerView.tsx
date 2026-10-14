@@ -18,7 +18,6 @@ import {
   Ticket,
   Clock,
   ShieldCheck,
-  LogIn,
   Search,
   User,
   Maximize2,
@@ -166,7 +165,16 @@ export function RaffleDetailPlayerView({
 
   const handleEnter = async () => {
     if (!isLoggedIn) {
-      window.dispatchEvent(new CustomEvent("open-login-modal"));
+      window.dispatchEvent(
+        new CustomEvent("open-login-modal", {
+          detail: {
+            callbackUrl:
+              typeof window !== "undefined"
+                ? `${window.location.pathname}${window.location.search}`
+                : undefined,
+          },
+        })
+      );
       return;
     }
 
@@ -636,16 +644,6 @@ export function RaffleDetailPlayerView({
                     Darse de baja del sorteo
                   </Button>
                 </div>
-              )}
-
-              {!isLoggedIn && !isFinished && (
-                <Button
-                  onClick={handleEnter}
-                  className="w-full bg-white text-black border-2 border-white hover:bg-primary hover:text-black hover:border-primary font-black py-5 text-sm rounded-xl shadow-lg gap-2 cursor-pointer uppercase tracking-wider"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Iniciar Sesión para Inscribirme
-                </Button>
               )}
 
               {!raffle.isEntered && isFull && !isFinished && (
