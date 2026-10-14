@@ -61,11 +61,13 @@ export const sidebarData = [
     href: "/admin/voting",
     icon: Vote,
   },
+  /* Oculto según solicitud: Solicitudes Pendientes
   {
     title: "Solicitudes",
     href: "/admin/requests",
     icon: UserCheck,
   },
+  */
   {
     title: "Jugadores",
     href: "/admin/players",

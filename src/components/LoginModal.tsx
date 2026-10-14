@@ -1,32 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/ui/password-input";
-import { Button } from "@/components/ui/button";
-import { Loader2, X, Gamepad2 } from "lucide-react";
-import Link from "next/link";
-import { toast } from "sonner";
+import { usePathname } from "next/navigation";
+import { X, Gamepad2, ShieldCheck, Zap, Trophy } from "lucide-react";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToRegister: () => void;
+  onSwitchToRegister?: () => void;
 }
 
-export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const pathname = usePathname();
 
-  // Redirect to profile only if logging in from Home (/) or History (/acerca-de)
-  // On all other pages (Premios, Torneos, Sorteos, Votaciones, etc.), stay right where the user is
   const isHomeOrAbout = pathname === "/" || pathname === "/acerca-de";
   const targetCallbackUrl = isHomeOrAbout
     ? "/player/dashboard/profile"
@@ -36,118 +22,68 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        // Here we show the actual string thrown from Auth.js or fallback
-        const message = result.error.includes("ACCESO_DENEGADO") || result.error.includes("en revisión")
-          ? "Tu cuenta se encuentra en revisión. Aguarda a que un administrador la apruebe."
-          : result.error.includes("LOGIN_WITH_OAUTH")
-          ? "Esta cuenta fue creada con inicio de sesión social. Usa los botones correspondientes."
-          : "Credenciales inválidas.";
-        toast.error(message);
-      } else {
-        toast.success("¡Bienvenido!");
-        onClose();
-        if (isHomeOrAbout) {
-          router.push("/player/dashboard/profile");
-        } else {
-          router.refresh();
-        }
-      }
-    } catch (error) {
-      toast.error("Algo salió mal.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
-    >
-      <div className="w-full max-w-sm mx-auto bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl shadow-primary/5 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      {/* Glow backdrop background effect */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/10 rounded-full blur-[140px]" />
+        <div className="absolute top-1/3 left-1/3 w-[300px] h-[300px] bg-cyan-500/5 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="w-full max-w-[440px] mx-auto bg-gradient-to-b from-zinc-900/95 via-zinc-950 to-black border border-white/10 rounded-3xl shadow-2xl shadow-black/80 overflow-hidden animate-in fade-in zoom-in-95 duration-250 relative">
+        {/* Top gradient accent line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-yellow-400/80 to-transparent" />
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="absolute right-4 top-4 text-zinc-400 hover:text-white transition-all cursor-pointer z-10 p-2 rounded-full hover:bg-white/10 active:scale-95"
+        >
+          <X size={18} />
+        </button>
+
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-2 text-center">
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors cursor-pointer"
-          >
-            <X size={18} />
-          </button>
-          <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 mb-3">
-            <Gamepad2 className="w-6 h-6 text-primary" />
+        <div className="px-7 pt-9 pb-5 text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-400/10 border border-yellow-400/25 text-yellow-400 text-[11px] font-bold uppercase tracking-wider mb-4 shadow-[0_0_15px_rgba(250,204,21,0.15)]">
+            <Gamepad2 className="w-3.5 h-3.5" />
+            <span>Player Hub</span>
           </div>
-          <h3 className="text-xl font-bold text-white tracking-tight">Bienvenido Jugador</h3>
-          <p className="text-sm text-gray-400 mt-1">Ingresa a tu cuenta</p>
+
+          <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Bienvenido Jugador
+          </h3>
+          <p className="text-sm text-zinc-400 mt-2 max-w-xs mx-auto">
+            Ingresá o creá tu cuenta con tus redes en un solo clic
+          </p>
         </div>
 
-        <div className="px-6 pt-2">
+        {/* Social Buttons */}
+        <div className="px-7 pb-6">
           <SocialAuthButtons mode="login" callbackUrl={targetCallbackUrl} />
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4 pt-1">
-          <div className="space-y-2">
-            <Label htmlFor="modal-email" className="text-gray-300 text-sm">
-              Email
-            </Label>
-            <Input
-              id="modal-email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10"
-              placeholder="tu@email.com"
-              autoComplete="email"
-            />
+        {/* Trust & Community Badges */}
+        <div className="px-7 pb-7 pt-2 border-t border-white/5 bg-white/[0.015]">
+          <div className="grid grid-cols-3 gap-2 text-center text-[11px] text-zinc-400">
+            <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/[0.03]">
+              <Zap className="w-4 h-4 text-yellow-400" />
+              <span className="font-medium text-zinc-300">Instantáneo</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/[0.03]">
+              <Trophy className="w-4 h-4 text-yellow-400" />
+              <span className="font-medium text-zinc-300">Torneos</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white/[0.03]">
+              <ShieldCheck className="w-4 h-4 text-yellow-400" />
+              <span className="font-medium text-zinc-300">100% Seguro</span>
+            </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="modal-password" className="text-gray-300 text-sm">
-              Contraseña
-            </Label>
-            <PasswordInput
-              id="modal-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10"
-              placeholder="******"
-              autoComplete="current-password"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-primary text-black hover:bg-yellow-400 font-bold h-11 shadow-[0_0_20px_rgba(255,215,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all"
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Ingresar
-          </Button>
-
-          <p className="text-center text-sm text-gray-500 pt-1">
-            ¿No tienes cuenta?{" "}
-            <button
-              type="button"
-              className="text-yellow-500 hover:underline font-medium cursor-pointer"
-              onClick={onSwitchToRegister}
-            >
-              Regístrate
-            </button>
+          <p className="text-[11px] text-zinc-500 text-center mt-3">
+            Al continuar, aceptás los términos y condiciones de Chimuchek.
           </p>
-        </form>
+        </div>
       </div>
     </div>
   );

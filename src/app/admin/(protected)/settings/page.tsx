@@ -15,7 +15,8 @@ export default async function SettingsPage() {
         <p className="text-gray-400">Ajustes generales del panel de administración.</p>
       </div>
 
-      <GlobalSettingsManager initialSettings={globalSettings} />
+      {/* Oculto según solicitud: Restringir Registro de Jugadores */}
+      {/* <GlobalSettingsManager initialSettings={globalSettings} /> */}
 
       <UsersManager initialUsers={users} />
 

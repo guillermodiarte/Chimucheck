@@ -5,7 +5,7 @@ import { AuthError } from "next-auth";
 import { db } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getGlobalSettings } from "@/app/actions/settings";
+
 
 const RegisterSchema = z.object({
   alias: z.string().min(2, "El alias es requerido"),
@@ -120,17 +120,15 @@ export async function registerPlayer(prevState: any, formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const settings = await getGlobalSettings();
-    const isRestricted = settings?.restrictPlayerRegistration;
-
+    // Registro siempre auto-aprobado (opción de restricción oculta)
     const newPlayer = await db.player.create({
       data: {
         alias,
         email,
         password: hashedPassword,
         phone,
-        active: !isRestricted,
-        registrationStatus: isRestricted ? "PENDING" : "APPROVED",
+        active: true,
+        registrationStatus: "APPROVED",
       },
     });
 
@@ -157,8 +155,8 @@ export async function registerPlayer(prevState: any, formData: FormData) {
 
     return {
       success: true,
-      message: isRestricted ? "Cuenta en revisión" : "Cuenta creada. Inicia sesión.",
-      isPending: isRestricted
+      message: "Cuenta creada. Inicia sesión.",
+      isPending: false
     };
 
   } catch (error) {

@@ -571,7 +571,7 @@ export default function Navbar({
                           className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-primary to-secondary text-black hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)] cursor-pointer"
                         >
                           <LogIn size={18} />
-                          <span>INGRESAR / REGISTRARSE</span>
+                          <span>INGRESAR</span>
                         </button>
                       </div>
                     )}
@@ -690,12 +690,13 @@ export default function Navbar({
         onClose={() => setShowLoginModal(false)}
         onSwitchToRegister={openRegister}
       />
-      <RegisterModal
+      {/* RegisterModal oculto según solicitud — registro solo vía OAuth */}
+      {/* <RegisterModal
         key={showRegisterModal ? "open" : "closed"}
         isOpen={showRegisterModal}
         onClose={() => setShowRegisterModal(false)}
         onSwitchToLogin={openLogin}
-      />
+      /> */}
     </>
   );
 }
