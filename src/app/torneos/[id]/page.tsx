@@ -51,7 +51,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   const isFull = tournament.registrations.length >= tournament.maxPlayers;
 
   return (
-    <div className="relative min-h-screen pt-48 pb-12 px-4 md:px-8">
+    <div className="relative min-h-screen pt-28 md:pt-40 lg:pt-48 pb-12 px-4 md:px-8">
 
       {/* Background Image */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none">

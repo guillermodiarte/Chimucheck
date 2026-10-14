@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowDown, Heart, AlertTriangle, X, Loader2, Instagram, User } from "lucide-react";
 import Image from "next/image";
@@ -29,19 +31,27 @@ export function SwitchVoteModal({
   newEntry,
   isSubmitting = false,
 }: SwitchVoteModalProps) {
-  if (!isOpen || !previousEntry || !newEntry) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={isSubmitting ? undefined : onClose}
-          className="fixed inset-0 bg-black/85 backdrop-blur-md"
-        />
+      {isOpen && previousEntry && newEntry && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={isSubmitting ? undefined : onClose}
+            className="fixed inset-0 bg-black/85 backdrop-blur-md"
+          />
 
         {/* Modal Window */}
         <motion.div
@@ -205,6 +215,8 @@ export function SwitchVoteModal({
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }

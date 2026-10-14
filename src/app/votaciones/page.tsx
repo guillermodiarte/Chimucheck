@@ -38,7 +38,7 @@ export default async function PublicVotacionesPage() {
   const contests = await getPublicContests();
 
   return (
-    <div className="relative min-h-screen pt-48 pb-16 px-4 md:px-8">
+    <div className="relative min-h-screen pt-28 md:pt-40 lg:pt-48 pb-16 px-4 md:px-8">
       {/* Background ambient */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-500/10 rounded-full blur-[140px]" />

@@ -121,7 +121,7 @@ export default async function VotacionDetailPage({ params, searchParams }: PageP
   const isFinished = contest.status === "FINISHED";
 
   return (
-    <div className="relative min-h-screen pt-44 pb-20 px-4 md:px-8">
+    <div className="relative min-h-screen pt-28 md:pt-36 lg:pt-44 pb-20 px-4 md:px-8">
       {/* Background */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 rounded-full blur-[150px]" />

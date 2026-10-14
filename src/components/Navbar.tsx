@@ -423,16 +423,23 @@ export default function Navbar({
               </div>
             </div>
 
-            {/* Mobile Hamburger Button */}
+            {/* Mobile Menu Button */}
             <div className="ml-auto flex md:hidden pointer-events-auto z-50">
               <button
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
                 aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
                 aria-expanded={isOpen}
-                className="inline-flex items-center justify-center w-11 h-11 rounded-xl text-white bg-black/70 backdrop-blur-xl border border-white/15 hover:border-primary/50 hover:text-primary active:scale-95 transition-all duration-200 shadow-xl focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-4 h-11 rounded-xl text-white bg-black/70 backdrop-blur-xl border border-white/15 hover:border-primary/50 hover:text-primary active:scale-95 transition-all duration-200 shadow-xl focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
               >
-                {isOpen ? <X size={24} className="text-primary" /> : <Menu size={24} />}
+                {isOpen ? (
+                  <>
+                    <X size={18} className="text-primary" />
+                    <span className="text-sm font-bold text-primary">Cerrar</span>
+                  </>
+                ) : (
+                  <span className="text-sm font-bold tracking-wide">Menú</span>
+                )}
               </button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -82,6 +83,12 @@ export function VotingDetailModal({
   currentUserId,
 }: VotingDetailModalProps) {
   const [search, setSearch] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure we only render the portal on the client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const currentIndex = useMemo(() => {
     if (!entry) return -1;
@@ -158,19 +165,21 @@ export function VotingDetailModal({
     });
   }, [voters, search]);
 
-  if (!isOpen || !entry) return null;
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/90 backdrop-blur-md"
-        />
+      {isOpen && entry && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/90 backdrop-blur-md"
+          />
 
         {/* Modal Container */}
         <motion.div
@@ -458,6 +467,8 @@ export function VotingDetailModal({
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }
