@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Instagram, Heart, Sparkles, Users } from "lucide-react";
+import { Instagram, Heart, Sparkles, Users, Calendar, Clock, ImageIcon } from "lucide-react";
 import { VotingPodium } from "./VotingPodium";
 import { VotingGallery, Entry, Voter } from "./VotingGallery";
 import { VotingDetailModal } from "./VotingDetailModal";
 import { SwitchVoteModal } from "./SwitchVoteModal";
-import { GalleryLoginHint } from "./LoginCTA";
+import { LoginCTABanner, GalleryLoginHint } from "./LoginCTA";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -14,6 +14,7 @@ interface ContestData {
   id: string;
   title: string;
   description: string | null;
+  coverImageUrl?: string | null;
   startDate: Date | string;
   endDate: Date | string;
   status: string;
@@ -34,6 +35,31 @@ interface VotingContestClientProps {
   isActive: boolean;
   isFinished: boolean;
   currentUser?: CurrentUser | null;
+  defaultLogoUrl?: string;
+}
+
+function formatDate(date: Date | string) {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatCountdown(endDate: Date | string) {
+  const d = typeof endDate === "string" ? new Date(endDate) : endDate;
+  const now = new Date();
+  const diff = d.getTime() - now.getTime();
+  if (diff <= 0) return "Finalizado";
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hours}h restantes`;
+  if (hours > 0) return `${hours}h ${minutes}m restantes`;
+  return `${minutes}m restantes`;
 }
 
 export function VotingContestClient({
@@ -44,6 +70,7 @@ export function VotingContestClient({
   isActive,
   isFinished,
   currentUser,
+  defaultLogoUrl,
 }: VotingContestClientProps) {
   const router = useRouter();
   const [entries, setEntries] = useState<Entry[]>(initialEntries);
@@ -233,16 +260,123 @@ export function VotingContestClient({
     ? [...entries].sort((a, b) => b.voteCount - a.voteCount).slice(3)
     : entries;
 
-  return (
-    <>
-      {/* ── FINISHED: Podium + Full ranking ── */}
-      {isFinished && top3.length > 0 && (
-        <div className="space-y-14">
-          <VotingPodium
-            top3={top3}
-            onSelectEntry={(entry) => openDetailModal(entry.id)}
-          />
+  const totalVotes = entries.reduce((acc, e) => acc + e.voteCount, 0);
+  const hasCustomCover = !!contest.coverImageUrl;
+  const coverImage = contest.coverImageUrl || defaultLogoUrl || "/images/logo5.png";
 
+  return (
+    <div className="space-y-12">
+      {/* ── 2-COLUMN HEADER: Text on Left, Cover Image OR Winners Podium on Right ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center bg-zinc-950/60 border border-white/10 rounded-3xl p-6 sm:p-8 lg:p-10 backdrop-blur-xl shadow-2xl">
+        {/* LEFT COLUMN: Badge, Title, Description, Stats */}
+        <div className="lg:col-span-7 space-y-5 text-left">
+          {/* Status Badge */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {isActive && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Votación Abierta
+              </span>
+            )}
+            {isFinished && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-xs font-bold uppercase tracking-wider">
+                🏆 Concurso Finalizado
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+            {contest.title}
+          </h1>
+
+          {/* Description */}
+          {contest.description && (
+            <p className="text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+              {contest.description}
+            </p>
+          )}
+
+          {/* Stats Row */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-xs sm:text-sm text-gray-400 pt-2">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span>Inició: {formatDate(contest.startDate)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+              <Clock className="w-4 h-4 text-gray-400" />
+              {isActive ? (
+                <span className="text-yellow-400 font-semibold">
+                  ⏱ {formatCountdown(contest.endDate)}
+                </span>
+              ) : (
+                <span>Cerró: {formatDate(contest.endDate)}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+              <ImageIcon className="w-4 h-4 text-gray-400" />
+              <span>{entries.length} imágenes</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-bold">
+              <Heart className="w-4 h-4 fill-red-400" />
+              <span>{totalVotes} votos</span>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Cover Image (when active) OR Winners Podium (when finished) */}
+        <div className="lg:col-span-5 flex justify-center w-full">
+          {isFinished && top3.length > 0 ? (
+            /* Winners Podium replaces the Cover Image */
+            <div className="w-full rounded-3xl bg-zinc-950/80 border border-yellow-500/30 p-5 sm:p-6 backdrop-blur-xl shadow-[0_0_50px_rgba(255,215,0,0.12)] relative overflow-hidden flex flex-col items-center">
+              <VotingPodium
+                top3={top3}
+                onSelectEntry={(entry) => openDetailModal(entry.id)}
+                compact
+              />
+            </div>
+          ) : (
+            /* Cover Image Display */
+            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-[0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center group">
+              {coverImage ? (
+                <img
+                  src={coverImage}
+                  alt={contest.title}
+                  className={`transition-all duration-500 ${
+                    hasCustomCover
+                      ? "w-full h-full object-cover group-hover:scale-105"
+                      : "max-h-48 max-w-[75%] object-contain drop-shadow-[0_0_30px_rgba(255,215,0,0.25)] group-hover:scale-105"
+                  }`}
+                  onError={(e) => {
+                    if (defaultLogoUrl && (e.target as any).src !== defaultLogoUrl) {
+                      (e.target as any).src = defaultLogoUrl;
+                    } else {
+                      (e.target as any).src = "/images/logo5.png";
+                    }
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-900 to-black text-zinc-600">
+                  <ImageIcon className="w-16 h-16 opacity-40" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent pointer-events-none" />
+              <div className="absolute top-4 right-4 z-10">
+                <span className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[11px] font-bold text-gray-300 uppercase tracking-wider">
+                  {hasCustomCover ? "Portada Oficial" : "ChimuCheck"}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Login CTA for non-logged users during active contest */}
+      {isActive && !isLoggedIn && <LoginCTABanner />}
+
+      {/* ── FINISHED: Full ranking list (if > 3 entries) + Gallery ── */}
+      {isFinished && (
+        <div className="space-y-12">
           {/* Full ranking table */}
           {restEntries.length > 0 && (
             <div className="space-y-6">
@@ -391,6 +525,6 @@ export function VotingContestClient({
         newEntry={modalNewEntry}
         isSubmitting={isSwitching}
       />
-    </>
+    </div>
   );
 }

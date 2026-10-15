@@ -14,8 +14,15 @@ interface PageProps {
 async function getContest(id: string, playerId?: string) {
   const now = new Date();
 
-  const contest = await db.votingContest.findUnique({ where: { id } });
+  const [contest, homeSection] = await Promise.all([
+    db.votingContest.findUnique({ where: { id } }),
+    db.siteSection.findUnique({ where: { key: "home_section" } }),
+  ]);
   if (!contest) return null;
+
+  const defaultLogoUrl =
+    (homeSection?.content as any)?.logoUrl ||
+    "/uploads/imagenes/logo-trasparente-1771101621599-1771772834629.webp";
 
   // Auto-sync status
   let status = contest.status;
@@ -72,30 +79,8 @@ async function getContest(id: string, playerId?: string) {
   return {
     contest: { ...contest, status },
     entries: enrichedEntries,
-    totalVotes: enrichedEntries.reduce((acc, e) => acc + e.voteCount, 0),
+    defaultLogoUrl,
   };
-}
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatCountdown(endDate: Date) {
-  const now = new Date();
-  const diff = endDate.getTime() - now.getTime();
-  if (diff <= 0) return "Finalizado";
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const minutes = Math.floor((diff % 3600000) / 60000);
-  if (days > 0) return `${days}d ${hours}h restantes`;
-  if (hours > 0) return `${hours}h ${minutes}m restantes`;
-  return `${minutes}m restantes`;
 }
 
 export default async function VotacionDetailPage({ params, searchParams }: PageProps) {
@@ -116,7 +101,7 @@ export default async function VotacionDetailPage({ params, searchParams }: PageP
   const data = await getContest(id, playerId);
   if (!data) notFound();
 
-  const { contest, entries, totalVotes } = data;
+  const { contest, entries, defaultLogoUrl } = data;
   const isActive = contest.status === "ACTIVE";
   const isFinished = contest.status === "FINISHED";
 
@@ -129,7 +114,7 @@ export default async function VotacionDetailPage({ params, searchParams }: PageP
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
       </div>
 
-      <div className="relative z-10 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-500">
+      <div className="relative z-10 max-w-[1400px] mx-auto space-y-8 animate-in fade-in duration-500">
         {/* Back button */}
         <Link
           href="/votaciones"
@@ -139,64 +124,7 @@ export default async function VotacionDetailPage({ params, searchParams }: PageP
           Volver a Votaciones
         </Link>
 
-        {/* Contest header */}
-        <div className="space-y-4 text-center flex flex-col items-center justify-center max-w-4xl mx-auto">
-          {/* Status badge */}
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            {isActive && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Votación Abierta
-              </span>
-            )}
-            {isFinished && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-xs font-bold uppercase tracking-wider">
-                🏆 Finalizado
-              </span>
-            )}
-          </div>
-
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight text-center">
-            {contest.title}
-          </h1>
-
-          {contest.description && (
-            <p className="text-gray-300 text-base md:text-lg max-w-3xl leading-relaxed whitespace-pre-wrap text-center">
-              {contest.description}
-            </p>
-          )}
-
-          {/* Stats row */}
-          <div className="flex items-center justify-center gap-6 flex-wrap text-sm text-gray-400 pt-2">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <span>Inició: {formatDate(contest.startDate)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-500" />
-              {isActive ? (
-                <span className="text-yellow-400 font-semibold">
-                  ⏱ {formatCountdown(contest.endDate)}
-                </span>
-              ) : (
-                <span>Cerró: {formatDate(contest.endDate)}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-gray-500" />
-              <span>{entries.length} imágenes</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-red-400 fill-red-400" />
-              <span className="text-red-400 font-bold">{totalVotes} votos en total</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Login CTA for non-logged users during active contest */}
-        {isActive && !playerId && <LoginCTABanner />}
-
-        {/* Interactive Contest Body (Podium, Ranking, Gallery and Detail Modal) */}
+        {/* Interactive Contest Body (2-column hero: text on left, cover/podium on right + gallery) */}
         <VotingContestClient
           contest={contest}
           initialEntries={entries}
@@ -205,6 +133,7 @@ export default async function VotacionDetailPage({ params, searchParams }: PageP
           isActive={isActive}
           isFinished={isFinished}
           currentUser={currentUser}
+          defaultLogoUrl={defaultLogoUrl}
         />
       </div>
     </div>
