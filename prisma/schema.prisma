@@ -293,16 +293,17 @@ model RaffleEntry {
 // ─── Voting System ────────────────────────────────────────────────────────────
 
 model VotingContest {
-  id          String        @id @default(uuid())
-  title       String
-  description String?
-  startDate   DateTime
-  endDate     DateTime
-  status      String        @default("DRAFT") // DRAFT | ACTIVE | FINISHED
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id            String        @id @default(uuid())
+  title         String
+  description   String?
+  coverImageUrl String?
+  startDate     DateTime
+  endDate       DateTime
+  status        String        @default("DRAFT") // DRAFT | ACTIVE | FINISHED
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  entries     VotingEntry[]
+  entries       VotingEntry[]
 }
 
 model VotingEntry {

@@ -112,7 +112,7 @@ export function PublicSorteosList({
                         {raffle.title}
                       </h4>
                       {raffle.description && (
-                        <p className="text-xs text-gray-400 line-clamp-3 leading-relaxed">
+                        <p className="text-xs text-gray-400 line-clamp-3 leading-relaxed whitespace-pre-wrap">
                           {raffle.description}
                         </p>
                       )}

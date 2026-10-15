@@ -140,9 +140,9 @@ export default async function VotacionDetailPage({ params, searchParams }: PageP
         </Link>
 
         {/* Contest header */}
-        <div className="space-y-4">
+        <div className="space-y-4 text-center flex flex-col items-center justify-center max-w-4xl mx-auto">
           {/* Status badge */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             {isActive && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold uppercase tracking-wider">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -156,18 +156,18 @@ export default async function VotacionDetailPage({ params, searchParams }: PageP
             )}
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight text-center">
             {contest.title}
           </h1>
 
           {contest.description && (
-            <p className="text-gray-300 text-base md:text-lg max-w-3xl leading-relaxed">
+            <p className="text-gray-300 text-base md:text-lg max-w-3xl leading-relaxed whitespace-pre-wrap text-center">
               {contest.description}
             </p>
           )}
 
           {/* Stats row */}
-          <div className="flex items-center gap-6 flex-wrap text-sm text-gray-400 pt-2">
+          <div className="flex items-center justify-center gap-6 flex-wrap text-sm text-gray-400 pt-2">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-500" />
               <span>Inició: {formatDate(contest.startDate)}</span>

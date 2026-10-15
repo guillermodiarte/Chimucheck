@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const body = await req.json();
-  const { title, description, startDate, endDate, status } = body;
+  const { title, description, coverImageUrl, startDate, endDate, status } = body;
 
   if (!title || !startDate || !endDate) {
     return NextResponse.json(
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
     data: {
       title,
       description: description || null,
+      coverImageUrl: coverImageUrl || null,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       status: status || "DRAFT",

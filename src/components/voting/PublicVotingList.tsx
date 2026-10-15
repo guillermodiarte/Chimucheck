@@ -8,6 +8,7 @@ interface ContestItem {
   id: string;
   title: string;
   description: string | null;
+  coverImageUrl?: string | null;
   startDate: string;
   endDate: string;
   status: string;
@@ -41,7 +42,13 @@ function ContestStatusBadge({ status }: { status: string }) {
   return null;
 }
 
-export function PublicVotingList({ contests }: { contests: ContestItem[] }) {
+export function PublicVotingList({
+  contests,
+  defaultLogoUrl,
+}: {
+  contests: ContestItem[];
+  defaultLogoUrl?: string;
+}) {
   const active = contests.filter((c) => c.status === "ACTIVE");
   const finished = contests.filter((c) => c.status === "FINISHED");
 
@@ -64,7 +71,7 @@ export function PublicVotingList({ contests }: { contests: ContestItem[] }) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {active.map((contest) => (
-              <ContestCard key={contest.id} contest={contest} />
+              <ContestCard key={contest.id} contest={contest} defaultLogoUrl={defaultLogoUrl} />
             ))}
           </div>
         )}
@@ -80,7 +87,7 @@ export function PublicVotingList({ contests }: { contests: ContestItem[] }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {finished.map((contest) => (
-              <ContestCard key={contest.id} contest={contest} finished />
+              <ContestCard key={contest.id} contest={contest} finished defaultLogoUrl={defaultLogoUrl} />
             ))}
           </div>
         </section>
@@ -99,8 +106,17 @@ export function PublicVotingList({ contests }: { contests: ContestItem[] }) {
   );
 }
 
-function ContestCard({ contest, finished = false }: { contest: ContestItem; finished?: boolean }) {
-  const coverImage = contest.entries[0]?.imageUrl;
+function ContestCard({
+  contest,
+  finished = false,
+  defaultLogoUrl,
+}: {
+  contest: ContestItem;
+  finished?: boolean;
+  defaultLogoUrl?: string;
+}) {
+  const hasCustomCover = !!contest.coverImageUrl;
+  const coverImage = contest.coverImageUrl || defaultLogoUrl || "/images/logo5.png";
 
   return (
     <Link
@@ -110,22 +126,33 @@ function ContestCard({ contest, finished = false }: { contest: ContestItem; fini
       }`}
     >
       {/* Cover image */}
-      <div className="relative h-52 w-full bg-zinc-900 overflow-hidden">
+      <div className="relative h-52 w-full bg-zinc-900/90 overflow-hidden flex items-center justify-center">
         {coverImage ? (
           <img
             src={coverImage}
             alt={contest.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className={`transition-all duration-500 group-hover:scale-105 ${
+              hasCustomCover
+                ? "w-full h-full object-cover"
+                : "max-h-36 max-w-[75%] object-contain drop-shadow-[0_0_20px_rgba(255,215,0,0.2)]"
+            }`}
+            onError={(e) => {
+              if (defaultLogoUrl && (e.target as any).src !== defaultLogoUrl) {
+                (e.target as any).src = defaultLogoUrl;
+              } else {
+                (e.target as any).src = "/images/logo5.png";
+              }
+            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-900 to-black text-zinc-600">
             <ImageIcon className="w-14 h-14 opacity-40" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent pointer-events-none" />
 
         {/* Status badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 z-10">
           <ContestStatusBadge status={contest.status} />
         </div>
       </div>
@@ -137,7 +164,7 @@ function ContestCard({ contest, finished = false }: { contest: ContestItem; fini
             {contest.title}
           </h3>
           {contest.description && (
-            <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
+            <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed whitespace-pre-wrap">
               {contest.description}
             </p>
           )}

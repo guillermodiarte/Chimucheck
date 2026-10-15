@@ -266,7 +266,7 @@ export function PlayerRafflesClient({
                     </Link>
 
                     {raffle.description && (
-                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed whitespace-pre-wrap">
                         {raffle.description}
                       </p>
                     )}

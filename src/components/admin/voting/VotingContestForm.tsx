@@ -7,14 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Calendar, Trophy, FileText, Clock, ChevronLeft } from "lucide-react";
+import { Calendar, Trophy, FileText, Clock, ChevronLeft, Image as ImageIcon, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
 
 interface VotingContestFormProps {
   initialData?: {
     id: string;
     title: string;
     description: string | null;
+    coverImageUrl?: string | null;
     startDate: string | Date;
     endDate: string | Date;
     status: string;
@@ -34,11 +36,36 @@ export function VotingContestForm({ initialData }: VotingContestFormProps) {
 
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(initialData?.description ?? "");
+  const [coverImageUrl, setCoverImageUrl] = useState(initialData?.coverImageUrl ?? "");
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [startDate, setStartDate] = useState(toDatetimeLocal(initialData?.startDate));
   const [endDate, setEndDate] = useState(toDatetimeLocal(initialData?.endDate));
   const [status, setStatus] = useState(initialData?.status ?? "DRAFT");
 
   const isEditing = !!initialData;
+
+  async function handleCoverFileSelect(file: File) {
+    setUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "imagenes");
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Error al subir la imagen");
+      }
+      setCoverImageUrl(data.url);
+      toast.success("Imagen de portada subida");
+    } catch (err: any) {
+      toast.error(err.message || "Error al subir la imagen");
+    } finally {
+      setUploadingCover(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +91,7 @@ export function VotingContestForm({ initialData }: VotingContestFormProps) {
         body: JSON.stringify({
           title,
           description: description || null,
+          coverImageUrl: coverImageUrl || null,
           startDate,
           endDate,
           status,
@@ -228,6 +256,90 @@ export function VotingContestForm({ initialData }: VotingContestFormProps) {
               El concurso pasará automáticamente a <strong>Activo</strong> cuando llegue la fecha de inicio, y a{" "}
               <strong>Finalizado</strong> cuando llegue la fecha de cierre. También podés cambiarlo manualmente.
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Cover Image Section */}
+      <div className="space-y-6 bg-zinc-900/60 border border-white/10 rounded-2xl p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-secondary font-bold text-sm uppercase tracking-wider">
+            <ImageIcon className="w-4 h-4" />
+            Imagen de Portada (Opcional)
+          </div>
+          {coverImageUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setCoverImageUrl("")}
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5 text-xs h-8"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Quitar portada
+            </Button>
+          )}
+        </div>
+
+        <p className="text-gray-400 text-xs">
+          Esta imagen se mostrará como portada en la lista de votaciones. Podés cargar un archivo desde tu dispositivo o seleccionarlo desde la biblioteca. Si no definís una portada, se mostrará el logo oficial de la página por defecto.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-6 items-start">
+          {/* Preview Container */}
+          <div className="relative w-full sm:w-80 h-48 rounded-xl border border-white/10 bg-black/60 overflow-hidden flex items-center justify-center flex-shrink-0 group">
+            {coverImageUrl ? (
+              <>
+                <img
+                  src={coverImageUrl}
+                  alt="Portada de la votación"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-emerald-400 font-bold border border-emerald-500/30">
+                  Portada seleccionada
+                </div>
+              </>
+            ) : (
+              <div className="text-center p-4 space-y-2 flex flex-col items-center justify-center h-full">
+                <div className="w-20 h-20 relative flex items-center justify-center">
+                  <img
+                    src="/uploads/imagenes/logo-trasparente-1771101621599-1771772834629.webp"
+                    alt="Logo oficial"
+                    className="max-h-full max-w-full object-contain drop-shadow-[0_0_15px_rgba(255,215,0,0.25)]"
+                    onError={(e) => {
+                      (e.target as any).src = "/images/logo5.png";
+                    }}
+                  />
+                </div>
+                <span className="inline-block text-[11px] font-semibold text-gray-400 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
+                  Logo oficial (por defecto)
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="space-y-4 flex-1">
+            <LocalImageUpload
+              onFileSelect={handleCoverFileSelect}
+              onUrlSelect={(url) => {
+                setCoverImageUrl(url);
+                toast.success("Imagen de portada seleccionada");
+              }}
+              label={uploadingCover ? "Subiendo portada..." : "Subir Portada"}
+              defaultFolder="imagenes"
+            />
+
+            {coverImageUrl ? (
+              <div className="text-xs text-emerald-400 flex items-center gap-1.5 pt-1">
+                <span>✓ Imagen activa:</span>
+                <span className="text-gray-400 truncate max-w-md">{coverImageUrl}</span>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500">
+                Al crear o guardar, esta votación utilizará el logo de la página como imagen de portada.
+              </p>
+            )}
           </div>
         </div>
       </div>

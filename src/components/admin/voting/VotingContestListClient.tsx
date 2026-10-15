@@ -21,6 +21,7 @@ interface ContestItem {
   id: string;
   title: string;
   description: string | null;
+  coverImageUrl?: string | null;
   startDate: string;
   endDate: string;
   status: string;
@@ -142,19 +143,39 @@ export function VotingContestListClient({
                 className="bg-zinc-900/60 border border-white/10 hover:border-white/20 rounded-2xl p-6 transition-all duration-200"
               >
                 <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="space-y-2 flex-1 min-w-0">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-xl font-black text-white truncate">
-                        {contest.title}
-                      </h3>
-                      <StatusBadge status={contest.status} />
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-16 h-16 rounded-xl bg-black/60 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                      {contest.coverImageUrl ? (
+                        <img
+                          src={contest.coverImageUrl}
+                          alt={contest.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <img
+                          src="/uploads/imagenes/logo-trasparente-1771101621599-1771772834629.webp"
+                          alt="Logo oficial"
+                          className="w-10 h-10 object-contain opacity-50"
+                          onError={(e) => {
+                            (e.target as any).src = "/images/logo5.png";
+                          }}
+                        />
+                      )}
                     </div>
 
-                    {contest.description && (
-                      <p className="text-gray-400 text-sm line-clamp-2">
-                        {contest.description}
-                      </p>
-                    )}
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="text-xl font-black text-white truncate">
+                          {contest.title}
+                        </h3>
+                        <StatusBadge status={contest.status} />
+                      </div>
+
+                      {contest.description && (
+                        <p className="text-gray-400 text-sm line-clamp-2">
+                          {contest.description}
+                        </p>
+                      )}
 
                     <div className="flex items-center gap-6 text-xs text-gray-500 flex-wrap">
                       <div className="flex items-center gap-1.5">
@@ -175,8 +196,9 @@ export function VotingContestListClient({
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Actions */}
+                {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0 flex-wrap">
                     {/* Quick status change */}
                     {contest.status === "DRAFT" && (

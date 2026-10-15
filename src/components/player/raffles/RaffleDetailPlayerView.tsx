@@ -399,7 +399,7 @@ export function RaffleDetailPlayerView({
                 <Ticket className="w-4 h-4 text-secondary" />
                 Descripción y Bases del Sorteo
               </h3>
-              <div className="text-gray-300 text-xs md:text-sm leading-relaxed whitespace-pre-line border-t border-white/5 pt-3">
+              <div className="text-gray-300 text-xs md:text-sm leading-relaxed whitespace-pre-wrap border-t border-white/5 pt-3">
                 {raffle.description}
               </div>
             </div>

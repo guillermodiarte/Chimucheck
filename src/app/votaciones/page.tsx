@@ -20,22 +20,31 @@ async function getPublicContests() {
     data: { status: "FINISHED" },
   });
 
-  return db.votingContest.findMany({
-    where: { status: { in: ["ACTIVE", "FINISHED"] } },
-    orderBy: { startDate: "desc" },
-    include: {
-      _count: { select: { entries: true } },
-      entries: {
-        take: 1,
-        orderBy: { createdAt: "asc" },
-        select: { imageUrl: true },
+  const [contests, homeSection] = await Promise.all([
+    db.votingContest.findMany({
+      where: { status: { in: ["ACTIVE", "FINISHED"] } },
+      orderBy: { startDate: "desc" },
+      include: {
+        _count: { select: { entries: true } },
+        entries: {
+          take: 1,
+          orderBy: { createdAt: "asc" },
+          select: { imageUrl: true },
+        },
       },
-    },
-  });
+    }),
+    db.siteSection.findUnique({ where: { key: "home_section" } }),
+  ]);
+
+  const defaultLogoUrl =
+    (homeSection?.content as any)?.logoUrl ||
+    "/uploads/imagenes/logo-trasparente-1771101621599-1771772834629.webp";
+
+  return { contests, defaultLogoUrl };
 }
 
 export default async function PublicVotacionesPage() {
-  const contests = await getPublicContests();
+  const { contests, defaultLogoUrl } = await getPublicContests();
 
   return (
     <div className="relative min-h-screen pt-28 md:pt-40 lg:pt-48 pb-16 px-4 md:px-8">
@@ -76,7 +85,7 @@ export default async function PublicVotacionesPage() {
         </div>
 
         {/* Contests list */}
-        <PublicVotingList contests={contests as any} />
+        <PublicVotingList contests={contests as any} defaultLogoUrl={defaultLogoUrl} />
       </div>
     </div>
   );

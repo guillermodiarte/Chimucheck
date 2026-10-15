@@ -43,13 +43,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const body = await req.json();
-  const { title, description, startDate, endDate, status } = body;
+  const { title, description, coverImageUrl, startDate, endDate, status } = body;
 
   const contest = await db.votingContest.update({
     where: { id },
     data: {
       ...(title && { title }),
       ...(description !== undefined && { description }),
+      ...(coverImageUrl !== undefined && { coverImageUrl: coverImageUrl || null }),
       ...(startDate && { startDate: new Date(startDate) }),
       ...(endDate && { endDate: new Date(endDate) }),
       ...(status && { status }),
