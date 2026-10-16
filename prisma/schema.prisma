@@ -145,6 +145,7 @@ model PlayerCategoryStats {
 model GlobalSettings {
   id                         String   @id @default(uuid())
   restrictPlayerRegistration Boolean  @default(false)
+  raffleWinnerCooldownDays   Int      @default(7)
   updatedAt                  DateTime @updatedAt
 }
 
@@ -255,6 +256,7 @@ model Raffle {
   winnerId      String?
   winnerAlias   String?
   winnerImage   String?
+  drawnAt       DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

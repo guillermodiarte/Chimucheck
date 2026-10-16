@@ -1,6 +1,7 @@
 import { db } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { LiveDrawScreen } from "@/components/admin/raffles/LiveDrawScreen";
+import { getRecentWinnerPlayerIds } from "@/app/actions/raffles";
 
 export default async function RaffleLivePage({
   params,
@@ -56,6 +57,8 @@ export default async function RaffleLivePage({
     image: e.player.image,
   }));
 
+  const recentBlockedIds = await getRecentWinnerPlayerIds();
+
   return (
     <div className="w-full min-h-[92vh]">
       <LiveDrawScreen
@@ -71,6 +74,7 @@ export default async function RaffleLivePage({
           prizes: prizes as any,
         }}
         participants={participants}
+        cooldownPlayerIds={recentBlockedIds}
       />
     </div>
   );

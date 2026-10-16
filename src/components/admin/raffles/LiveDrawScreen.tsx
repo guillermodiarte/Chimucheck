@@ -161,9 +161,11 @@ class SoundFX {
 export function LiveDrawScreen({
   raffle,
   participants,
+  cooldownPlayerIds = [],
 }: {
   raffle: LiveRaffle;
   participants: Participant[];
+  cooldownPlayerIds?: string[];
 }) {
   // Normalize prizes list
   const initialPrizes: LivePrize[] = useMemo(() => {
@@ -223,10 +225,11 @@ export function LiveDrawScreen({
   const containerRef = useRef<HTMLDivElement>(null);
   const spinIntervalRef = useRef<any>(null);
 
-  // Excluded player IDs (players who have already won a prize in this raffle)
+  // Excluded player IDs (players who have already won a prize in this raffle or are in recent cooldown)
   const alreadyWonPlayerIds = useMemo(() => {
-    return prizes.filter((p) => !!p.winnerId).map((p) => p.winnerId!);
-  }, [prizes]);
+    const currentRaffleWinners = prizes.filter((p) => !!p.winnerId).map((p) => p.winnerId!);
+    return [...currentRaffleWinners, ...cooldownPlayerIds];
+  }, [prizes, cooldownPlayerIds]);
 
   // Eligible participants for the current prize draw (cannot win twice)
   const eligibleParticipants = useMemo(() => {

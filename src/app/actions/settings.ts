@@ -12,6 +12,7 @@ export async function getGlobalSettings() {
       settings = await db.globalSettings.create({
         data: {
           restrictPlayerRegistration: false,
+          raffleWinnerCooldownDays: 7,
         }
       });
     }
@@ -19,7 +20,36 @@ export async function getGlobalSettings() {
     return settings;
   } catch (error) {
     console.error("Error fetching global settings:", error);
-    return { restrictPlayerRegistration: false };
+    return { restrictPlayerRegistration: false, raffleWinnerCooldownDays: 7 };
+  }
+}
+
+export async function updateRaffleWinnerCooldownDays(days: number) {
+  try {
+    const validDays = Math.max(0, Math.floor(Number(days) || 0));
+    let settings = await db.globalSettings.findFirst();
+
+    if (settings) {
+      await db.globalSettings.update({
+        where: { id: settings.id },
+        data: { raffleWinnerCooldownDays: validDays }
+      });
+    } else {
+      await db.globalSettings.create({
+        data: {
+          restrictPlayerRegistration: false,
+          raffleWinnerCooldownDays: validDays,
+        }
+      });
+    }
+
+    revalidatePath("/admin/raffles");
+    revalidatePath("/admin/settings");
+    revalidatePath("/sorteos");
+    return { success: true, message: `Margen configurado a ${validDays} días` };
+  } catch (error) {
+    console.error("Error updating raffle cooldown days:", error);
+    return { success: false, message: "Error al actualizar la configuración" };
   }
 }
 

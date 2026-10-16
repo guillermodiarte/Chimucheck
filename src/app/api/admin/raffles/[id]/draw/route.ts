@@ -51,8 +51,19 @@ export async function POST(
     );
   }
 
-  const winningIndex = randomInt(0, raffle.entries.length);
-  const winningEntry = raffle.entries[winningIndex];
+  const { getRecentWinnerPlayerIds } = await import("@/app/actions/raffles");
+  const recentBlockedIds = await getRecentWinnerPlayerIds();
+  const eligibleEntries = raffle.entries.filter((e) => !recentBlockedIds.includes(e.playerId));
+
+  if (eligibleEntries.length === 0) {
+    return NextResponse.json(
+      { error: "No hay participantes elegibles restantes (los inscritos ganaron recientemente dentro del período configurado)" },
+      { status: 400 }
+    );
+  }
+
+  const winningIndex = randomInt(0, eligibleEntries.length);
+  const winningEntry = eligibleEntries[winningIndex];
   const winnerPlayer = winningEntry.player;
   const winnerAlias = winnerPlayer.alias || winnerPlayer.name || "Jugador";
   const winnerImage = winnerPlayer.image || null;
@@ -63,6 +74,7 @@ export async function POST(
       winnerId: winnerPlayer.id,
       winnerAlias,
       winnerImage,
+      drawnAt: new Date(),
       status: "FINISHED",
     },
   });

@@ -532,13 +532,16 @@ export async function drawWinner(raffleId: string) {
       return { success: false, message: "Sorteo no encontrado" };
     }
 
-    if (raffle.entries.length === 0) {
-      return { success: false, message: "No hay participantes en este sorteo para elegir un ganador" };
+    const recentBlockedIds = await getRecentWinnerPlayerIds();
+    const eligibleEntries = raffle.entries.filter((e) => !recentBlockedIds.includes(e.playerId));
+
+    if (eligibleEntries.length === 0) {
+      return { success: false, message: "No hay participantes elegibles para este sorteo (los inscritos ya ganaron recientemente dentro del período configurado)." };
     }
 
     // Cryptographically secure random selection: randomInt(0, length)
-    const winningIndex = randomInt(0, raffle.entries.length);
-    const winningEntry = raffle.entries[winningIndex];
+    const winningIndex = randomInt(0, eligibleEntries.length);
+    const winningEntry = eligibleEntries[winningIndex];
     const winnerPlayer = winningEntry.player;
 
     const winnerAlias = winnerPlayer.alias || winnerPlayer.name || "Jugador";
@@ -551,6 +554,7 @@ export async function drawWinner(raffleId: string) {
         winnerId: winnerPlayer.id,
         winnerAlias: winnerAlias,
         winnerImage: winnerImage,
+        drawnAt: new Date(),
         status: "FINISHED",
       },
     });
@@ -638,9 +642,11 @@ export async function drawPrizeWinner(
       return { success: false, message: "Premio no encontrado en este sorteo" };
     }
 
-    // Exclude players who already won another prize in this raffle
+    // Exclude players who already won another prize in this raffle or won within the cooldown window
+    const recentBlockedIds = await getRecentWinnerPlayerIds();
     const alreadyWonIds = new Set([
       ...excludedPlayerIds,
+      ...recentBlockedIds,
       ...raffle.prizes.filter((p) => p.id !== prizeId && p.winnerId).map((p) => p.winnerId!),
     ]);
 
@@ -649,7 +655,7 @@ export async function drawPrizeWinner(
     if (eligibleEntries.length === 0) {
       return {
         success: false,
-        message: "No hay participantes elegibles restantes para este premio.",
+        message: "No hay participantes elegibles restantes para este premio (todos los inscritos ya ganaron recientemente o ya obtuvieron un premio en este sorteo).",
       };
     }
 
@@ -689,6 +695,7 @@ export async function drawPrizeWinner(
           winnerId: firstPlacePrize?.winnerId || winnerPlayer.id,
           winnerAlias: firstPlacePrize?.winnerAlias || winnerAlias,
           winnerImage: firstPlacePrize?.winnerImage || winnerImage,
+          drawnAt: new Date(),
         },
       });
     } else {
@@ -1049,6 +1056,196 @@ export async function searchPlayersAvailableForRaffle(raffleId: string, query: s
     return players;
   } catch (error) {
     console.error("Error searching players for raffle:", error);
+    return [];
+  }
+}
+
+// ─── Recent Winners & Cooldown Management ────────────────────────────────────
+
+export type RecentWinnerItem = {
+  playerId: string;
+  alias: string;
+  name: string | null;
+  image: string | null;
+  email: string | null;
+  wonAt: Date | string;
+  raffleId: string;
+  raffleTitle: string;
+  prizeTitle: string;
+  daysRemaining: number;
+};
+
+export async function getRecentWinnerPlayerIds(customDays?: number): Promise<string[]> {
+  try {
+    const winners = await getRecentRaffleWinners(customDays);
+    return winners.map((w) => w.playerId);
+  } catch (err) {
+    console.error("Error getting recent winner player IDs:", err);
+    return [];
+  }
+}
+
+export async function getRecentRaffleWinners(customDays?: number): Promise<RecentWinnerItem[]> {
+  try {
+    let days = customDays;
+    if (days === undefined) {
+      const settings = await db.globalSettings.findFirst();
+      days = settings?.raffleWinnerCooldownDays ?? 7;
+    }
+
+    if (days <= 0) {
+      return [];
+    }
+
+    const now = Date.now();
+    const cutoffDate = new Date(now - days * 24 * 60 * 60 * 1000);
+
+    // 1. Fetch from RafflePrize
+    const prizes = await db.rafflePrize.findMany({
+      where: {
+        winnerId: { not: null },
+        OR: [
+          { drawnAt: { gte: cutoffDate } },
+          {
+            drawnAt: null,
+            raffle: {
+              status: "FINISHED",
+              updatedAt: { gte: cutoffDate },
+            },
+          },
+        ],
+      },
+      include: {
+        raffle: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            updatedAt: true,
+            drawnAt: true,
+          },
+        },
+      },
+      orderBy: { drawnAt: "desc" },
+    });
+
+    // 2. Fetch from Raffle (where winnerId is set and status is FINISHED)
+    const raffles = await db.raffle.findMany({
+      where: {
+        winnerId: { not: null },
+        status: "FINISHED",
+        OR: [
+          { drawnAt: { gte: cutoffDate } },
+          {
+            drawnAt: null,
+            updatedAt: { gte: cutoffDate },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        prize: true,
+        winnerId: true,
+        winnerAlias: true,
+        winnerImage: true,
+        drawnAt: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // Collect all unique player IDs to query fresh Player profile data
+    const playerIds = new Set<string>();
+    prizes.forEach((p) => { if (p.winnerId) playerIds.add(p.winnerId); });
+    raffles.forEach((r) => { if (r.winnerId) playerIds.add(r.winnerId); });
+
+    if (playerIds.size === 0) {
+      return [];
+    }
+
+    const players = await db.player.findMany({
+      where: { id: { in: Array.from(playerIds) } },
+      select: {
+        id: true,
+        alias: true,
+        name: true,
+        image: true,
+        email: true,
+      },
+    });
+
+    const playerMap = new Map(players.map((p) => [p.id, p]));
+
+    // Map each win and keep the most recent win per player
+    const playerLatestWin = new Map<string, RecentWinnerItem>();
+
+    // Process prize wins
+    for (const p of prizes) {
+      if (!p.winnerId) continue;
+      const player = playerMap.get(p.winnerId);
+      const wonDate = p.drawnAt || p.raffle.drawnAt || p.raffle.updatedAt;
+      const wonTime = new Date(wonDate).getTime();
+      const expirationTime = wonTime + days * 24 * 60 * 60 * 1000;
+      const remainingMs = expirationTime - now;
+
+      if (remainingMs > 0) {
+        const daysRemaining = Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000)));
+        const existing = playerLatestWin.get(p.winnerId);
+
+        if (!existing || new Date(existing.wonAt).getTime() < wonTime) {
+          playerLatestWin.set(p.winnerId, {
+            playerId: p.winnerId,
+            alias: player?.alias || p.winnerAlias || player?.name || "Jugador",
+            name: player?.name || null,
+            image: player?.image || p.winnerImage || null,
+            email: player?.email || null,
+            wonAt: wonDate,
+            raffleId: p.raffleId,
+            raffleTitle: p.raffle.title,
+            prizeTitle: p.title,
+            daysRemaining,
+          });
+        }
+      }
+    }
+
+    // Process raffle wins
+    for (const r of raffles) {
+      if (!r.winnerId) continue;
+      const player = playerMap.get(r.winnerId);
+      const wonDate = r.drawnAt || r.updatedAt;
+      const wonTime = new Date(wonDate).getTime();
+      const expirationTime = wonTime + days * 24 * 60 * 60 * 1000;
+      const remainingMs = expirationTime - now;
+
+      if (remainingMs > 0) {
+        const daysRemaining = Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000)));
+        const existing = playerLatestWin.get(r.winnerId);
+
+        if (!existing || new Date(existing.wonAt).getTime() < wonTime) {
+          playerLatestWin.set(r.winnerId, {
+            playerId: r.winnerId,
+            alias: player?.alias || r.winnerAlias || player?.name || "Jugador",
+            name: player?.name || null,
+            image: player?.image || r.winnerImage || null,
+            email: player?.email || null,
+            wonAt: wonDate,
+            raffleId: r.id,
+            raffleTitle: r.title,
+            prizeTitle: r.prize,
+            daysRemaining,
+          });
+        }
+      }
+    }
+
+    // Sort by wonAt descending (most recent first)
+    return Array.from(playerLatestWin.values()).sort(
+      (a, b) => new Date(b.wonAt).getTime() - new Date(a.wonAt).getTime()
+    );
+  } catch (error) {
+    console.error("Error in getRecentRaffleWinners:", error);
     return [];
   }
 }

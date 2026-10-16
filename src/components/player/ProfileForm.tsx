@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "@/app/actions/player-profile";
-import { Loader2, Lock, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Eye, EyeOff, Coins, Gamepad2, ChevronRight, ChevronLeft, Pencil, Globe, MapPin } from "lucide-react";
+import { Loader2, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Coins, Gamepad2, ChevronRight, ChevronLeft, Pencil, Globe, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -71,8 +71,6 @@ export function ProfileForm({
   const [isPending, startTransition] = useTransition();
   const [previewUrl, setPreviewUrl] = useState<string | null>(player.image);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageError, setImageError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -761,70 +759,6 @@ export function ProfileForm({
                       />
                     </div>
 
-                    <div className="pt-4 border-t border-white/5 space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Lock size={14} className="text-primary" />
-                        <h3 className="text-xs font-bold text-white">Seguridad</h3>
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-zinc-400 text-[10px] font-medium">Nueva Contraseña</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  type={showPassword ? "text" : "password"}
-                                  {...field}
-                                  disabled={!isEditing}
-                                  className="bg-black/40 border-white/10 text-white h-10 px-3 focus:border-primary/50 transition-all text-sm pr-9 disabled:opacity-60 disabled:cursor-not-allowed"
-                                  placeholder="..."
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
-                                >
-                                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                                </button>
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-red-400 text-[10px]" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-zinc-400 text-[10px] font-medium">Confirmar Contraseña</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  type={showConfirmPassword ? "text" : "password"}
-                                  {...field}
-                                  disabled={!isEditing}
-                                  className="bg-black/40 border-white/10 text-white h-10 px-3 focus:border-primary/50 transition-all text-sm pr-9 disabled:opacity-60 disabled:cursor-not-allowed"
-                                  placeholder="..."
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
-                                >
-                                  {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                                </button>
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-red-400 text-[10px]" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
                   </form>
                 </Form>
               </CardContent>
