@@ -31,8 +31,6 @@ const RANK_THEMES = [
     cardBg: "from-amber-950/30 via-gray-900/90 to-black/95",
     accentColor: "#fbbf24",
     accentText: "text-amber-400",
-    pedestalFill: "rgba(245, 158, 11, 0.28)",
-    pedestalStroke: "rgba(251, 191, 36, 0.7)",
     ringColor: "ring-amber-400",
     medalIcon: "🥇",
     label: "Líder",
@@ -46,8 +44,6 @@ const RANK_THEMES = [
     cardBg: "from-cyan-950/30 via-gray-900/90 to-black/95",
     accentColor: "#22d3ee",
     accentText: "text-cyan-400",
-    pedestalFill: "rgba(6, 182, 212, 0.28)",
-    pedestalStroke: "rgba(34, 211, 238, 0.7)",
     ringColor: "ring-cyan-400",
     medalIcon: "🥈",
     label: "Top 2",
@@ -61,8 +57,6 @@ const RANK_THEMES = [
     cardBg: "from-purple-950/30 via-gray-900/90 to-black/95",
     accentColor: "#c084fc",
     accentText: "text-purple-400",
-    pedestalFill: "rgba(168, 85, 247, 0.28)",
-    pedestalStroke: "rgba(192, 132, 252, 0.7)",
     ringColor: "ring-purple-400",
     medalIcon: "🥉",
     label: "Top 3",
@@ -76,8 +70,6 @@ const RANK_THEMES = [
     cardBg: "from-rose-950/30 via-gray-900/90 to-black/95",
     accentColor: "#fb7185",
     accentText: "text-rose-400",
-    pedestalFill: "rgba(244, 63, 94, 0.28)",
-    pedestalStroke: "rgba(251, 113, 133, 0.7)",
     ringColor: "ring-rose-400",
     medalIcon: "🎖️",
     label: "Top 4",
@@ -91,8 +83,6 @@ const RANK_THEMES = [
     cardBg: "from-emerald-950/30 via-gray-900/90 to-black/95",
     accentColor: "#34d399",
     accentText: "text-emerald-400",
-    pedestalFill: "rgba(16, 185, 129, 0.28)",
-    pedestalStroke: "rgba(52, 211, 153, 0.7)",
     ringColor: "ring-emerald-400",
     medalIcon: "⚡",
     label: "Top 5",
@@ -152,7 +142,7 @@ export default function TopPlayersBannerSlide({ players }: TopPlayersBannerSlide
 
               const cardContent = (
                 <div
-                  className={`relative w-[210px] sm:w-[220px] md:w-auto shrink-0 snap-center rounded-2xl border-2 ${theme.borderClass} ${theme.glowClass} bg-gradient-to-b ${theme.cardBg} backdrop-blur-xl p-4 sm:p-5 flex flex-col items-center text-center transition-all duration-300 group hover:-translate-y-2 hover:scale-[1.02] cursor-pointer`}
+                  className={`relative w-[210px] sm:w-[220px] md:w-auto shrink-0 snap-center rounded-2xl border-2 ${theme.borderClass} ${theme.glowClass} bg-gradient-to-b ${theme.cardBg} backdrop-blur-xl px-3 sm:px-3.5 pt-5 pb-4 flex flex-col items-center text-center transition-all duration-300 group hover:-translate-y-2 hover:scale-[1.02] cursor-pointer`}
                 >
                   {/* Top Rank Badge (centered on top border like reference) */}
                   <div
@@ -161,68 +151,29 @@ export default function TopPlayersBannerSlide({ players }: TopPlayersBannerSlide
                     {theme.badgeText}
                   </div>
 
-                  {/* Character Illustration / Avatar Container inspired by reference */}
-                  <div className="relative w-full aspect-[4/3.8] max-w-[170px] mt-2 mb-3 flex flex-col items-center justify-end">
-                    {/* Background dome/arch behind avatar like reference */}
+                  {/* Circular Avatar with neon glowing ring occupying full card width */}
+                  <div className="relative w-full aspect-square my-3 flex items-center justify-center">
                     <div
-                      className="absolute inset-0 rounded-t-[50px] rounded-b-2xl border border-white/5 opacity-80"
-                      style={{
-                        background: `radial-gradient(ellipse at center top, ${theme.accentColor}25 0%, #0d1424 70%)`,
-                      }}
-                    />
-
-                    {/* Circular Avatar with neon glowing ring */}
-                    <div className="relative z-10 -mb-2">
-                      <div
-                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 ring-2 ${theme.ringColor} shadow-[0_0_20px_${theme.accentColor}50] bg-gray-950 flex items-center justify-center`}
-                      >
-                        {player?.avatar ? (
-                          <Avatar className="w-full h-full">
-                            <AvatarImage
-                              src={player.avatar}
-                              alt={playerName}
-                              className="object-cover"
-                            />
-                            <AvatarFallback
-                              className="font-black text-lg bg-gray-800 text-white"
-                            >
-                              {avatarInitials}
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : (
-                          <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-white/90 font-black text-base sm:text-lg">
-                            {player ? avatarInitials : <User className="w-7 h-7 text-gray-500" />}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Stylized Pedestal/Body Trapeze from reference */}
-                    <div className="relative z-0 w-full flex justify-center">
-                      <svg
-                        viewBox="0 0 140 55"
-                        className="w-28 sm:w-32 h-auto drop-shadow-md"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <polygon
-                          points="25,4 115,4 135,52 5,52"
-                          fill={theme.pedestalFill}
-                          stroke={theme.pedestalStroke}
-                          strokeWidth="2"
-                        />
-                        {/* Inner cyber highlight line */}
-                        <line
-                          x1="38"
-                          y1="12"
-                          x2="102"
-                          y2="12"
-                          stroke={theme.accentColor}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          opacity="0.8"
-                        />
-                      </svg>
+                      className={`w-full h-full rounded-full p-1 sm:p-1.5 ring-2 sm:ring-4 ${theme.ringColor} shadow-[0_0_25px_${theme.accentColor}50] bg-gray-950 flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.03] overflow-hidden`}
+                    >
+                      {player?.avatar ? (
+                        <Avatar className="w-full h-full">
+                          <AvatarImage
+                            src={player.avatar}
+                            alt={playerName}
+                            className="object-cover w-full h-full"
+                          />
+                          <AvatarFallback
+                            className="font-black text-2xl sm:text-3xl bg-gray-800 text-white"
+                          >
+                            {avatarInitials}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-800 to-gray-950 flex items-center justify-center text-white/90 font-black text-2xl sm:text-3xl">
+                          {player ? avatarInitials : <User className="w-12 h-12 text-gray-500" />}
+                        </div>
+                      )}
                     </div>
                   </div>
 
