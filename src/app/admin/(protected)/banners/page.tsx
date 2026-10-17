@@ -18,6 +18,12 @@ export default async function BannersPage() {
   const isTopPlayersEnabled = topContent.enabled ?? true;
   const topPlayersOrder = typeof topContent.order === "number" ? topContent.order : 2;
 
+  const bannerSettingsSection = await db.siteSection.findUnique({
+    where: { key: "banner_settings" },
+  });
+  const bannerSettings = (bannerSettingsSection?.content as any) || {};
+  const bannerInterval = typeof bannerSettings.interval === "number" ? bannerSettings.interval : 5;
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -38,6 +44,7 @@ export default async function BannersPage() {
         initialBanners={banners}
         initialTopPlayersEnabled={isTopPlayersEnabled}
         initialTopPlayersOrder={topPlayersOrder}
+        initialInterval={bannerInterval}
       />
     </div>
   );

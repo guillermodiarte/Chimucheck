@@ -60,6 +60,10 @@ export default async function Home() {
   const showTopPlayers = topContent.enabled ?? true;
   const topPlayersOrder = typeof topContent.order === "number" ? topContent.order : 2;
 
+  const bannerSettingsSection = await db.siteSection.findUnique({ where: { key: "banner_settings" } });
+  const bannerSettings = (bannerSettingsSection?.content as any) || {};
+  const bannerInterval = typeof bannerSettings.interval === "number" ? bannerSettings.interval : 5;
+
   let topPlayersData: TopPlayerItem[] = [];
   if (showTopPlayers) {
     const topPlayers = await db.player.findMany({
@@ -90,6 +94,7 @@ export default async function Home() {
         topPlayers={topPlayersData}
         showTopPlayers={showTopPlayers}
         topPlayersOrder={topPlayersOrder}
+        interval={bannerInterval}
       />
 
       {/* Streaming Section */}

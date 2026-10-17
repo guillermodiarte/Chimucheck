@@ -38,6 +38,7 @@ interface HeroCarouselProps {
   showTopPlayers?: boolean;
   topPlayersOrder?: number;
   unifiedSlides?: UnifiedSlide[];
+  interval?: number;
 }
 
 export default function HeroCarousel({
@@ -46,6 +47,7 @@ export default function HeroCarousel({
   showTopPlayers = false,
   topPlayersOrder = 2,
   unifiedSlides,
+  interval = 5,
 }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -85,16 +87,17 @@ export default function HeroCarousel({
     }
   }, [allSlides.length, current]);
 
-  // Auto-advance timer (pauses when hovering)
+  // Auto-advance timer (resets on slide change; pauses on interaction)
   useEffect(() => {
     if (allSlides.length <= 1 || isPaused) return;
 
+    const ms = Math.max(2, interval) * 1000;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % allSlides.length);
-    }, 8500); // 8.5 seconds per slide
+    }, ms);
 
     return () => clearInterval(timer);
-  }, [allSlides.length, isPaused]);
+  }, [allSlides.length, isPaused, interval, current]);
 
   if (!allSlides || allSlides.length === 0) {
     return (
@@ -107,103 +110,105 @@ export default function HeroCarousel({
   const nextSlide = () => setCurrent((prev) => (prev + 1) % allSlides.length);
   const prevSlide = () => setCurrent((prev) => (prev - 1 + allSlides.length) % allSlides.length);
 
-  const activeSlide = allSlides[current] || allSlides[0];
-
   return (
-    <div
-      className="relative h-screen w-full overflow-hidden bg-black"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      <AnimatePresence mode="wait">
-        {activeSlide.type === "top_players" ? (
-          <motion.div
-            key="top_players_slide"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.7 }}
-            className="absolute inset-0"
+    <div className="relative h-screen w-full overflow-hidden bg-black select-none">
+      {/* Persistent Layered Slides with GPU-accelerated smooth cross-fade */}
+      {allSlides.map((slide, index) => {
+        const isActive = index === current;
+        const isTopPlayers = slide.type === "top_players";
+
+        return (
+          <div
+            key={slide.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              isActive
+                ? "opacity-100 z-10 pointer-events-auto"
+                : "opacity-0 z-0 pointer-events-none"
+            }`}
+            style={{ willChange: "opacity" }}
+            aria-hidden={!isActive}
           >
-            <TopPlayersBannerSlide players={activeSlide.players} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key={activeSlide.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="absolute inset-0"
-          >
-            {activeSlide.imageUrl.endsWith(".mp4") || activeSlide.imageUrl.endsWith(".webm") ? (
-              <video
-                src={activeSlide.imageUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="object-cover w-full h-full opacity-60"
-              />
+            {isTopPlayers ? (
+              <div
+                className="w-full h-full"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+              >
+                <TopPlayersBannerSlide players={slide.players} />
+              </div>
             ) : (
               <div className="relative w-full h-full">
-                <Image
-                  src={activeSlide.imageUrl}
-                  alt={activeSlide.title}
-                  fill
-                  className="object-cover opacity-60"
-                  priority
-                />
+                {slide.imageUrl.endsWith(".mp4") || slide.imageUrl.endsWith(".webm") ? (
+                  <video
+                    src={slide.imageUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="object-cover w-full h-full opacity-60"
+                  />
+                ) : (
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={slide.imageUrl}
+                      alt={slide.title}
+                      fill
+                      sizes="100vw"
+                      className="object-cover opacity-60"
+                      priority={index <= 1}
+                    />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 pointer-events-none" />
+
+                {/* Banner Titles and CTA */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-10 px-4 pointer-events-none">
+                  <h1
+                    className={`text-5xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-secondary drop-shadow-[0_0_25px_rgba(0,240,255,0.4)] mb-4 pb-2 leading-normal uppercase transition-all duration-700 delay-150 transform ${
+                      isActive ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+                    }`}
+                  >
+                    {slide.title}
+                  </h1>
+                  {slide.subtitle && (
+                    <p
+                      className={`text-xl md:text-3xl font-medium text-white tracking-widest uppercase border-b-2 border-primary pb-3 mb-6 transition-all duration-700 delay-300 transform ${
+                        isActive ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+                      }`}
+                    >
+                      {slide.subtitle}
+                    </p>
+                  )}
+                  {slide.link && (
+                    <div
+                      className={`transition-all duration-700 delay-500 transform pointer-events-auto ${
+                        isActive ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+                      }`}
+                      onMouseEnter={() => setIsPaused(true)}
+                      onMouseLeave={() => setIsPaused(false)}
+                    >
+                      <Link
+                        href={slide.link}
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-black font-black uppercase tracking-wider hover:bg-yellow-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,215,0,0.4)]"
+                      >
+                        Ver Más
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
-
-            {/* Banner Titles and CTA */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-10 px-4">
-              <motion.h1
-                key={`title-${activeSlide.id}`}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.8 }}
-                className="text-5xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-secondary drop-shadow-[0_0_25px_rgba(0,240,255,0.4)] mb-4 pb-2 leading-normal overflow-visible uppercase"
-              >
-                {activeSlide.title}
-              </motion.h1>
-              {activeSlide.subtitle && (
-                <motion.p
-                  key={`sub-${activeSlide.id}`}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                  className="text-xl md:text-3xl font-medium text-white tracking-widest uppercase border-b-2 border-primary pb-3 mb-6"
-                >
-                  {activeSlide.subtitle}
-                </motion.p>
-              )}
-              {activeSlide.link && (
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.7, duration: 0.8 }}
-                >
-                  <Link
-                    href={activeSlide.link}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-black font-black uppercase tracking-wider hover:bg-yellow-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,215,0,0.4)]"
-                  >
-                    Ver Más
-                  </Link>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        );
+      })}
 
       {/* Navigation Buttons */}
       {allSlides.length > 1 && (
         <>
           <button
             onClick={prevSlide}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
             aria-label="Diapositiva anterior"
             className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 p-2 text-white/50 hover:text-primary hover:scale-110 transition-all cursor-pointer drop-shadow-lg"
           >
@@ -211,6 +216,8 @@ export default function HeroCarousel({
           </button>
           <button
             onClick={nextSlide}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
             aria-label="Siguiente diapositiva"
             className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 p-2 text-white/50 hover:text-primary hover:scale-110 transition-all cursor-pointer drop-shadow-lg"
           >
@@ -221,7 +228,11 @@ export default function HeroCarousel({
 
       {/* Indicators */}
       {allSlides.length > 1 && (
-        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center space-x-2 sm:space-x-3 z-30 bg-black/40 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10">
+        <div
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center space-x-2 sm:space-x-3 z-30 bg-black/40 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10"
+        >
           {allSlides.map((slide, index) => {
             const isTopPlayersSlide = slide.type === "top_players";
             const isActive = index === current;

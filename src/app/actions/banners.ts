@@ -241,4 +241,38 @@ export async function ensureConsistentOrders() {
   }
 }
 
+export async function updateBannerInterval(intervalSeconds: number) {
+  try {
+    const validInterval = Math.max(2, Math.min(60, Number(intervalSeconds) || 5));
+    const section = await db.siteSection.findUnique({
+      where: { key: "banner_settings" },
+    });
+    const current = (section?.content as any) || {};
+
+    await db.siteSection.upsert({
+      where: { key: "banner_settings" },
+      update: {
+        content: {
+          ...current,
+          interval: validInterval,
+        },
+      },
+      create: {
+        key: "banner_settings",
+        content: {
+          ...current,
+          interval: validInterval,
+        },
+      },
+    });
+
+    revalidatePath("/admin/banners");
+    revalidatePath("/");
+    return { success: true, interval: validInterval };
+  } catch (error) {
+    console.error("Error al actualizar intervalo de banners:", error);
+    return { success: false, message: "Error al actualizar tiempo" };
+  }
+}
+
 

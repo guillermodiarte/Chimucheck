@@ -12,6 +12,7 @@ import {
   Edit2,
   Trash2,
   Sparkles,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -29,6 +30,7 @@ import {
   toggleBannerStatus,
   toggleTopPlayersBanner,
   deleteBanner,
+  updateBannerInterval,
 } from "@/app/actions/banners";
 
 export interface BannerItemData {
@@ -67,16 +69,19 @@ interface BannersManagerProps {
   initialBanners: BannerItemData[];
   initialTopPlayersEnabled: boolean;
   initialTopPlayersOrder: number;
+  initialInterval?: number;
 }
 
 export function BannersManager({
   initialBanners,
   initialTopPlayersEnabled,
   initialTopPlayersOrder,
+  initialInterval = 5,
 }: BannersManagerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [topEnabled, setTopEnabled] = useState(initialTopPlayersEnabled);
+  const [interval, setIntervalState] = useState(initialInterval);
 
   // Build unified items list ordered by position
   const buildSortedList = (): UnifiedRowItem[] => {
@@ -212,6 +217,20 @@ export function BannersManager({
     });
   };
 
+  const handleSaveInterval = (newSeconds: number) => {
+    const clamped = Math.max(2, Math.min(60, Number(newSeconds) || 5));
+    setIntervalState(clamped);
+    startTransition(async () => {
+      const res = await updateBannerInterval(clamped);
+      if (res.success) {
+        toast.success(`Tiempo del carrusel configurado a ${clamped} segundos`);
+        router.refresh();
+      } else {
+        toast.error("Error al guardar el tiempo del carrusel");
+      }
+    });
+  };
+
   const topPlayersItem = items.find((i) => i.type === "top_players");
   const topPlayersCurrentIndex = items.findIndex((i) => i.type === "top_players");
 
@@ -272,6 +291,75 @@ export function BannersManager({
               disabled={isPending}
               className="data-[state=checked]:bg-amber-400 data-[state=unchecked]:bg-gray-700"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Carrusel Auto-advance Timer Control Card */}
+      <div className="bg-gradient-to-r from-gray-900 via-gray-900/95 to-cyan-950/25 border-2 border-cyan-500/30 rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div className="flex items-start sm:items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
+            <Clock className="w-7 h-7" />
+          </div>
+          <div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-wide">
+                Tiempo de Transición Automática
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/40">
+                {interval} segundos por banner
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl leading-relaxed">
+              Configura cuántos segundos permanece cada diapositiva en pantalla antes de cambiar automáticamente a la siguiente.
+            </p>
+          </div>
+        </div>
+
+        {/* Quick presets and input */}
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end pt-2 md:pt-0 border-t md:border-t-0 border-gray-800">
+          <div className="flex items-center gap-1.5 bg-gray-950/80 border border-gray-800 p-1.5 rounded-xl">
+            {[3, 5, 7, 10].map((sec) => (
+              <button
+                key={sec}
+                type="button"
+                onClick={() => handleSaveInterval(sec)}
+                disabled={isPending}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  interval === sec
+                    ? "bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.6)]"
+                    : "text-gray-400 hover:text-white hover:bg-gray-800"
+                }`}
+              >
+                {sec}s
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 bg-gray-950/80 border border-gray-800 px-3 py-1.5 rounded-xl">
+            <input
+              type="number"
+              min={2}
+              max={60}
+              value={interval}
+              onChange={(e) => setIntervalState(Number(e.target.value))}
+              onBlur={() => handleSaveInterval(interval)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveInterval(interval);
+              }}
+              disabled={isPending}
+              className="w-14 bg-gray-900 border border-gray-700 text-white font-mono font-bold text-sm text-center rounded-lg px-1 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+            />
+            <span className="text-xs text-gray-400 font-medium">seg</span>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => handleSaveInterval(interval)}
+              disabled={isPending}
+              className="bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border border-cyan-500/40 text-xs px-2.5 py-1 h-auto cursor-pointer"
+            >
+              Guardar
+            </Button>
           </div>
         </div>
       </div>
