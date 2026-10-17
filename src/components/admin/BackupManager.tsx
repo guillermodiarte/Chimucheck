@@ -83,9 +83,15 @@ export default function BackupManager() {
     setLoadingAuto(true);
     try {
       const res = await fetch("/api/backup/auto");
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        const data = await res.json();
         setAutoBackups(data.backups || []);
+      } else {
+        if (res.status === 401) {
+          console.warn("Sesión no autorizada para copias automáticas");
+        } else if (data.error) {
+          toast.error(data.error);
+        }
       }
     } catch (err) {
       console.error("Error al cargar copias automáticas:", err);
@@ -164,8 +170,8 @@ export default function BackupManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "create" }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al crear la copia");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Error (${res.status}) al crear la copia`);
       toast.success("Copia de seguridad SQLite creada correctamente");
       await fetchAutoBackups();
     } catch (err: any) {
@@ -184,8 +190,8 @@ export default function BackupManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "restore", filename: backupToRestore.filename }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al restaurar");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Error (${res.status}) al restaurar`);
       toast.success("Base de datos restaurada. Reiniciando...");
       setBackupToRestore(null);
       setTimeout(() => window.location.reload(), 2000);
@@ -203,8 +209,8 @@ export default function BackupManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", filename: backupToDelete.filename }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al eliminar");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Error (${res.status}) al eliminar`);
       toast.success("Copia de seguridad eliminada");
       setBackupToDelete(null);
       await fetchAutoBackups();

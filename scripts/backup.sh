@@ -8,16 +8,36 @@
 # --- Configuration ---
 if [ -n "$DATABASE_URL" ]; then
   RAW_PATH=$(echo "$DATABASE_URL" | sed 's/file://')
-  if   [ -f "$RAW_PATH" ];               then DB_PATH="$RAW_PATH"
-  elif [ -f "./prisma/$RAW_PATH" ];      then DB_PATH="./prisma/$RAW_PATH"
-  elif [ -f "./prisma/$(basename "$RAW_PATH")" ]; then DB_PATH="./prisma/$(basename "$RAW_PATH")"
+  if   [ -f "$RAW_PATH" ];                              then DB_PATH="$RAW_PATH"
+  elif [ -f "./prisma/$RAW_PATH" ];                     then DB_PATH="./prisma/$RAW_PATH"
+  elif [ -f "./prisma/$(basename "$RAW_PATH")" ];       then DB_PATH="./prisma/$(basename "$RAW_PATH")"
+  elif [ -f "/app/database/$(basename "$RAW_PATH")" ];  then DB_PATH="/app/database/$(basename "$RAW_PATH")"
+  elif [ -f "/app/data/$(basename "$RAW_PATH")" ];      then DB_PATH="/app/data/$(basename "$RAW_PATH")"
   else DB_PATH="$RAW_PATH"
   fi
-else
+elif [ -f "/app/database/prod.db" ]; then
+  DB_PATH="/app/database/prod.db"
+elif [ -f "/app/data/prod.db" ]; then
+  DB_PATH="/app/data/prod.db"
+elif [ -f "./prisma/dev.db" ]; then
   DB_PATH="./prisma/dev.db"
+else
+  # Auto-search any .db file in common volumes
+  FOUND_DB=$(find /app/database /app/data ./prisma -maxdepth 1 -name "*.db" ! -name "backup*" 2>/dev/null | head -n 1)
+  DB_PATH="${FOUND_DB:-./prisma/dev.db}"
 fi
 
-BACKUP_DIR="${BACKUP_DIR:-/app/chimu_backups}"
+# Detect backup directory (persist on volume if available)
+if [ -z "$BACKUP_DIR" ]; then
+  if [ -d "/app/chimu_backups" ]; then
+    BACKUP_DIR="/app/chimu_backups"
+  elif [ -d "/app/database" ]; then
+    BACKUP_DIR="/app/database/backups"
+  else
+    BACKUP_DIR="./chimu_backups"
+  fi
+fi
+
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 BACKUP_NAME="backup base de datos global ${TIMESTAMP}.db"
 

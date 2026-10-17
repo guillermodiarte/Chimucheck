@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
@@ -14,29 +15,59 @@ function getDatabasePath(): string {
   const dbUrl = process.env.DATABASE_URL || "file:./prisma/dev.db";
   const raw = dbUrl.replace(/^file:/, "").trim();
 
-  if (path.isAbsolute(raw)) return raw;
+  if (path.isAbsolute(raw) && fs.existsSync(raw)) return raw;
 
   const cwd = process.cwd();
   const candidates = [
+    raw,
     path.resolve(cwd, raw),
     path.resolve(cwd, "prisma", raw),
     path.resolve(cwd, "prisma", path.basename(raw)),
     path.resolve(cwd, ".next/standalone/prisma", path.basename(raw)),
     path.resolve(cwd, ".next/standalone", raw),
+    path.resolve("/app/database", path.basename(raw)),
+    "/app/database/prod.db",
+    "/app/database/dev.db",
+    path.resolve("/app/data", path.basename(raw)),
+    "/app/data/prod.db",
   ];
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) return candidate;
   }
 
+  if (fs.existsSync("/app/database")) {
+    try {
+      const files = fs.readdirSync("/app/database");
+      const dbFile = files.find((f) => f.endsWith(".db") && !f.startsWith("backup"));
+      if (dbFile) return path.join("/app/database", dbFile);
+    } catch {}
+  }
+
+  if (path.isAbsolute(raw)) return raw;
   return path.resolve(cwd, "prisma", path.basename(raw));
 }
 
 function getBackupDirectory(): string {
-  if (process.env.BACKUP_DIR && fs.existsSync(process.env.BACKUP_DIR)) {
-    return process.env.BACKUP_DIR;
+  if (process.env.BACKUP_DIR) {
+    try {
+      if (!fs.existsSync(process.env.BACKUP_DIR)) {
+        fs.mkdirSync(process.env.BACKUP_DIR, { recursive: true });
+      }
+      return process.env.BACKUP_DIR;
+    } catch {}
   }
+
   if (fs.existsSync("/app/chimu_backups")) return "/app/chimu_backups";
+
+  // If /app/database exists (Coolify volume mounted!), save backups in /app/database/backups
+  if (fs.existsSync("/app/database")) {
+    const dir = "/app/database/backups";
+    try {
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      return dir;
+    } catch {}
+  }
 
   const localDir = path.resolve(process.cwd(), "chimu_backups");
   if (!fs.existsSync(localDir)) {
@@ -85,10 +116,34 @@ function cleanOldBackups(backupDir: string) {
 }
 
 async function requireAdmin(req: Request) {
-  const session = await auth();
-  const user = session?.user as any;
-  if (user?.role !== "ADMIN") return false;
-  return true;
+  // 1. Check legacy admin session cookie (Chimuchek Admin panel uses admin_session)
+  try {
+    const cookieStore = await cookies();
+    const adminSession = cookieStore.get("admin_session");
+    if (adminSession?.value) return true;
+  } catch {}
+
+  const cookieHeader = req.headers.get("cookie") || "";
+  if (cookieHeader.includes("admin_session=true") || cookieHeader.includes("admin_session=")) {
+    return true;
+  }
+
+  // 2. Check NextAuth session
+  try {
+    const session = await auth();
+    const user = session?.user as any;
+    if (user?.role === "ADMIN") return true;
+  } catch {}
+
+  // 3. Check Authorization header / Bearer token (for VPS cron / Coolify scheduled curls)
+  const authHeader = req.headers.get("authorization") || req.headers.get("x-backup-token");
+  const cronSecret = process.env.CRON_SECRET || process.env.AUTH_SECRET;
+  if (cronSecret && authHeader) {
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (token === cronSecret) return true;
+  }
+
+  return false;
 }
 
 // ─── GET — list backups / download single ────────────────────────────────────
@@ -96,7 +151,7 @@ async function requireAdmin(req: Request) {
 export async function GET(req: Request) {
   try {
     if (!(await requireAdmin(req))) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -167,7 +222,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     if (!(await requireAdmin(req))) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
