@@ -10,6 +10,8 @@ import ChimuCoinSectionWrapper from "@/components/ChimuCoinSectionWrapper";
 import { db } from "@/lib/prisma";
 import { Banner, News, Event } from "@prisma/client";
 
+import { TopPlayerItem } from "@/components/TopPlayersBannerSlide";
+
 export const dynamic = "force-dynamic";
 
 async function getBanners(): Promise<Banner[]> {
@@ -53,10 +55,42 @@ export default async function Home() {
   const streamingSection = await db.siteSection.findUnique({ where: { key: "streaming_section" } });
   const streamingContent = (streamingSection?.content as any) || null;
 
+  const topPlayersSection = await db.siteSection.findUnique({ where: { key: "banner_top_players" } });
+  const topContent = (topPlayersSection?.content as any) || {};
+  const showTopPlayers = topContent.enabled ?? true;
+  const topPlayersOrder = typeof topContent.order === "number" ? topContent.order : 2;
+
+  let topPlayersData: TopPlayerItem[] = [];
+  if (showTopPlayers) {
+    const topPlayers = await db.player.findMany({
+      take: 5,
+      orderBy: { chimucoins: "desc" },
+      include: { stats: true },
+      where: { active: true },
+    });
+
+    topPlayersData = topPlayers.map((p, i) => ({
+      id: p.id,
+      rank: i + 1,
+      name: p.alias || p.name || p.email,
+      alias: p.alias,
+      avatar: p.image || null,
+      score: p.chimucoins,
+      formattedScore: p.chimucoins.toLocaleString("es-AR"),
+      medal: i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "none",
+      winsFirst: p.stats?.winsFirst ?? 0,
+    }));
+  }
+
   return (
     <div className="bg-black text-white">
       {/* Hero Carousel */}
-      <HeroCarousel slides={banners} />
+      <HeroCarousel
+        slides={banners}
+        topPlayers={topPlayersData}
+        showTopPlayers={showTopPlayers}
+        topPlayersOrder={topPlayersOrder}
+      />
 
       {/* Streaming Section */}
       <StreamingSection config={streamingContent} />

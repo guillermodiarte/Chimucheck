@@ -50,6 +50,7 @@ export async function createBanner(prevState: any, formData: FormData) {
         order: Number(order) || 0,
       },
     });
+    await ensureConsistentOrders();
   } catch (error) {
     return {
       message: "Error de base de datos: No se pudo crear el banner.",
@@ -95,6 +96,7 @@ export async function updateBanner(id: string, prevState: any, formData: FormDat
         order: Number(order) || 0,
       },
     });
+    await ensureConsistentOrders();
   } catch (error) {
     return {
       message: "Error de base de datos: No se pudo actualizar el banner.",
@@ -111,6 +113,7 @@ export async function deleteBanner(id: string) {
     await db.banner.delete({
       where: { id },
     });
+    await ensureConsistentOrders();
     revalidatePath("/admin/banners");
   } catch (error) {
     console.error("Error al eliminar el banner.", error);
@@ -124,7 +127,118 @@ export async function toggleBannerStatus(id: string, currentStatus: boolean) {
       data: { active: !currentStatus }
     });
     revalidatePath("/admin/banners");
+    revalidatePath("/");
   } catch (error) {
     console.error("Error al actualizar estado.", error);
   }
 }
+
+export interface ReorderItem {
+  id: string;
+  type: "banner" | "top_players";
+}
+
+export async function reorderAllBanners(items: ReorderItem[]) {
+  try {
+    await db.$transaction(async (tx) => {
+      const topSection = await tx.siteSection.findUnique({
+        where: { key: "banner_top_players" },
+      });
+      const currentTopContent = (topSection?.content as any) || { enabled: true, order: 2 };
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const newOrder = i + 1;
+
+        if (item.type === "banner") {
+          await tx.banner.update({
+            where: { id: item.id },
+            data: { order: newOrder },
+          });
+        } else if (item.type === "top_players") {
+          await tx.siteSection.upsert({
+            where: { key: "banner_top_players" },
+            update: {
+              content: {
+                ...currentTopContent,
+                order: newOrder,
+              },
+            },
+            create: {
+              key: "banner_top_players",
+              content: {
+                ...currentTopContent,
+                order: newOrder,
+              },
+            },
+          });
+        }
+      }
+    });
+
+    revalidatePath("/admin/banners");
+    revalidatePath("/");
+    return { success: true, message: "Posiciones actualizadas correctamente" };
+  } catch (error) {
+    console.error("Error al reordenar banners:", error);
+    return { success: false, message: "Error al reordenar banners" };
+  }
+}
+
+export async function toggleTopPlayersBanner(enabled: boolean) {
+  try {
+    const topSection = await db.siteSection.findUnique({
+      where: { key: "banner_top_players" },
+    });
+    const currentTopContent = (topSection?.content as any) || { order: 2 };
+
+    await db.siteSection.upsert({
+      where: { key: "banner_top_players" },
+      update: {
+        content: {
+          ...currentTopContent,
+          enabled,
+        },
+      },
+      create: {
+        key: "banner_top_players",
+        content: {
+          ...currentTopContent,
+          enabled,
+        },
+      },
+    });
+
+    revalidatePath("/admin/banners");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al cambiar estado de Top 5:", error);
+    return { success: false };
+  }
+}
+
+export async function ensureConsistentOrders() {
+  try {
+    const banners = await db.banner.findMany({
+      orderBy: { order: "asc" },
+    });
+
+    const topSection = await db.siteSection.findUnique({
+      where: { key: "banner_top_players" },
+    });
+    const currentTopContent = (topSection?.content as any) || { enabled: true, order: 2 };
+    const topOrder = typeof currentTopContent.order === "number" ? currentTopContent.order : 2;
+
+    const list: { id: string; type: "banner" | "top_players"; order: number }[] = [
+      ...banners.map((b) => ({ id: b.id, type: "banner" as const, order: b.order })),
+      { id: "top_players", type: "top_players" as const, order: topOrder },
+    ].sort((a, b) => a.order - b.order);
+
+    await reorderAllBanners(list.map((i) => ({ id: i.id, type: i.type })));
+  } catch (error) {
+    console.error("Error al asegurar órdenes consistentes:", error);
+  }
+}
+
+
