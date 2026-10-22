@@ -168,11 +168,11 @@ export function RecentWinnersList({ initialWinners, initialDays }: RecentWinners
                       )}
                       <div className="flex flex-col">
                         <span className="font-bold text-white text-sm">
-                          {winner.alias}
+                          {winner.name || winner.alias}
                         </span>
-                        {winner.name && (
+                        {winner.name && winner.alias && winner.alias !== winner.name && (
                           <span className="text-[11px] text-gray-500 truncate max-w-[160px]">
-                            {winner.name}
+                            @{winner.alias}
                           </span>
                         )}
                       </div>

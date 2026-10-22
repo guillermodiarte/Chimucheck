@@ -35,8 +35,32 @@ export default async function RaffleLivePage({
     notFound();
   }
 
+  const winnerIds = Array.from(
+    new Set(
+      [raffle.winnerId, ...(raffle.prizes?.map((p) => p.winnerId) || [])].filter(Boolean) as string[]
+    )
+  );
+
+  const winnerPlayers =
+    winnerIds.length > 0
+      ? await db.player.findMany({
+          where: { id: { in: winnerIds } },
+          select: { id: true, name: true, alias: true },
+        })
+      : [];
+  const winnerMap = new Map(winnerPlayers.map((p) => [p.id, p]));
+
+  const rw = raffle.winnerId ? winnerMap.get(raffle.winnerId) : null;
+  const resolvedRaffleWinner = rw?.name?.trim() || rw?.alias || raffle.winnerAlias;
+
   const prizes = raffle.prizes && raffle.prizes.length > 0
-    ? raffle.prizes
+    ? raffle.prizes.map((p) => {
+        const pw = p.winnerId ? winnerMap.get(p.winnerId) : null;
+        return {
+          ...p,
+          winnerAlias: pw?.name?.trim() || pw?.alias || p.winnerAlias,
+        };
+      })
     : [
         {
           id: "legacy",
@@ -45,15 +69,15 @@ export default async function RaffleLivePage({
           image: raffle.prizeImage,
           order: 1,
           winnerId: raffle.winnerId,
-          winnerAlias: raffle.winnerAlias,
+          winnerAlias: resolvedRaffleWinner,
           winnerImage: raffle.winnerImage,
         },
       ];
 
   const participants = raffle.entries.map((e) => ({
     id: e.player.id,
-    alias: e.player.alias || e.player.name || "Jugador",
-    name: e.player.name,
+    alias: e.player.name?.trim() || e.player.alias || "Jugador",
+    name: e.player.name?.trim() || null,
     image: e.player.image,
   }));
 
@@ -69,7 +93,7 @@ export default async function RaffleLivePage({
           prizeImage: raffle.prizeImage,
           status: raffle.status,
           winnerId: raffle.winnerId,
-          winnerAlias: raffle.winnerAlias,
+          winnerAlias: resolvedRaffleWinner,
           winnerImage: raffle.winnerImage,
           prizes: prizes as any,
         }}

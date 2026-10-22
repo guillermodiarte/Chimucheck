@@ -61,6 +61,21 @@ export default function RegisterPage() {
         <form action={action} onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="name" className="text-gray-300">Nombre Completo</Label>
+              <Input
+                id="name"
+                name="name"
+                defaultValue={state?.payload?.name as string}
+                required
+                className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 ${state?.errors?.name ? "border-red-500" : ""}`}
+                placeholder="Ej: Juan Pérez"
+              />
+              {state?.errors?.name && (
+                <p className="text-sm text-red-500">{state.errors.name[0]}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="alias" className="text-gray-300">Alias (Usuario)</Label>
               <Input
                 id="alias"

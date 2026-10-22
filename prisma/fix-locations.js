@@ -353,11 +353,14 @@ async function fixLocations() {
     }
 
     console.log("------------------------------------------------------");
-    console.log(`✅ Finalizado con éxito:`);
+    console.log(`✅ Finalizado con éxito (ubicaciones):`);
     console.log(`   - Actualizados con match: ${updatedCount}`);
     console.log(`   - Ya correctos o sin cambios: ${alreadyValidCount}`);
     console.log(`   - Sin datos de ubicación: ${emptyCount}`);
     console.log("======================================================");
+
+    // Sincronizar nombres completos de ganadores de sorteos
+    await fixRaffleWinners(prisma);
   } catch (err) {
     console.error("[fix-locations] Error durante la ejecución:", err);
   } finally {
@@ -365,8 +368,68 @@ async function fixLocations() {
   }
 }
 
+async function fixRaffleWinners(prisma) {
+  try {
+    console.log("======================================================");
+    console.log("🎁 Sincronizando nombres completos de ganadores de sorteos...");
+    const raffles = await prisma.raffle.findMany({
+      where: { winnerId: { not: null } },
+      select: { id: true, title: true, winnerId: true, winnerAlias: true },
+    });
+
+    let raffleUpdated = 0;
+    for (const r of raffles) {
+      if (!r.winnerId) continue;
+      const player = await prisma.player.findUnique({
+        where: { id: r.winnerId },
+        select: { name: true, alias: true },
+      });
+      if (player) {
+        const fullName = player.name?.trim() || player.alias;
+        if (fullName && r.winnerAlias !== fullName) {
+          await prisma.raffle.update({
+            where: { id: r.id },
+            data: { winnerAlias: fullName },
+          });
+          console.log(`✔ Sorteo "${r.title}": "${r.winnerAlias}" ➡️ "${fullName}"`);
+          raffleUpdated++;
+        }
+      }
+    }
+
+    const prizes = await prisma.rafflePrize.findMany({
+      where: { winnerId: { not: null } },
+      select: { id: true, title: true, winnerId: true, winnerAlias: true },
+    });
+
+    let prizesUpdated = 0;
+    for (const p of prizes) {
+      if (!p.winnerId) continue;
+      const player = await prisma.player.findUnique({
+        where: { id: p.winnerId },
+        select: { name: true, alias: true },
+      });
+      if (player) {
+        const fullName = player.name?.trim() || player.alias;
+        if (fullName && p.winnerAlias !== fullName) {
+          await prisma.rafflePrize.update({
+            where: { id: p.id },
+            data: { winnerAlias: fullName },
+          });
+          console.log(`✔ Premio "${p.title}": "${p.winnerAlias}" ➡️ "${fullName}"`);
+          prizesUpdated++;
+        }
+      }
+    }
+    console.log(`✅ Sorteos actualizados: ${raffleUpdated}, Premios actualizados: ${prizesUpdated}`);
+    console.log("======================================================");
+  } catch (err) {
+    console.error("[fix-raffle-winners] Error:", err);
+  }
+}
+
 if (require.main === module) {
   fixLocations();
 }
 
-module.exports = { fixLocations, matchProvince, matchCity };
+module.exports = { fixLocations, fixRaffleWinners, matchProvince, matchCity };

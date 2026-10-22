@@ -13,6 +13,7 @@ const rawLocations = locationsData as Record<string, string[]>;
 const ALL_PROVINCES = Object.keys(rawLocations);
 
 const RegisterSchema = z.object({
+  name: z.string().min(2, "El nombre completo es requerido"),
   alias: z.string().min(2, "El alias es requerido"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Mínimo 6 caracteres"),
@@ -83,10 +84,12 @@ export async function logoutPlayer() {
 }
 
 export async function registerPlayer(prevState: any, formData: FormData) {
+  const rawName = (formData.get("name") as string || "").trim();
   const rawProvince = (formData.get("province") as string || "").trim();
   const rawCity = (formData.get("city") as string || "").trim();
 
   const validatedFields = RegisterSchema.safeParse({
+    name: rawName,
     alias: formData.get("alias"),
     email: formData.get("email"),
     password: formData.get("password"),
@@ -101,6 +104,7 @@ export async function registerPlayer(prevState: any, formData: FormData) {
       message: "Por favor revisa los campos requeridos",
       errors: validatedFields.error.flatten().fieldErrors,
       payload: {
+        name: rawName,
         alias: formData.get("alias"),
         email: formData.get("email"),
         phone: formData.get("phone"),
@@ -110,7 +114,7 @@ export async function registerPlayer(prevState: any, formData: FormData) {
     };
   }
 
-  const { alias, email, password, phone, province, city } = validatedFields.data;
+  const { name, alias, email, password, phone, province, city } = validatedFields.data;
 
   try {
     const existingEmail = await db.player.findUnique({ where: { email } });
@@ -119,21 +123,21 @@ export async function registerPlayer(prevState: any, formData: FormData) {
         return {
           success: false,
           message: "Tu solicitud de registro está pendiente de aprobación por un administrador.",
-          payload: { alias, email, phone, province, city }
+          payload: { name, alias, email, phone, province, city }
         };
       }
       if (existingEmail.registrationStatus === "REJECTED") {
         return {
           success: false,
           message: "Tu solicitud de registro ha sido rechazada.",
-          payload: { alias, email, phone, province, city }
+          payload: { name, alias, email, phone, province, city }
         };
       }
 
       return {
         success: false,
         message: "El email ya está registrado.",
-        payload: { alias, email, phone, province, city }
+        payload: { name, alias, email, phone, province, city }
       };
     }
 
@@ -142,7 +146,7 @@ export async function registerPlayer(prevState: any, formData: FormData) {
       return {
         success: false,
         message: "El alias ya está en uso.",
-        payload: { alias, email, phone, province, city }
+        payload: { name, alias, email, phone, province, city }
       };
     }
 
@@ -151,6 +155,7 @@ export async function registerPlayer(prevState: any, formData: FormData) {
     // Registro siempre auto-aprobado (opción de restricción oculta)
     const newPlayer = await db.player.create({
       data: {
+        name,
         alias,
         email,
         password: hashedPassword,

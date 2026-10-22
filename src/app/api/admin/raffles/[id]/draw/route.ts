@@ -65,14 +65,14 @@ export async function POST(
   const winningIndex = randomInt(0, eligibleEntries.length);
   const winningEntry = eligibleEntries[winningIndex];
   const winnerPlayer = winningEntry.player;
-  const winnerAlias = winnerPlayer.alias || winnerPlayer.name || "Jugador";
+  const winnerDisplayName = winnerPlayer.name || winnerPlayer.alias || "Jugador";
   const winnerImage = winnerPlayer.image || null;
 
   const updatedRaffle = await db.raffle.update({
     where: { id: raffleId },
     data: {
       winnerId: winnerPlayer.id,
-      winnerAlias,
+      winnerAlias: winnerDisplayName,
       winnerImage,
       drawnAt: new Date(),
       status: "FINISHED",
@@ -91,7 +91,8 @@ export async function POST(
           raffleTitle: raffle.title,
           prize: raffle.prize,
           playerId: winnerPlayer.id,
-          alias: winnerAlias,
+          name: winnerDisplayName,
+          alias: winnerPlayer.alias,
         }),
       },
     });
@@ -101,8 +102,8 @@ export async function POST(
     success: true,
     winner: {
       id: winnerPlayer.id,
-      alias: winnerAlias,
-      name: winnerPlayer.name,
+      alias: winnerDisplayName,
+      name: winnerPlayer.name || winnerDisplayName,
       image: winnerImage,
       email: winnerPlayer.email,
       winningIndex,

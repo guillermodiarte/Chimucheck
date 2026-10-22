@@ -544,7 +544,7 @@ export async function drawWinner(raffleId: string) {
     const winningEntry = eligibleEntries[winningIndex];
     const winnerPlayer = winningEntry.player;
 
-    const winnerAlias = winnerPlayer.alias || winnerPlayer.name || "Jugador";
+    const winnerAlias = winnerPlayer.name || winnerPlayer.alias || "Jugador";
     const winnerImage = winnerPlayer.image || null;
 
     // Update raffle
@@ -664,7 +664,7 @@ export async function drawPrizeWinner(
     const winningEntry = eligibleEntries[winningIndex];
     const winnerPlayer = winningEntry.player;
 
-    const winnerAlias = winnerPlayer.alias || winnerPlayer.name || "Jugador";
+    const winnerAlias = winnerPlayer.name || winnerPlayer.alias || "Jugador";
     const winnerImage = winnerPlayer.image || null;
 
     // Update RafflePrize record
@@ -873,9 +873,35 @@ export async function getRaffles() {
       },
     });
 
+    const winnerIds = Array.from(
+      new Set(
+        raffles
+          .flatMap((r) => [r.winnerId, ...(r.prizes?.map((p) => p.winnerId) || [])])
+          .filter(Boolean) as string[]
+      )
+    );
+
+    const winnerPlayers =
+      winnerIds.length > 0
+        ? await db.player.findMany({
+            where: { id: { in: winnerIds } },
+            select: { id: true, name: true, alias: true },
+          })
+        : [];
+    const winnerMap = new Map(winnerPlayers.map((p) => [p.id, p]));
+
     return raffles.map((r) => {
+      const rw = r.winnerId ? winnerMap.get(r.winnerId) : null;
+      const resolvedRaffleWinner = rw?.name?.trim() || rw?.alias || r.winnerAlias;
+
       const prizes = r.prizes && r.prizes.length > 0
-        ? r.prizes
+        ? r.prizes.map((p) => {
+            const pw = p.winnerId ? winnerMap.get(p.winnerId) : null;
+            return {
+              ...p,
+              winnerAlias: pw?.name?.trim() || pw?.alias || p.winnerAlias,
+            };
+          })
         : [
             {
               id: "legacy",
@@ -885,13 +911,14 @@ export async function getRaffles() {
               image: r.prizeImage,
               order: 1,
               winnerId: r.winnerId,
-              winnerAlias: r.winnerAlias,
+              winnerAlias: resolvedRaffleWinner,
               winnerImage: r.winnerImage,
               drawnAt: null,
             },
           ];
       return {
         ...r,
+        winnerAlias: resolvedRaffleWinner,
         prizes,
       };
     });
@@ -930,8 +957,32 @@ export async function getRaffleWithParticipants(id: string) {
 
     if (!raffle) return null;
 
+    const winnerIds = Array.from(
+      new Set(
+        [raffle.winnerId, ...(raffle.prizes?.map((p) => p.winnerId) || [])].filter(Boolean) as string[]
+      )
+    );
+
+    const winnerPlayers =
+      winnerIds.length > 0
+        ? await db.player.findMany({
+            where: { id: { in: winnerIds } },
+            select: { id: true, name: true, alias: true },
+          })
+        : [];
+    const winnerMap = new Map(winnerPlayers.map((p) => [p.id, p]));
+
+    const rw = raffle.winnerId ? winnerMap.get(raffle.winnerId) : null;
+    const resolvedRaffleWinner = rw?.name?.trim() || rw?.alias || raffle.winnerAlias;
+
     const prizes = raffle.prizes && raffle.prizes.length > 0
-      ? raffle.prizes
+      ? raffle.prizes.map((p) => {
+          const pw = p.winnerId ? winnerMap.get(p.winnerId) : null;
+          return {
+            ...p,
+            winnerAlias: pw?.name?.trim() || pw?.alias || p.winnerAlias,
+          };
+        })
       : [
           {
             id: "legacy",
@@ -941,7 +992,7 @@ export async function getRaffleWithParticipants(id: string) {
             image: raffle.prizeImage,
             order: 1,
             winnerId: raffle.winnerId,
-            winnerAlias: raffle.winnerAlias,
+            winnerAlias: resolvedRaffleWinner,
             winnerImage: raffle.winnerImage,
             drawnAt: null,
           },
@@ -949,6 +1000,7 @@ export async function getRaffleWithParticipants(id: string) {
 
     return {
       ...raffle,
+      winnerAlias: resolvedRaffleWinner,
       prizes,
     };
   } catch (error) {
@@ -983,9 +1035,35 @@ export async function getPlayerRaffles(playerId?: string) {
       },
     });
 
+    const winnerIds = Array.from(
+      new Set(
+        raffles
+          .flatMap((r) => [r.winnerId, ...(r.prizes?.map((p) => p.winnerId) || [])])
+          .filter(Boolean) as string[]
+      )
+    );
+
+    const winnerPlayers =
+      winnerIds.length > 0
+        ? await db.player.findMany({
+            where: { id: { in: winnerIds } },
+            select: { id: true, name: true, alias: true },
+          })
+        : [];
+    const winnerMap = new Map(winnerPlayers.map((p) => [p.id, p]));
+
     return raffles.map((r) => {
+      const rw = r.winnerId ? winnerMap.get(r.winnerId) : null;
+      const resolvedRaffleWinner = rw?.name?.trim() || rw?.alias || r.winnerAlias;
+
       const prizes = r.prizes && r.prizes.length > 0
-        ? r.prizes
+        ? r.prizes.map((p) => {
+            const pw = p.winnerId ? winnerMap.get(p.winnerId) : null;
+            return {
+              ...p,
+              winnerAlias: pw?.name?.trim() || pw?.alias || p.winnerAlias,
+            };
+          })
         : [
             {
               id: "legacy",
@@ -995,7 +1073,7 @@ export async function getPlayerRaffles(playerId?: string) {
               image: r.prizeImage,
               order: 1,
               winnerId: r.winnerId,
-              winnerAlias: r.winnerAlias,
+              winnerAlias: resolvedRaffleWinner,
               winnerImage: r.winnerImage,
               drawnAt: null,
             },
@@ -1003,6 +1081,7 @@ export async function getPlayerRaffles(playerId?: string) {
 
       return {
         ...r,
+        winnerAlias: resolvedRaffleWinner,
         prizes,
         isEntered: playerId ? (r.entries && r.entries.length > 0) : false,
         myEntryDate: playerId && r.entries?.[0]?.enteredAt ? r.entries[0].enteredAt : null,
@@ -1196,7 +1275,7 @@ export async function getRecentRaffleWinners(customDays?: number): Promise<Recen
         if (!existing || new Date(existing.wonAt).getTime() < wonTime) {
           playerLatestWin.set(p.winnerId, {
             playerId: p.winnerId,
-            alias: player?.alias || p.winnerAlias || player?.name || "Jugador",
+            alias: player?.name || player?.alias || p.winnerAlias || "Jugador",
             name: player?.name || null,
             image: player?.image || p.winnerImage || null,
             email: player?.email || null,
@@ -1226,7 +1305,7 @@ export async function getRecentRaffleWinners(customDays?: number): Promise<Recen
         if (!existing || new Date(existing.wonAt).getTime() < wonTime) {
           playerLatestWin.set(r.winnerId, {
             playerId: r.winnerId,
-            alias: player?.alias || r.winnerAlias || player?.name || "Jugador",
+            alias: player?.name || player?.alias || r.winnerAlias || "Jugador",
             name: player?.name || null,
             image: player?.image || r.winnerImage || null,
             email: player?.email || null,

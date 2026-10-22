@@ -118,6 +118,21 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
             <form action={handleSubmit} className="space-y-4 pt-1">
             <div className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="reg-name" className="text-gray-300 text-sm">Nombre Completo</Label>
+                <Input
+                  id="reg-name"
+                  name="name"
+                  defaultValue={state?.payload?.name as string}
+                  required
+                  className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 h-10 ${state?.errors?.name ? "border-red-500" : ""}`}
+                  placeholder="Ej: Juan Pérez"
+                />
+                {state?.errors?.name && (
+                  <p className="text-xs text-red-500">{state.errors.name[0]}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="reg-alias" className="text-gray-300 text-sm">Alias (Usuario)</Label>
                 <Input
                   id="reg-alias"

@@ -350,7 +350,8 @@ export function LiveDrawScreen({
 
     const targetWinner = {
       id: result.winner.id,
-      alias: result.winner.alias,
+      alias: result.winner.name || result.winner.alias || "Jugador",
+      name: result.winner.name,
       image: result.winner.image,
     };
 
@@ -744,12 +745,13 @@ export function LiveDrawScreen({
                       />
                     ) : (
                       <div className="w-24 h-24 rounded-full bg-yellow-500/30 text-yellow-400 flex items-center justify-center text-4xl font-black border-4 border-yellow-400 shadow-xl">
-                        {(eligibleParticipants[activeSlotIndex].alias || "J")[0].toUpperCase()}
+                        {((eligibleParticipants[activeSlotIndex].name || eligibleParticipants[activeSlotIndex].alias || "J")[0]).toUpperCase()}
                       </div>
                     )}
                     <h2 className="text-3xl md:text-4xl font-black text-white mt-4 tracking-wide text-center truncate max-w-full drop-shadow">
-                      {eligibleParticipants[activeSlotIndex].alias ||
-                        eligibleParticipants[activeSlotIndex].name}
+                      {eligibleParticipants[activeSlotIndex].name ||
+                        eligibleParticipants[activeSlotIndex].alias ||
+                        "Jugador"}
                     </h2>
                   </motion.div>
                 )}
@@ -778,12 +780,12 @@ export function LiveDrawScreen({
                 {lastDrawnWinner.image ? (
                   <img
                     src={lastDrawnWinner.image}
-                    alt={lastDrawnWinner.alias}
+                    alt={(lastDrawnWinner as any).name || lastDrawnWinner.alias}
                     className="relative w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border-8 border-yellow-400 shadow-[0_0_60px_rgba(234,179,8,0.8)]"
                   />
                 ) : (
                   <div className="relative w-36 h-36 md:w-44 md:h-44 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 text-black flex items-center justify-center text-6xl font-black border-8 border-yellow-400 shadow-[0_0_60px_rgba(234,179,8,0.8)]">
-                    {(lastDrawnWinner.alias || "J")[0].toUpperCase()}
+                    {(((lastDrawnWinner as any).name || lastDrawnWinner.alias || "J")[0]).toUpperCase()}
                   </div>
                 )}
               </div>
@@ -791,7 +793,7 @@ export function LiveDrawScreen({
               {/* Title & Winner Name */}
               <div className="space-y-2">
                 <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-300 drop-shadow-[0_5px_25px_rgba(234,179,8,0.6)]">
-                  {lastDrawnWinner.alias}
+                  {(lastDrawnWinner as any).name || lastDrawnWinner.alias}
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-200 font-bold mt-2">
                   ¡Se lleva: <span className="text-yellow-400 underline">{currentPrize.title}</span>!
