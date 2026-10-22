@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "@/app/actions/player-profile";
+import { LocationSelector } from "@/components/ui/LocationSelector";
 import { Loader2, Save, User, Phone, Camera, Upload, Shield, Mail, Calendar, Trophy, Coins, Gamepad2, ChevronRight, ChevronLeft, Pencil, Globe, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,6 +35,7 @@ const profileSchema = z.object({
   phone: z.string().optional(),
   country: z.string().optional(),
   province: z.string().optional(),
+  city: z.string().optional(),
   password: z.string().optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
@@ -193,8 +195,9 @@ export function ProfileForm({
       email: player.email || "",
       name: player.name || "",
       phone: player.phone || "",
-      country: player.country || "",
+      country: player.country || "Argentina",
       province: player.province || "",
+      city: player.city || "",
       password: "",
       confirmPassword: "",
     },
@@ -253,6 +256,7 @@ export function ProfileForm({
         phone: values.phone,
         country: values.country,
         province: values.province,
+        city: values.city,
         password: values.password || undefined,
         image: imageUrl,
       });
@@ -737,26 +741,65 @@ export function ProfileForm({
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="province"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-zinc-400 text-xs font-medium flex items-center gap-1.5">
-                              <MapPin size={12} /> Prov / Estado
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                disabled={!isEditing}
-                                className="bg-black/40 border-white/10 text-white h-10 px-3 focus:border-white/20 transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                                placeholder="Ej: Formosa"
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-400 text-[10px]" />
-                          </FormItem>
-                        )}
-                      />
+                      {(!form.watch("country") || form.watch("country") === "Argentina") ? (
+                        <div className="col-span-1 md:col-span-2">
+                          <LocationSelector
+                            initialProvince={form.watch("province") || ""}
+                            initialCity={form.watch("city") || ""}
+                            onProvinceChange={(prov) => {
+                              form.setValue("province", prov, { shouldDirty: true });
+                            }}
+                            onCityChange={(city) => {
+                              form.setValue("city", city, { shouldDirty: true });
+                            }}
+                            disabled={!isEditing}
+                            layout="grid"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name="province"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-zinc-400 text-xs font-medium flex items-center gap-1.5">
+                                  <MapPin size={12} /> Prov / Estado
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    disabled={!isEditing}
+                                    className="bg-black/40 border-white/10 text-white h-10 px-3 focus:border-white/20 transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    placeholder="Estado / Región"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-red-400 text-[10px]" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="city"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-zinc-400 text-xs font-medium flex items-center gap-1.5">
+                                  <MapPin size={12} /> Localidad / Ciudad
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    disabled={!isEditing}
+                                    className="bg-black/40 border-white/10 text-white h-10 px-3 focus:border-white/20 transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    placeholder="Ciudad"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-red-400 text-[10px]" />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
                     </div>
 
                   </form>

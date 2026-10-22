@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import { LocationSelector } from "@/components/ui/LocationSelector";
 
 export default function RegisterPage() {
   // Enforcing fresh build for Confirm Password field
@@ -101,6 +102,14 @@ export default function RegisterPage() {
                 placeholder="+54 9 ..."
               />
             </div>
+
+            <LocationSelector
+              initialProvince={(state?.payload?.province as string) || ""}
+              initialCity={(state?.payload?.city as string) || ""}
+              provinceError={state?.errors?.province?.[0]}
+              cityError={state?.errors?.city?.[0]}
+              required
+            />
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-300">Contraseña</Label>

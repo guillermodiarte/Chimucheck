@@ -14,6 +14,7 @@ export async function updateProfile(data: {
   phone?: string;
   country?: string;
   province?: string;
+  city?: string;
   password?: string;
   image?: string;
 }) {
@@ -60,6 +61,7 @@ export async function updateProfile(data: {
       phone: data.phone,
       country: data.country || null,
       province: data.province || null,
+      city: data.city || null,
     };
 
     if (data.email) {

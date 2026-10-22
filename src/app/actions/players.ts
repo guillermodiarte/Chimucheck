@@ -54,6 +54,8 @@ const PlayerSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().optional(),
   phone: z.string().optional(),
+  province: z.string().optional(),
+  city: z.string().optional(),
   chimucoins: z.coerce.number().min(0, "No puede ser negativo"),
   active: z.boolean().optional(),
   image: z.string().optional().or(z.literal("")),
@@ -66,6 +68,8 @@ export async function updatePlayer(id: string, prevState: any, formData: FormDat
     email: formData.get("email"),
     password: formData.get("password") || undefined, // undefined to ignore if empty
     phone: formData.get("phone"),
+    province: formData.get("province") || undefined,
+    city: formData.get("city") || undefined,
     chimucoins: formData.get("chimucoins"),
     active: formData.get("active") === "on",
     image: formData.get("image"),
@@ -78,7 +82,7 @@ export async function updatePlayer(id: string, prevState: any, formData: FormDat
     };
   }
 
-  const { alias, name, email, password, phone, chimucoins, active, image } = validatedFields.data;
+  const { alias, name, email, password, phone, province, city, chimucoins, active, image } = validatedFields.data;
 
   try {
     // Check for unique email/alias (excluding current player)
@@ -107,6 +111,8 @@ export async function updatePlayer(id: string, prevState: any, formData: FormDat
       name,
       email,
       phone,
+      province: province || null,
+      city: city || null,
       chimucoins,
       active,
       image: image || null,

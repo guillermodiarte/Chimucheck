@@ -15,6 +15,7 @@ import { CATEGORIES, calculateRank, RANK_TIERS, MMR_CONSTANTS } from "@/lib/mmr"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { LocationSelector } from "@/components/ui/LocationSelector";
 
 // Dynamic MMR categories for the schema
 const categorySchemaFields = CATEGORIES.reduce((acc, cat) => {
@@ -27,6 +28,8 @@ export const playerSchema = z.object({
   name: z.string().optional(),
   email: z.string().email("Email inválido"),
   phone: z.string().optional(),
+  province: z.string().optional(),
+  city: z.string().optional(),
   chimucoins: z.coerce.number().min(0, "Mínimo 0").default(0),
   password: z.string().optional(),
   active: z.boolean().default(true),
@@ -79,6 +82,8 @@ interface PlayerFormProps {
     name: string | null;
     email: string;
     phone: string | null;
+    province?: string | null;
+    city?: string | null;
     image: string | null;
     chimucoins: number;
     active: boolean;
@@ -106,6 +111,8 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
     name: initialData.name || "",
     email: initialData.email || "",
     phone: initialData.phone || "",
+    province: (initialData as any).province || "",
+    city: (initialData as any).city || "",
     chimucoins: initialData.chimucoins || 0,
     password: "",
     active: initialData.active ?? true,
@@ -165,6 +172,8 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
       formData.append("name", values.name || "");
       formData.append("email", values.email);
       formData.append("phone", values.phone || "");
+      formData.append("province", values.province || "");
+      formData.append("city", values.city || "");
       formData.append("chimucoins", values.chimucoins.toString());
       if (values.password) formData.append("password", values.password);
       formData.append("active", values.active ? "on" : "off");
@@ -275,6 +284,17 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem><FormLabel className="text-white">Nueva Contraseña</FormLabel><FormControl><PasswordInput {...field} placeholder="Dejar en blanco para no cambiar" className="bg-gray-800 border-gray-700 text-white" /></FormControl><FormMessage /></FormItem>
               )} />
+            </div>
+
+            {/* Province & City */}
+            <div className="pt-2 border-t border-gray-800">
+              <LocationSelector
+                initialProvince={form.watch("province") || ""}
+                initialCity={form.watch("city") || ""}
+                onProvinceChange={(prov) => form.setValue("province", prov, { shouldDirty: true })}
+                onCityChange={(city) => form.setValue("city", city, { shouldDirty: true })}
+                layout="grid"
+              />
             </div>
 
             <FormField control={form.control} name="active" render={({ field }) => (

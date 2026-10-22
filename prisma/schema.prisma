@@ -84,6 +84,7 @@ model Player {
   phone              String?
   country            String?
   province           String?
+  city               String?
   chimucoins         Int                      @default(0)
   active             Boolean                  @default(true)
   registrationStatus String                   @default("APPROVED") // PENDING, APPROVED, REJECTED

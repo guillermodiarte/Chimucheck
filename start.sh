@@ -55,6 +55,12 @@ if [ -f "prisma/fix-games.js" ]; then
     node prisma/fix-games.js
 fi
 
+# Normalize and match provinces & localities for registered players
+echo "Fixing player locations (fuzzy matching)..."
+if [ -f "prisma/fix-locations.js" ]; then
+    node prisma/fix-locations.js
+fi
+
 # Run seed
 if [ -f "prisma/seed.js" ]; then
     echo "Running seed..."

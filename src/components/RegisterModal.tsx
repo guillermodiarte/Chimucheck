@@ -10,6 +10,7 @@ import { Loader2, X, Gamepad2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import { LocationSelector } from "@/components/ui/LocationSelector";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -78,9 +79,9 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
     >
-      <div className="w-full max-w-sm mx-auto bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl shadow-primary/5 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
+      <div className="w-full max-w-md mx-auto bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl shadow-primary/5 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-4 text-center">
+        <div className="relative px-6 pt-6 pb-3 text-center flex-shrink-0">
           <button
             onClick={onClose}
             className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors cursor-pointer"
@@ -112,7 +113,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
             </Button>
           </div>
         ) : (
-          <div className="px-6 pb-6 space-y-3">
+          <div className="px-6 pb-6 space-y-3 overflow-y-auto flex-1">
             <SocialAuthButtons mode="register" callbackUrl={targetCallbackUrl} />
             <form action={handleSubmit} className="space-y-4 pt-1">
             <div className="space-y-4">
@@ -158,6 +159,14 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                   placeholder="+54 9 ..."
                 />
               </div>
+
+              <LocationSelector
+                initialProvince={(state?.payload?.province as string) || ""}
+                initialCity={(state?.payload?.city as string) || ""}
+                provinceError={state?.errors?.province?.[0]}
+                cityError={state?.errors?.city?.[0]}
+                required
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="reg-password" className="text-gray-300 text-sm">Contraseña</Label>

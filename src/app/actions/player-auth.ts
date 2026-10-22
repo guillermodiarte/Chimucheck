@@ -7,11 +7,32 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 
+import locationsData from "@/data/provincias_localidades.json";
+
+const rawLocations = locationsData as Record<string, string[]>;
+const ALL_PROVINCES = Object.keys(rawLocations);
+
 const RegisterSchema = z.object({
   alias: z.string().min(2, "El alias es requerido"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Mínimo 6 caracteres"),
   phone: z.string().optional(),
+  province: z.string().min(1, "Debes seleccionar una provincia").refine(
+    (prov) => ALL_PROVINCES.includes(prov),
+    { message: "La provincia seleccionada no es válida" }
+  ),
+  city: z.string().min(1, "Debes seleccionar una localidad"),
+}).superRefine((data, ctx) => {
+  if (data.province && data.city) {
+    const validCities = rawLocations[data.province] || [];
+    if (!validCities.includes(data.city)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `La localidad '${data.city}' no pertenece a ${data.province}`,
+        path: ["city"],
+      });
+    }
+  }
 });
 
 export async function loginPlayer(prevState: string | undefined, formData: FormData) {
@@ -62,27 +83,34 @@ export async function logoutPlayer() {
 }
 
 export async function registerPlayer(prevState: any, formData: FormData) {
+  const rawProvince = (formData.get("province") as string || "").trim();
+  const rawCity = (formData.get("city") as string || "").trim();
+
   const validatedFields = RegisterSchema.safeParse({
     alias: formData.get("alias"),
     email: formData.get("email"),
     password: formData.get("password"),
     phone: formData.get("phone"),
+    province: rawProvince,
+    city: rawCity,
   });
 
   if (!validatedFields.success) {
     return {
       success: false,
-      message: "Campos inválidos",
+      message: "Por favor revisa los campos requeridos",
       errors: validatedFields.error.flatten().fieldErrors,
       payload: {
         alias: formData.get("alias"),
         email: formData.get("email"),
         phone: formData.get("phone"),
+        province: rawProvince,
+        city: rawCity,
       }
     };
   }
 
-  const { alias, email, password, phone } = validatedFields.data;
+  const { alias, email, password, phone, province, city } = validatedFields.data;
 
   try {
     const existingEmail = await db.player.findUnique({ where: { email } });
@@ -91,21 +119,21 @@ export async function registerPlayer(prevState: any, formData: FormData) {
         return {
           success: false,
           message: "Tu solicitud de registro está pendiente de aprobación por un administrador.",
-          payload: { alias, email, phone }
+          payload: { alias, email, phone, province, city }
         };
       }
       if (existingEmail.registrationStatus === "REJECTED") {
         return {
           success: false,
           message: "Tu solicitud de registro ha sido rechazada.",
-          payload: { alias, email, phone }
+          payload: { alias, email, phone, province, city }
         };
       }
 
       return {
         success: false,
         message: "El email ya está registrado.",
-        payload: { alias, email, phone }
+        payload: { alias, email, phone, province, city }
       };
     }
 
@@ -114,7 +142,7 @@ export async function registerPlayer(prevState: any, formData: FormData) {
       return {
         success: false,
         message: "El alias ya está en uso.",
-        payload: { alias, email, phone }
+        payload: { alias, email, phone, province, city }
       };
     }
 
@@ -127,6 +155,9 @@ export async function registerPlayer(prevState: any, formData: FormData) {
         email,
         password: hashedPassword,
         phone,
+        country: "Argentina",
+        province,
+        city,
         active: true,
         registrationStatus: "APPROVED",
       },
