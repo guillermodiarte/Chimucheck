@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useActionState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -23,29 +24,40 @@ const initialState: CompleteProfileState = { success: false };
 
 export default function OAuthCompleteProfileModal() {
   const { data: session, update: updateSession } = useSession();
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(completeOAuthProfile, initialState);
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const hasCompletedRef = useRef(false);
 
   // Watch session to show modal when needed
   useEffect(() => {
     const needsCompletion = (session?.user as any)?.needsProfileCompletion;
-    if (needsCompletion && !done) {
+    if (needsCompletion && !done && !hasCompletedRef.current) {
       setOpen(true);
+    } else if (!needsCompletion) {
+      setOpen(false);
     }
   }, [session, done]);
 
-  // Handle action result
+  // Handle action result (Guaranteed to fire ONLY ONCE)
   useEffect(() => {
-    if (state.success) {
+    if (state.success && !hasCompletedRef.current) {
+      hasCompletedRef.current = true;
       setDone(true);
+      toast.success("¡Perfil completado! Bienvenido a ChimuCheck 🎮", {
+        id: "oauth-profile-complete",
+      });
       // Refresh session to clear needsProfileCompletion flag
-      updateSession({ needsProfileCompletion: false });
-      toast.success("¡Perfil completado! Bienvenido a ChimuCheck 🎮");
-      setTimeout(() => setOpen(false), 1500);
+      updateSession({ needsProfileCompletion: false })
+        .catch(() => {})
+        .finally(() => {
+          router.refresh();
+        });
+      setTimeout(() => setOpen(false), 1200);
     }
-  }, [state.success, updateSession]);
+  }, [state.success]);
 
   if (!open) return null;
 
