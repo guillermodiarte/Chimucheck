@@ -67,7 +67,14 @@ export default async function AdminPlayersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-bold text-white">{player.alias || "-"}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white">{player.alias || "-"}</span>
+                        {player.needsProfileCompletion && (
+                          <span className="text-[10px] bg-orange-500/20 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded font-medium" title="Perfil pendiente de completar">
+                            ⚠️ Incompleto
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-gray-500">{player.name}</span>
                     </div>
                   </TableCell>

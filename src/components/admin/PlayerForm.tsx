@@ -13,7 +13,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 import { CATEGORIES, calculateRank, RANK_TIERS, MMR_CONSTANTS } from "@/lib/mmr";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, MapPin, Shield, Coins, BarChart2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LocationSelector } from "@/components/ui/LocationSelector";
 
@@ -28,11 +28,13 @@ export const playerSchema = z.object({
   name: z.string().optional(),
   email: z.string().email("Email inválido"),
   phone: z.string().optional(),
+  country: z.string().optional(),
   province: z.string().optional(),
   city: z.string().optional(),
   chimucoins: z.coerce.number().min(0, "Mínimo 0").default(0),
   password: z.string().optional(),
   active: z.boolean().default(true),
+  needsProfileCompletion: z.boolean().default(false),
   matchesPlayed: z.coerce.number().min(0).default(0),
   winsFirst: z.coerce.number().min(0).default(0),
   winsSecond: z.coerce.number().min(0).default(0),
@@ -82,11 +84,13 @@ interface PlayerFormProps {
     name: string | null;
     email: string;
     phone: string | null;
+    country?: string | null;
     province?: string | null;
     city?: string | null;
     image: string | null;
     chimucoins: number;
     active: boolean;
+    needsProfileCompletion: boolean;
     stats?: {
       matchesPlayed: number;
       winsFirst: number;
@@ -111,11 +115,13 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
     name: initialData.name || "",
     email: initialData.email || "",
     phone: initialData.phone || "",
+    country: (initialData as any).country || "",
     province: (initialData as any).province || "",
     city: (initialData as any).city || "",
     chimucoins: initialData.chimucoins || 0,
     password: "",
     active: initialData.active ?? true,
+    needsProfileCompletion: initialData.needsProfileCompletion ?? false,
     matchesPlayed: initialData.stats?.matchesPlayed || 0,
     winsFirst: initialData.stats?.winsFirst || 0,
     winsSecond: initialData.stats?.winsSecond || 0,
@@ -172,11 +178,13 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
       formData.append("name", values.name || "");
       formData.append("email", values.email);
       formData.append("phone", values.phone || "");
+      formData.append("country", values.country || "");
       formData.append("province", values.province || "");
       formData.append("city", values.city || "");
       formData.append("chimucoins", values.chimucoins.toString());
       if (values.password) formData.append("password", values.password);
       formData.append("active", values.active ? "on" : "off");
+      formData.append("needsProfileCompletion", values.needsProfileCompletion ? "on" : "off");
 
       // Append Stats
       formData.append("matchesPlayed", values.matchesPlayed.toString());
@@ -264,50 +272,132 @@ export function PlayerForm({ initialData }: PlayerFormProps) {
               </div>
             </div>
 
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <FormField control={form.control} name="alias" render={({ field }) => (
-                <FormItem><FormLabel className="text-white">Alias</FormLabel><FormControl><Input {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel className="text-white">Nombre Real</FormLabel><FormControl><Input {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem><FormLabel className="text-white">Email</FormLabel><FormControl><Input {...field} type="email" className="bg-gray-800 border-gray-700 text-white" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel className="text-white">Teléfono</FormLabel><FormControl><Input {...field} className="bg-gray-800 border-gray-700 text-white" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="chimucoins" render={({ field }) => (
-                <FormItem><FormLabel className="text-yellow-500 font-bold">ChimuCoins Balance</FormLabel><FormControl><Input {...field} type="number" className="bg-gray-800 border-gray-700 text-white font-mono text-lg" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="password" render={({ field }) => (
-                <FormItem><FormLabel className="text-white">Nueva Contraseña</FormLabel><FormControl><PasswordInput {...field} placeholder="Dejar en blanco para no cambiar" className="bg-gray-800 border-gray-700 text-white" /></FormControl><FormMessage /></FormItem>
-              )} />
-            </div>
-
-            {/* Province & City */}
-            <div className="pt-2 border-t border-gray-800">
-              <LocationSelector
-                initialProvince={form.watch("province") || ""}
-                initialCity={form.watch("city") || ""}
-                onProvinceChange={(prov) => form.setValue("province", prov, { shouldDirty: true })}
-                onCityChange={(city) => form.setValue("city", city, { shouldDirty: true })}
-                layout="grid"
-              />
-            </div>
-
-            <FormField control={form.control} name="active" render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4 border border-gray-800 bg-gray-800/50 rounded-lg">
-                <FormControl>
-                  <input type="checkbox" checked={field.value} onChange={field.onChange} className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary cursor-pointer" />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-white cursor-pointer">Jugador Activo</FormLabel>
-                  <p className="text-xs text-gray-400">Si se desactiva, no podrá iniciar sesión en la app.</p>
+            {/* ─── DATOS PERSONALES ─── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-800">
+                <div className="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 </div>
-              </FormItem>
-            )} />
+                <h3 className="text-white font-bold text-sm uppercase tracking-wider">Datos Personales</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormField control={form.control} name="name" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 text-xs uppercase tracking-wide">Nombre Completo</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Ej: Juan Pérez" className="bg-gray-800 border-gray-700 text-white" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="alias" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 text-xs uppercase tracking-wide">Alias (usuario)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Ej: Slayer99" className="bg-gray-800 border-gray-700 text-white" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 text-xs uppercase tracking-wide">Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" className="bg-gray-800 border-gray-700 text-white" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="phone" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 text-xs uppercase tracking-wide">Teléfono</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="tel" placeholder="+54 9 ..." className="bg-gray-800 border-gray-700 text-white" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="country" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 text-xs uppercase tracking-wide">País</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Ej: Argentina" className="bg-gray-800 border-gray-700 text-white" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+
+              {/* Province & City */}
+              <div className="pt-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-3">Provincia y Localidad</p>
+                <LocationSelector
+                  initialProvince={form.watch("province") || ""}
+                  initialCity={form.watch("city") || ""}
+                  onProvinceChange={(prov) => form.setValue("province", prov, { shouldDirty: true })}
+                  onCityChange={(city) => form.setValue("city", city, { shouldDirty: true })}
+                  layout="grid"
+                />
+              </div>
+
+              {/* Password */}
+              <FormField control={form.control} name="password" render={({ field }) => (
+                <FormItem className="max-w-sm">
+                  <FormLabel className="text-gray-300 text-xs uppercase tracking-wide">Nueva Contraseña</FormLabel>
+                  <FormControl>
+                    <PasswordInput {...field} placeholder="Dejar en blanco para no cambiar" className="bg-gray-800 border-gray-700 text-white" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
+            {/* ─── ESTADO Y CUENTA ─── */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-800">
+                <div className="w-6 h-6 rounded-md bg-green-500/10 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                </div>
+                <h3 className="text-white font-bold text-sm uppercase tracking-wider">Estado de Cuenta</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FormField control={form.control} name="active" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4 border border-gray-800 bg-gray-800/50 rounded-lg">
+                    <FormControl>
+                      <input type="checkbox" checked={field.value} onChange={field.onChange} className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-secondary focus:ring-secondary cursor-pointer" />
+                    </FormControl>
+                    <div className="space-y-0.5 leading-none">
+                      <FormLabel className="text-white cursor-pointer font-bold">Jugador Activo</FormLabel>
+                      <p className="text-xs text-gray-400">Si se desactiva, no podrá iniciar sesión.</p>
+                    </div>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="needsProfileCompletion" render={({ field }) => (
+                  <FormItem className={`flex flex-row items-center space-x-3 space-y-0 p-4 border rounded-lg transition-colors ${
+                    field.value
+                      ? "border-orange-500/40 bg-orange-500/5"
+                      : "border-gray-800 bg-gray-800/50"
+                  }`}>
+                    <FormControl>
+                      <input type="checkbox" checked={field.value} onChange={field.onChange} className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-orange-500 focus:ring-orange-500 cursor-pointer" />
+                    </FormControl>
+                    <div className="space-y-0.5 leading-none">
+                      <FormLabel className={`cursor-pointer font-bold ${ field.value ? "text-orange-400" : "text-white" }`}>
+                        {field.value ? "⚠️ Perfil Incompleto" : "✅ Perfil Completo"}
+                      </FormLabel>
+                      <p className="text-xs text-gray-400">
+                        {field.value
+                          ? "El usuario verá el formulario de completar datos al ingresar."
+                          : "El usuario completó sus datos de registro."}
+                      </p>
+                    </div>
+                  </FormItem>
+                )} />
+              </div>
+            </div>
 
           </CardContent>
         </Card>
