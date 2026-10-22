@@ -78,9 +78,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               });
             }
 
+            // Mark existing OAuth users who haven't filled province/city
+            const missingData = !player.province || !player.city;
+            if (missingData && !player.needsProfileCompletion) {
+              await db.player.update({
+                where: { id: player.id },
+                data: { needsProfileCompletion: true },
+              });
+              player.needsProfileCompletion = true;
+            }
+
             user.id = player.id;
             (user as any).alias = player.alias;
             (user as any).image = player.image || user.image;
+            (user as any).needsProfileCompletion = player.needsProfileCompletion;
             return true;
           }
 
@@ -129,9 +140,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 });
               }
 
+              // Mark existing OAuth users who haven't filled province/city
+              const missingData = !existingPlayer.province || !existingPlayer.city;
+              if (missingData && !existingPlayer.needsProfileCompletion) {
+                await db.player.update({
+                  where: { id: existingPlayer.id },
+                  data: { needsProfileCompletion: true },
+                });
+                existingPlayer.needsProfileCompletion = true;
+              }
+
               user.id = existingPlayer.id;
               (user as any).alias = existingPlayer.alias;
               (user as any).image = existingPlayer.image || user.image;
+              (user as any).needsProfileCompletion = existingPlayer.needsProfileCompletion;
               return true;
             }
           }
@@ -171,6 +193,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               image: user.image,
               active: true,
               registrationStatus: "APPROVED",
+              needsProfileCompletion: true,
               accounts: {
                 create: {
                   type: account.type,
@@ -190,6 +213,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               },
             },
           });
+          (user as any).needsProfileCompletion = true;
 
           // Admin notification
           try {
@@ -229,6 +253,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.alias = (user as any).alias;
         token.image = user.image;
         token.role = "PLAYER";
+        token.needsProfileCompletion = (user as any).needsProfileCompletion ?? false;
       }
 
       // If token exists but has no alias or stale image, verify from DB
@@ -237,13 +262,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const player = await db.player.findUnique({
             where: { id: lookupId },
-            select: { id: true, image: true, alias: true },
+            select: { id: true, image: true, alias: true, needsProfileCompletion: true },
           });
           if (player) {
             token.id = player.id;
             token.image = player.image || token.image;
             token.alias = player.alias;
             token.role = "PLAYER";
+            token.needsProfileCompletion = player.needsProfileCompletion;
           }
         } catch (error) {
           console.error("Error refreshing token user data:", error);
@@ -263,6 +289,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).alias = token.alias as string;
         (session.user as any).image = token.image as string;
         (session.user as any).role = "PLAYER";
+        (session.user as any).needsProfileCompletion = token.needsProfileCompletion as boolean;
       }
       return session;
     },

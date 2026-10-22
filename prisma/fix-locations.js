@@ -361,6 +361,9 @@ async function fixLocations() {
 
     // Sincronizar nombres completos de ganadores de sorteos
     await fixRaffleWinners(prisma);
+
+    // Marcar jugadores OAuth sin perfil completo
+    await fixOAuthProfileCompletion(prisma);
   } catch (err) {
     console.error("[fix-locations] Error durante la ejecución:", err);
   } finally {
@@ -428,8 +431,45 @@ async function fixRaffleWinners(prisma) {
   }
 }
 
+async function fixOAuthProfileCompletion(prisma) {
+  try {
+    console.log("======================================================");
+    console.log("👤 Marcando jugadores OAuth sin perfil completo...");
+
+    // Find players who have an OAuth account and no province or city
+    const oauthPlayers = await prisma.player.findMany({
+      where: {
+        accounts: { some: {} }, // has at least one OAuth account
+        needsProfileCompletion: false,
+        OR: [
+          { province: null },
+          { province: "" },
+          { city: null },
+          { city: "" },
+        ],
+      },
+      select: { id: true, alias: true, province: true, city: true },
+    });
+
+    let markedCount = 0;
+    for (const player of oauthPlayers) {
+      await prisma.player.update({
+        where: { id: player.id },
+        data: { needsProfileCompletion: true },
+      });
+      console.log(`✔ Jugador [${player.alias || player.id}] marcado para completar perfil`);
+      markedCount++;
+    }
+
+    console.log(`✅ Jugadores marcados para completar perfil: ${markedCount}`);
+    console.log("======================================================");
+  } catch (err) {
+    console.error("[fix-oauth-profile] Error:", err);
+  }
+}
+
 if (require.main === module) {
   fixLocations();
 }
 
-module.exports = { fixLocations, fixRaffleWinners, matchProvince, matchCity };
+module.exports = { fixLocations, fixRaffleWinners, fixOAuthProfileCompletion, matchProvince, matchCity };

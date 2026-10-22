@@ -7,6 +7,7 @@ import { db } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { Providers } from "@/components/Providers";
 import { Toaster } from "sonner";
+import OAuthCompleteProfileModal from "@/components/auth/OAuthCompleteProfileModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,6 +68,7 @@ export default async function RootLayout({
             {children}
           </main>
           <FooterWrapper socialLinks={socialLinks} footerData={footerData} />
+          <OAuthCompleteProfileModal />
           <Toaster richColors position="top-center" />
         </Providers>
       </body>
