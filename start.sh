@@ -47,7 +47,7 @@ fi
 
 # Sync schema changes not yet in migration files (e.g. Json -> String)
 echo "Pushing schema changes..."
-npx prisma db push --accept-data-loss 2>/dev/null || echo "db push skipped"
+npx prisma db push --accept-data-loss || echo "db push warning / skipped"
 
 # Fix corrupt data: replace empty/invalid games values with valid JSON "[]"
 echo "Fixing tournament data..."

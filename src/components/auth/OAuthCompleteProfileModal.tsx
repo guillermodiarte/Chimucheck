@@ -52,14 +52,14 @@ export default function OAuthCompleteProfileModal() {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -69,13 +69,13 @@ export default function OAuthCompleteProfileModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-            className="relative w-full max-w-md bg-zinc-950 border border-white/10 rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden"
+            className="relative w-full max-w-md my-auto bg-zinc-950 border border-white/10 rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-visible"
           >
             {/* Gradient top bar */}
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500" />
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 rounded-t-2xl" />
 
             {/* Header */}
-            <div className="px-6 pt-7 pb-4">
+            <div className="px-6 pt-6 pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shrink-0">
@@ -91,7 +91,7 @@ export default function OAuthCompleteProfileModal() {
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-gray-400 mt-3 leading-relaxed">
+              <p className="text-xs text-gray-400 mt-2 leading-relaxed">
                 Para participar en sorteos y torneos necesitamos un par de datos más. ¡Te toma menos de un minuto!
               </p>
             </div>

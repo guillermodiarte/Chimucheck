@@ -34,18 +34,18 @@ RUN \
   if [ -f yarn.lock ]; then \
   export DATABASE_URL="file:./build.db" && \
   npx prisma generate && \
-  npx prisma migrate deploy && \
+  npx prisma db push --accept-data-loss && \
   yarn run build; \
   elif [ -f package-lock.json ]; then \
   export DATABASE_URL="file:./build.db" && \
   npx prisma generate && \
-  npx prisma migrate deploy && \
+  npx prisma db push --accept-data-loss && \
   npm run build; \
   elif [ -f pnpm-lock.yaml ]; then \
   corepack enable pnpm && \
   export DATABASE_URL="file:./build.db" && \
   npx prisma generate && \
-  npx prisma migrate deploy && \
+  npx prisma db push --accept-data-loss && \
   pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi

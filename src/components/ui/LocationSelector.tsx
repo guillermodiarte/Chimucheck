@@ -64,11 +64,42 @@ export function LocationSelector({
   const [highlightedProvinceIdx, setHighlightedProvinceIdx] = useState(-1);
   const [highlightedCityIdx, setHighlightedCityIdx] = useState(-1);
 
+  // Dropdown placement: open "up" if near bottom of screen/container, otherwise "down"
+  const [provincePlacement, setProvincePlacement] = useState<"down" | "up">("down");
+  const [cityPlacement, setCityPlacement] = useState<"down" | "up">("down");
+
   // Refs for clicking outside
   const provinceContainerRef = useRef<HTMLDivElement>(null);
   const cityContainerRef = useRef<HTMLDivElement>(null);
   const provinceListRef = useRef<HTMLUListElement>(null);
   const cityListRef = useRef<HTMLUListElement>(null);
+
+  // Detect available space and adjust placement when opening
+  useEffect(() => {
+    if (isProvinceOpen && provinceContainerRef.current) {
+      const rect = provinceContainerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      if (spaceBelow < 210 && spaceAbove > spaceBelow) {
+        setProvincePlacement("up");
+      } else {
+        setProvincePlacement("down");
+      }
+    }
+  }, [isProvinceOpen]);
+
+  useEffect(() => {
+    if (isCityOpen && cityContainerRef.current) {
+      const rect = cityContainerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      if (spaceBelow < 210 && spaceAbove > spaceBelow) {
+        setCityPlacement("up");
+      } else {
+        setCityPlacement("down");
+      }
+    }
+  }, [isCityOpen]);
 
   // Sync with initial props if they change
   useEffect(() => {
@@ -200,14 +231,14 @@ export function LocationSelector({
       e.preventDefault();
       setHighlightedProvinceIdx((prev) => {
         const next = prev < filteredProvinces.length - 1 ? prev + 1 : 0;
-        scrollIntoView(provinceListRef, next);
+        scrollItemIntoView(provinceListRef.current, next);
         return next;
       });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedProvinceIdx((prev) => {
         const next = prev > 0 ? prev - 1 : filteredProvinces.length - 1;
-        scrollIntoView(provinceListRef, next);
+        scrollItemIntoView(provinceListRef.current, next);
         return next;
       });
     } else if (e.key === "Enter") {
@@ -235,14 +266,14 @@ export function LocationSelector({
       e.preventDefault();
       setHighlightedCityIdx((prev) => {
         const next = prev < filteredCities.length - 1 ? prev + 1 : 0;
-        scrollIntoView(cityListRef, next);
+        scrollItemIntoView(cityListRef.current, next);
         return next;
       });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedCityIdx((prev) => {
         const next = prev > 0 ? prev - 1 : filteredCities.length - 1;
-        scrollIntoView(cityListRef, next);
+        scrollItemIntoView(cityListRef.current, next);
         return next;
       });
     } else if (e.key === "Enter") {
@@ -257,12 +288,21 @@ export function LocationSelector({
     }
   };
 
-  const scrollIntoView = (ref: React.RefObject<HTMLUListElement | null>, index: number) => {
-    if (ref.current) {
-      const item = ref.current.children[index] as HTMLElement;
-      if (item) {
-        item.scrollIntoView({ block: "nearest" });
-      }
+  // Internal list scrolling so the modal / page does not jump
+  const scrollItemIntoView = (list: HTMLUListElement | null, index: number) => {
+    if (!list) return;
+    const item = list.children[index] as HTMLElement;
+    if (!item) return;
+
+    const itemTop = item.offsetTop;
+    const itemBottom = itemTop + item.offsetHeight;
+    const listTop = list.scrollTop;
+    const listBottom = listTop + list.clientHeight;
+
+    if (itemTop < listTop) {
+      list.scrollTop = itemTop;
+    } else if (itemBottom > listBottom) {
+      list.scrollTop = itemBottom - list.clientHeight;
     }
   };
 
@@ -347,15 +387,19 @@ export function LocationSelector({
 
         {provinceError && <p className="text-xs text-red-500 mt-1">{provinceError}</p>}
 
-        {/* Dropdown list for Province */}
+        {/* Dropdown list for Province (Shows exactly 5 items, scrollable with mouse or keyboard) */}
         {isProvinceOpen && !disabled && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/90 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className={`absolute z-50 left-0 right-0 ${
+              provincePlacement === "up" ? "bottom-full mb-1.5" : "top-full mt-1.5"
+            } bg-zinc-950/98 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+          >
             <ul
               ref={provinceListRef}
-              className="max-h-56 overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-zinc-800 divide-y divide-white/5"
+              className="max-h-[188px] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-zinc-700 divide-y divide-white/5"
             >
               {filteredProvinces.length === 0 ? (
-                <li className="px-3 py-3 text-xs text-zinc-400 text-center flex items-center justify-center gap-1.5">
+                <li className="h-10 px-3 text-xs text-zinc-400 text-center flex items-center justify-center gap-1.5">
                   <Search size={13} className="text-zinc-500" />
                   No se encontró ninguna provincia
                 </li>
@@ -371,7 +415,7 @@ export function LocationSelector({
                         handleSelectProvince(prov);
                       }}
                       onMouseEnter={() => setHighlightedProvinceIdx(idx)}
-                      className={`px-3 py-2 text-sm cursor-pointer flex items-center justify-between transition-colors ${
+                      className={`h-9 px-3 text-sm cursor-pointer flex items-center justify-between shrink-0 transition-colors ${
                         isSelected
                           ? "bg-yellow-500/15 text-yellow-400 font-semibold"
                           : isHighlighted
@@ -471,15 +515,19 @@ export function LocationSelector({
 
         {cityError && <p className="text-xs text-red-500 mt-1">{cityError}</p>}
 
-        {/* Dropdown list for City */}
+        {/* Dropdown list for City (Shows exactly 5 items, scrollable with mouse or keyboard) */}
         {isCityOpen && !isCityDisabled && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/90 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className={`absolute z-50 left-0 right-0 ${
+              cityPlacement === "up" ? "bottom-full mb-1.5" : "top-full mt-1.5"
+            } bg-zinc-950/98 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+          >
             <ul
               ref={cityListRef}
-              className="max-h-56 overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-zinc-800 divide-y divide-white/5"
+              className="max-h-[188px] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-zinc-700 divide-y divide-white/5"
             >
               {filteredCities.length === 0 ? (
-                <li className="px-3 py-3 text-xs text-zinc-400 text-center flex items-center justify-center gap-1.5">
+                <li className="h-10 px-3 text-xs text-zinc-400 text-center flex items-center justify-center gap-1.5">
                   <Search size={13} className="text-zinc-500" />
                   No se encontró ninguna localidad en {selectedProvince}
                 </li>
@@ -495,7 +543,7 @@ export function LocationSelector({
                         handleSelectCity(city);
                       }}
                       onMouseEnter={() => setHighlightedCityIdx(idx)}
-                      className={`px-3 py-2 text-sm cursor-pointer flex items-center justify-between transition-colors ${
+                      className={`h-9 px-3 text-sm cursor-pointer flex items-center justify-between shrink-0 transition-colors ${
                         isSelected
                           ? "bg-yellow-500/15 text-yellow-400 font-semibold"
                           : isHighlighted
