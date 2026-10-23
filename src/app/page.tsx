@@ -25,7 +25,6 @@ async function getNews(): Promise<News[]> {
   return await db.news.findMany({
     where: { published: true },
     orderBy: { date: "desc" },
-    take: 3,
   });
 }
 
