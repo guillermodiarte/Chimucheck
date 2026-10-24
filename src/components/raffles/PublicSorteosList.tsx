@@ -73,10 +73,9 @@ export function PublicSorteosList({
                         Cupo máximo completado — Ver detalle
                       </div>
                     ) : (
-                      <div className="w-full h-11 bg-secondary text-black hover:bg-yellow-400 font-black tracking-wider text-xs uppercase rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all">
-                        <Sparkles className="w-4 h-4 fill-black" />
+                      <div className="w-full bg-secondary text-black hover:bg-yellow-400 font-bold py-3.5 text-sm rounded-xl shadow-lg shadow-yellow-500/15 flex items-center justify-center gap-2 transition-all">
+                        <Sparkles className="w-4 h-4" />
                         <span>Ver Sorteo e Inscribirme</span>
-                        <ArrowRight className="w-4 h-4" />
                       </div>
                     )}
                   </div>
@@ -161,9 +160,9 @@ export function PublicSorteosList({
                         </div>
                       ) : (
                         <Button
-                          className="w-full h-12 bg-secondary text-black border-2 border-secondary hover:bg-yellow-400 hover:border-yellow-400 transition-all duration-300 font-black tracking-wider text-sm uppercase shadow-lg gap-2"
+                          className="w-full bg-secondary text-black hover:bg-yellow-400 font-bold py-5 rounded-xl shadow-lg shadow-yellow-500/15 gap-2"
                         >
-                          <ArrowRight className="w-4 h-4" />
+                          <Sparkles className="w-4 h-4" />
                           Ver Sorteo e Inscribirme
                         </Button>
                       )}

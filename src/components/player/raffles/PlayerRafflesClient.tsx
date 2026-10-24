@@ -198,13 +198,12 @@ export function PlayerRafflesClient({
                 {canEnter && (
                   <Link href={`/player/dashboard/raffles/${raffle.id}`} className="block">
                     <Button
-                      className={`w-full bg-secondary text-black hover:bg-yellow-400 font-black uppercase text-xs tracking-wider rounded-xl shadow-lg shadow-cyan-500/20 gap-2 ${
-                        isMobile ? "h-11" : "py-5"
+                      className={`w-full bg-secondary text-black hover:bg-yellow-400 font-bold rounded-xl shadow-lg shadow-yellow-500/15 gap-2 ${
+                        isMobile ? "py-3.5 text-sm" : "py-5"
                       }`}
                     >
-                      <Sparkles className="w-4 h-4 fill-black" />
-                      <span>Ver Sorteo e Inscribirme</span>
-                      <ArrowRight className="w-4 h-4 ml-auto" />
+                      <Sparkles className="w-4 h-4" />
+                      Ver Sorteo e Inscribirme
                     </Button>
                   </Link>
                 )}
