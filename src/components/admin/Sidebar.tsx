@@ -22,6 +22,7 @@ import {
   Gamepad2,
   Ticket,
   Vote,
+  Dices,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
@@ -87,6 +88,11 @@ export const sidebarData = [
     title: "Juegos",
     href: "/admin/games",
     icon: Gamepad2,
+  },
+  {
+    title: "Ruleta",
+    href: "/admin/roulette",
+    icon: Dices,
   },
   {
     title: "Biblioteca",

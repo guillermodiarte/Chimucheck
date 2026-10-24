@@ -333,3 +333,16 @@ model Vote {
 
   @@unique([entryId, playerId])
 }
+
+// ─── Game Roulette System ───────────────────────────────────────────────────
+
+model GameRoulette {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  spinDuration Int      @default(8) // Segundos de giro automático
+  gameIds      String   @default("[]") // JSON array con IDs de juegos seleccionados
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
