@@ -115,13 +115,13 @@ export function RaffleListClient({ initialRaffles }: { initialRaffles: RaffleIte
         <Table>
           <TableHeader className="bg-gray-900/80">
             <TableRow className="border-gray-800 hover:bg-gray-900/80">
-              <TableHead className="text-gray-300 w-16">Premio</TableHead>
+              <TableHead className="text-gray-300 w-14">Premio</TableHead>
               <TableHead className="text-gray-300">Título / Premio</TableHead>
-              <TableHead className="text-gray-300">Tipo</TableHead>
-              <TableHead className="text-gray-300">Estado</TableHead>
-              <TableHead className="text-gray-300">Participantes</TableHead>
-              <TableHead className="text-gray-300">Ganador</TableHead>
-              <TableHead className="text-right text-gray-300">Acciones</TableHead>
+              <TableHead className="text-gray-300 w-24">Tipo</TableHead>
+              <TableHead className="text-gray-300 w-28">Estado</TableHead>
+              <TableHead className="text-gray-300 w-28">Participantes</TableHead>
+              <TableHead className="text-gray-300 w-36">Ganador</TableHead>
+              <TableHead className="text-right text-gray-300 w-36">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -204,52 +204,55 @@ export function RaffleListClient({ initialRaffles }: { initialRaffles: RaffleIte
                     </TableCell>
 
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Live screen button */}
-                        <Link href={`/admin/raffles/${raffle.id}/live`}>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-yellow-500/20 text-secondary border border-yellow-500/40 hover:bg-yellow-500 hover:text-black gap-1.5 text-xs font-bold h-8"
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            En Vivo
-                          </Button>
-                        </Link>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-1">
+                          {/* Live screen button */}
+                          <Link href={`/admin/raffles/${raffle.id}/live`}>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="bg-yellow-500/20 text-secondary border border-yellow-500/40 hover:bg-yellow-500 hover:text-black gap-1 text-xs font-bold h-7 px-2"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              En Vivo
+                            </Button>
+                          </Link>
 
-                        {/* Detail / Manage button */}
-                        <Link href={`/admin/raffles/${raffle.id}`}>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-gray-300 hover:text-white hover:bg-gray-800 h-8 text-xs gap-1"
-                          >
-                            <Users className="w-3.5 h-3.5" />
-                            Gestionar
-                          </Button>
-                        </Link>
+                          {/* Detail / Manage button */}
+                          <Link href={`/admin/raffles/${raffle.id}`}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-gray-300 hover:text-white hover:bg-gray-800 h-7 text-xs gap-1 px-2"
+                            >
+                              <Users className="w-3 h-3" />
+                              Gestionar
+                            </Button>
+                          </Link>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {/* Edit button */}
+                          <Link href={`/admin/raffles/${raffle.id}/edit`}>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-7 w-7"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                          </Link>
 
-                        {/* Edit button */}
-                        <Link href={`/admin/raffles/${raffle.id}/edit`}>
+                          {/* Delete button */}
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-8 w-8"
+                            disabled={deletingId === raffle.id}
+                            onClick={() => handleDelete(raffle.id, raffle.title)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3 h-3" />
                           </Button>
-                        </Link>
-
-                        {/* Delete button */}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          disabled={deletingId === raffle.id}
-                          onClick={() => handleDelete(raffle.id, raffle.title)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-8 w-8"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>

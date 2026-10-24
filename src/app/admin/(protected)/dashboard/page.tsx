@@ -100,7 +100,7 @@ async function getDashboardData() {
     const count = await db.player.count({
       where: { createdAt: { gte: weekStart, lt: weekEnd } },
     });
-    registrationData.push({ name: `Sem ${12 - i}`, value: count });
+    registrationData.push({ name: `Semana ${12 - i}`, value: count });
   }
 
   // Chart: Prize distribution from PlayerStats

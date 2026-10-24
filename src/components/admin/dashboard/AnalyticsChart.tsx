@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,9 +32,10 @@ export function AnalyticsChart({ data }: AnalyticsChartProps) {
                 tickFormatter={(value) => `${value}`}
               />
               <Tooltip
-                contentStyle={{ backgroundColor: "#1F2937", borderColor: "#374151" }}
+                contentStyle={{ backgroundColor: "#1F2937", borderColor: "#374151", borderRadius: "8px" }}
                 itemStyle={{ color: "#EAB308" }}
                 cursor={{ fill: "#374151", opacity: 0.4 }}
+                formatter={(value: any) => [value, "Jugadores Registrados"]}
               />
               <Bar
                 dataKey="value"

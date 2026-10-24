@@ -135,15 +135,20 @@ export function LocationSelector({
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      if (disabled) {
+        setIsProvinceOpen(false);
+        setIsCityOpen(false);
+        return;
+      }
+
       if (
         provinceContainerRef.current &&
         !provinceContainerRef.current.contains(event.target as Node)
       ) {
         setIsProvinceOpen(false);
-        // On blur: validate typed province against official list
         const norm = normalize(provinceQuery);
         const exactMatch = ALL_PROVINCES.find((p) => normalize(p) === norm);
-        if (exactMatch) {
+        if (exactMatch && exactMatch !== selectedProvince) {
           handleSelectProvince(exactMatch);
         } else if (!selectedProvince) {
           setProvinceQuery("");
@@ -157,10 +162,9 @@ export function LocationSelector({
         !cityContainerRef.current.contains(event.target as Node)
       ) {
         setIsCityOpen(false);
-        // On blur: validate typed city against available cities
         const norm = normalize(cityQuery);
         const exactMatch = availableCities.find((c) => normalize(c) === norm);
-        if (exactMatch) {
+        if (exactMatch && exactMatch !== selectedCity) {
           handleSelectCity(exactMatch);
         } else if (!selectedCity) {
           setCityQuery("");
@@ -172,26 +176,33 @@ export function LocationSelector({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [provinceQuery, selectedProvince, cityQuery, selectedCity, availableCities]);
+  }, [disabled, provinceQuery, selectedProvince, cityQuery, selectedCity, availableCities]);
 
   // Selection handlers
   const handleSelectProvince = (prov: string) => {
+    if (disabled) return;
+    const isDifferent = prov !== selectedProvince;
     setSelectedProvince(prov);
     setProvinceQuery(prov);
     setIsProvinceOpen(false);
     setHighlightedProvinceIdx(-1);
 
-    // Reset city when province changes
-    setSelectedCity("");
-    setCityQuery("");
-    setIsCityOpen(false);
+    if (isDifferent) {
+      // Only reset city if the province actually changed
+      setSelectedCity("");
+      setCityQuery("");
+      setIsCityOpen(false);
 
-    if (onProvinceChange) onProvinceChange(prov);
-    if (onCityChange) onCityChange("");
+      if (onProvinceChange) onProvinceChange(prov);
+      if (onCityChange) onCityChange("");
+    } else {
+      if (onProvinceChange) onProvinceChange(prov);
+    }
   };
 
   const handleClearProvince = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (disabled) return;
     setSelectedProvince("");
     setProvinceQuery("");
     setSelectedCity("");
@@ -203,6 +214,7 @@ export function LocationSelector({
   };
 
   const handleSelectCity = (c: string) => {
+    if (disabled || !selectedProvince) return;
     setSelectedCity(c);
     setCityQuery(c);
     setIsCityOpen(false);
@@ -212,6 +224,7 @@ export function LocationSelector({
 
   const handleClearCity = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (disabled || !selectedProvince) return;
     setSelectedCity("");
     setCityQuery("");
     setIsCityOpen(false);
@@ -220,6 +233,7 @@ export function LocationSelector({
 
   // Keyboard navigation for Province
   const handleProvinceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (disabled) return;
     if (!isProvinceOpen) {
       if (e.key === "ArrowDown" || e.key === "Enter") {
         setIsProvinceOpen(true);
@@ -255,6 +269,7 @@ export function LocationSelector({
 
   // Keyboard navigation for City
   const handleCityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (disabled || !selectedProvince) return;
     if (!isCityOpen) {
       if (e.key === "ArrowDown" || e.key === "Enter") {
         setIsCityOpen(true);
@@ -309,23 +324,18 @@ export function LocationSelector({
   const isCityDisabled = disabled || !selectedProvince;
 
   return (
-    <div className={`${layout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"} ${className}`}>
+    <div className={`${layout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "space-y-4"} ${className}`}>
       {/* Hidden inputs to integrate with standard HTML form submissions and Next.js server actions */}
       <input type="hidden" name={provinceName} value={selectedProvince} />
       <input type="hidden" name={cityName} value={selectedCity} />
 
       {/* 1. Selector de Provincia */}
-      <div className="space-y-2 relative" ref={provinceContainerRef}>
-        <div className="flex items-center justify-between">
-          <Label className="text-gray-300 text-sm font-medium flex items-center gap-1.5">
-            <MapPin size={14} className="text-yellow-400" />
-            Provincia {required && <span className="text-yellow-400">*</span>}
+      <div className="space-y-1.5 relative flex-1" ref={provinceContainerRef}>
+        <div className="flex items-center justify-between h-5">
+          <Label className="text-zinc-400 text-xs font-medium flex items-center gap-1.5 h-5">
+            <MapPin size={14} className="text-primary shrink-0" />
+            Provincia {required && <span className="text-primary">*</span>}
           </Label>
-          {selectedProvince && (
-            <span className="text-[10px] text-zinc-400 font-mono">
-              {availableCities.length} localidades
-            </span>
-          )}
         </div>
 
         <div className="relative">
@@ -336,11 +346,11 @@ export function LocationSelector({
             value={provinceQuery}
             autoComplete="off"
             onChange={(e) => {
+              if (disabled) return;
               setProvinceQuery(e.target.value);
               setIsProvinceOpen(true);
               setHighlightedProvinceIdx(0);
               if (selectedProvince && normalize(e.target.value) !== normalize(selectedProvince)) {
-                // User started editing the selected province
                 setSelectedProvince("");
                 setSelectedCity("");
                 setCityQuery("");
@@ -349,13 +359,15 @@ export function LocationSelector({
               }
             }}
             onFocus={() => {
-              setIsProvinceOpen(true);
-              setIsCityOpen(false);
+              if (!disabled) {
+                setIsProvinceOpen(true);
+                setIsCityOpen(false);
+              }
             }}
             onKeyDown={handleProvinceKeyDown}
-            className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 pr-16 h-10 transition-all ${
+            className={`bg-black/40 border border-white/10 text-white focus:border-primary/50 pr-16 h-10 transition-all text-sm rounded-md placeholder:text-zinc-600 ${
               provinceError ? "border-red-500 ring-1 ring-red-500/30" : ""
-            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
           />
 
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -375,7 +387,7 @@ export function LocationSelector({
               onClick={() => {
                 if (!disabled) setIsProvinceOpen((prev) => !prev);
               }}
-              className="text-zinc-400 hover:text-yellow-400 p-1 transition-transform"
+              className="text-zinc-400 hover:text-primary p-1 transition-transform"
             >
               <ChevronDown
                 size={16}
@@ -387,7 +399,7 @@ export function LocationSelector({
 
         {provinceError && <p className="text-xs text-red-500 mt-1">{provinceError}</p>}
 
-        {/* Dropdown list for Province (Shows exactly 5 items, scrollable with mouse or keyboard) */}
+        {/* Dropdown list for Province */}
         {isProvinceOpen && !disabled && (
           <div
             className={`absolute z-50 left-0 right-0 ${
@@ -417,14 +429,14 @@ export function LocationSelector({
                       onMouseEnter={() => setHighlightedProvinceIdx(idx)}
                       className={`h-9 px-3 text-sm cursor-pointer flex items-center justify-between shrink-0 transition-colors ${
                         isSelected
-                          ? "bg-yellow-500/15 text-yellow-400 font-semibold"
+                          ? "bg-primary/15 text-primary font-semibold"
                           : isHighlighted
                           ? "bg-white/10 text-white"
                           : "text-zinc-300 hover:bg-white/5"
                       }`}
                     >
                       <span className="truncate">{prov}</span>
-                      {isSelected && <Check size={14} className="text-yellow-400 flex-shrink-0" />}
+                      {isSelected && <Check size={14} className="text-primary flex-shrink-0" />}
                     </li>
                   );
                 })
@@ -435,23 +447,16 @@ export function LocationSelector({
       </div>
 
       {/* 2. Selector de Localidad */}
-      <div className="space-y-2 relative" ref={cityContainerRef}>
-        <div className="flex items-center justify-between">
+      <div className="space-y-1.5 relative flex-1" ref={cityContainerRef}>
+        <div className="flex items-center justify-between h-5">
           <Label
-            className={`text-sm font-medium flex items-center gap-1.5 ${
-              isCityDisabled ? "text-zinc-500" : "text-gray-300"
+            className={`text-xs font-medium flex items-center gap-1.5 h-5 ${
+              isCityDisabled ? "text-zinc-500" : "text-zinc-400"
             }`}
           >
-            <MapPin size={14} className={isCityDisabled ? "text-zinc-600" : "text-yellow-400"} />
-            Localidad {required && <span className="text-yellow-400">*</span>}
+            <MapPin size={14} className={isCityDisabled ? "text-zinc-600" : "text-primary shrink-0"} />
+            Localidad {required && <span className="text-primary">*</span>}
           </Label>
-          {!selectedProvince ? (
-            <span className="text-[10px] text-zinc-600">Elegí provincia primero</span>
-          ) : (
-            <span className="text-[10px] text-zinc-400 font-mono">
-              {filteredCities.length} de {availableCities.length}
-            </span>
-          )}
         </div>
 
         <div className="relative">
@@ -460,12 +465,13 @@ export function LocationSelector({
             disabled={isCityDisabled}
             placeholder={
               !selectedProvince
-                ? "Primero seleccioná una provincia..."
-                : `Buscar localidad en ${selectedProvince}...`
+                ? "Primero provincia..."
+                : `Buscar en ${selectedProvince}...`
             }
             value={cityQuery}
             autoComplete="off"
             onChange={(e) => {
+              if (isCityDisabled) return;
               setCityQuery(e.target.value);
               setIsCityOpen(true);
               setHighlightedCityIdx(0);
@@ -481,9 +487,9 @@ export function LocationSelector({
               }
             }}
             onKeyDown={handleCityKeyDown}
-            className={`bg-zinc-900 border-white/10 text-white focus:ring-yellow-500/50 pr-16 h-10 transition-all ${
+            className={`bg-black/40 border border-white/10 text-white focus:border-primary/50 pr-16 h-10 transition-all text-sm rounded-md placeholder:text-zinc-600 ${
               cityError ? "border-red-500 ring-1 ring-red-500/30" : ""
-            } ${isCityDisabled ? "opacity-50 cursor-not-allowed bg-zinc-950/40" : ""}`}
+            } ${isCityDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
           />
 
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -503,7 +509,7 @@ export function LocationSelector({
               onClick={() => {
                 if (!isCityDisabled) setIsCityOpen((prev) => !prev);
               }}
-              className="text-zinc-400 hover:text-yellow-400 p-1 transition-transform"
+              className="text-zinc-400 hover:text-primary p-1 transition-transform"
             >
               <ChevronDown
                 size={16}
@@ -515,7 +521,7 @@ export function LocationSelector({
 
         {cityError && <p className="text-xs text-red-500 mt-1">{cityError}</p>}
 
-        {/* Dropdown list for City (Shows exactly 5 items, scrollable with mouse or keyboard) */}
+        {/* Dropdown list for City */}
         {isCityOpen && !isCityDisabled && (
           <div
             className={`absolute z-50 left-0 right-0 ${
@@ -545,14 +551,14 @@ export function LocationSelector({
                       onMouseEnter={() => setHighlightedCityIdx(idx)}
                       className={`h-9 px-3 text-sm cursor-pointer flex items-center justify-between shrink-0 transition-colors ${
                         isSelected
-                          ? "bg-yellow-500/15 text-yellow-400 font-semibold"
+                          ? "bg-primary/15 text-primary font-semibold"
                           : isHighlighted
                           ? "bg-white/10 text-white"
                           : "text-zinc-300 hover:bg-white/5"
                       }`}
                     >
                       <span className="truncate">{city}</span>
-                      {isSelected && <Check size={14} className="text-yellow-400 flex-shrink-0" />}
+                      {isSelected && <Check size={14} className="text-primary flex-shrink-0" />}
                     </li>
                   );
                 })
