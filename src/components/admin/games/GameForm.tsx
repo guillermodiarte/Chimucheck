@@ -19,7 +19,15 @@ import { toast } from "sonner";
 import { createGame, updateGame } from "@/app/actions/games";
 import { CATEGORIES } from "@/lib/mmr";
 import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
-import { X } from "lucide-react";
+import { X, ChevronDown, Loader2, Image as ImageIcon, Shield, Info } from "lucide-react";
+
+const CATEGORY_DETAILS: Record<string, { label: string; desc: string }> = {
+  SHOOTER: { label: "Disparos / Shooter", desc: "FPS, Battle Royale y puntería" },
+  RACING: { label: "Carreras / Racing", desc: "Simuladores, arcade y conducción" },
+  KOMBAT: { label: "Combate / Kombat", desc: "Peleas 1v1 y lucha" },
+  SPORTS: { label: "Deportes / Sports", desc: "Fútbol, básquet y disciplinas deportivas" },
+  BOARD_GAME: { label: "Juegos de Mesa", desc: "Cartas, estrategia y tablero" },
+};
 
 const GameSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -34,7 +42,7 @@ export default function GameForm({ game }: GameFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // We only support one main image for now for simplicity, though schema is JSON array
+  // Parse existing images JSON
   const existingImages = (() => {
     if (game?.images) {
       try {
@@ -68,7 +76,7 @@ export default function GameForm({ game }: GameFormProps) {
       if (pendingFile) {
         const uploadFormData = new FormData();
         uploadFormData.append("file", pendingFile);
-        uploadFormData.append("folder", "juegos"); // Force upload to 'juegos'
+        uploadFormData.append("folder", "juegos");
 
         const toastId = toast.loading("Subiendo imagen...");
         const response = await fetch("/api/upload", {
@@ -88,7 +96,7 @@ export default function GameForm({ game }: GameFormProps) {
         }
       }
 
-      // 2. Wrap image in JSON array to match DB schema design (future proofing for galleries)
+      // 2. Wrap image in JSON array to match DB schema design
       const imagesJson = finalImageUrl ? JSON.stringify([finalImageUrl]) : "[]";
 
       // 3. Save Game
@@ -116,93 +124,163 @@ export default function GameForm({ game }: GameFormProps) {
   }
 
   return (
-    <div className="w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-6">
-        {game ? "Editar Juego" : "Crear Nuevo Juego"}
-      </h2>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Columna Izquierda: Datos del Juego y Acciones (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-gray-900/90 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-5">
+              <h2 className="text-base font-bold text-white flex items-center gap-2 border-b border-gray-800 pb-3">
+                <Shield className="w-4 h-4 text-primary" />
+                Información del Juego
+              </h2>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-300">Nombre del Juego</FormLabel>
-                <FormControl>
-                  <Input {...field} className="bg-gray-800 border-gray-700" placeholder="Ej: Valorant" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-300">Categoría Deportiva / Tipo</FormLabel>
-                <FormControl>
-                  <select
-                    {...field}
-                    className="w-full bg-gray-800 border border-gray-700 text-white h-10 px-3 rounded-md focus:border-white/20 transition-all appearance-none"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat} className="bg-gray-900">{cat}</option>
-                    ))}
-                  </select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="space-y-3">
-            <FormLabel className="text-gray-300 block">Imagen Principal (Opcional)</FormLabel>
-
-            {imageUrl || pendingFile ? (
-              <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-gray-700 group bg-black">
-                <img
-                  src={pendingFile ? URL.createObjectURL(pendingFile) : imageUrl}
-                  alt="Game preview"
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImageUrl("");
-                    setPendingFile(null);
-                  }}
-                  className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <LocalImageUpload
-                onFileSelect={(file) => setPendingFile(file)}
-                onUrlSelect={(url) => {
-                  setImageUrl(url);
-                  setPendingFile(null);
-                }}
-                defaultFolder="juegos"
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-200 text-sm font-semibold">
+                      Nombre del Juego
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className="bg-black/50 border-gray-700 text-white h-11 px-3.5 focus:border-primary/60 focus:ring-1 focus:ring-primary/40 rounded-xl transition-all placeholder:text-gray-600"
+                        placeholder="Ej: Dragon Ball Sparking Zero"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-400 text-xs" />
+                  </FormItem>
+                )}
               />
-            )}
-            <p className="text-xs text-gray-500">
-              Las nuevas imágenes subidas se guardarán automáticamente en la carpeta "Juegos" de tu biblioteca.
-            </p>
+
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => {
+                  const currentCat = CATEGORY_DETAILS[field.value];
+                  return (
+                    <FormItem>
+                      <FormLabel className="text-gray-200 text-sm font-semibold">
+                        Categoría Deportiva / Tipo
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <select
+                            {...field}
+                            className="w-full bg-black/50 border border-gray-700 text-white h-11 px-3.5 pr-10 rounded-xl focus:border-primary/60 focus:ring-1 focus:ring-primary/40 focus:outline-none transition-all appearance-none text-sm cursor-pointer"
+                          >
+                            {CATEGORIES.map((cat) => (
+                              <option key={cat} value={cat} className="bg-gray-900 text-white">
+                                {CATEGORY_DETAILS[cat]?.label || cat}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        </div>
+                      </FormControl>
+                      {currentCat && (
+                        <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1.5">
+                          <Info className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                          <span>{currentCat.desc}</span>
+                        </p>
+                      )}
+                      <FormMessage className="text-red-400 text-xs" />
+                    </FormItem>
+                  );
+                }}
+              />
+            </div>
+
+            {/* Tarjeta de Acciones */}
+            <div className="bg-gray-900/90 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-3">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-primary text-black hover:bg-yellow-400 font-bold h-11 text-sm disabled:opacity-50 transition-all rounded-xl shadow-lg shadow-yellow-500/10 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Guardando cambios...
+                  </>
+                ) : (
+                  game ? "Guardar Cambios" : "Crear Juego"
+                )}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/admin/games")}
+                disabled={isSubmitting}
+                className="w-full h-11 px-6 text-sm font-bold rounded-xl bg-gray-800 hover:bg-gray-700 text-white border border-gray-600 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-primary text-black hover:bg-yellow-400 font-bold disabled:opacity-50 mt-4"
-          >
-            {isSubmitting ? "Guardando..." : game ? "Guardar Cambios" : "Crear Juego"}
-          </Button>
-        </form>
-      </Form>
-    </div>
+          {/* Columna Derecha: Portada e Imagen Principal (7 cols) */}
+          <div className="lg:col-span-7">
+            <div className="bg-gray-900/90 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-4 h-full flex flex-col">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  Portada del Juego
+                </h2>
+                <span className="text-xs text-gray-400 bg-gray-800/80 px-2.5 py-1 rounded-full border border-gray-700">
+                  Formato 16:9 recomendado
+                </span>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center">
+                {imageUrl || pendingFile ? (
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-gray-700/80 group bg-black shadow-2xl">
+                    <img
+                      src={pendingFile ? URL.createObjectURL(pendingFile) : imageUrl}
+                      alt="Game preview"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+                      <span className="text-xs text-gray-300 font-medium truncate max-w-[200px]">
+                        {pendingFile ? pendingFile.name : "Imagen cargada"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageUrl("");
+                          setPendingFile(null);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-lg transition-colors cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        Quitar Imagen
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl overflow-hidden border border-gray-700/60 bg-black/40 p-4">
+                    <LocalImageUpload
+                      onFileSelect={(file) => setPendingFile(file)}
+                      onUrlSelect={(url) => {
+                        setImageUrl(url);
+                        setPendingFile(null);
+                      }}
+                      defaultFolder="juegos"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-400 leading-relaxed pt-2 border-t border-gray-800/60">
+                Las nuevas imágenes subidas se guardarán automáticamente en la carpeta{" "}
+                <span className="text-yellow-400 font-semibold">"Juegos"</span> de tu biblioteca multimedia para ser reutilizadas en torneos.
+              </p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </Form>
   );
 }

@@ -21,6 +21,9 @@ export async function getGames() {
 }
 
 export async function getGameById(id: string) {
+  if (!id) {
+    return { success: false, error: "ID no proporcionado" };
+  }
   try {
     const game = await db.game.findUnique({
       where: { id },
