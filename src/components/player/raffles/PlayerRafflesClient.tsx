@@ -187,6 +187,96 @@ export function PlayerRafflesClient({
             const isDrawing = raffle.status === "DRAWING";
             const canEnter = raffle.status === "ACTIVE" && raffle.type === "OPEN" && !raffle.isEntered && !isFull;
 
+            const renderCardActions = (isMobile = false) => (
+              <div
+                className={`space-y-2 ${
+                  isMobile
+                    ? "p-3.5 pb-2.5 md:hidden"
+                    : "pt-2 hidden md:block"
+                }`}
+              >
+                {canEnter && (
+                  <Link href={`/player/dashboard/raffles/${raffle.id}`} className="block">
+                    <Button
+                      className={`w-full bg-secondary text-black hover:bg-yellow-400 font-black uppercase text-xs tracking-wider rounded-xl shadow-lg shadow-cyan-500/20 gap-2 ${
+                        isMobile ? "h-11" : "py-5"
+                      }`}
+                    >
+                      <Sparkles className="w-4 h-4 fill-black" />
+                      <span>Ver Sorteo e Inscribirme</span>
+                      <ArrowRight className="w-4 h-4 ml-auto" />
+                    </Button>
+                  </Link>
+                )}
+
+                {raffle.isEntered && raffle.status === "ACTIVE" && (
+                  <div className="space-y-2">
+                    <div className="w-full py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Ya estás participando en este sorteo
+                    </div>
+                    <Link href={`/player/dashboard/raffles/${raffle.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs text-gray-400 hover:text-white hover:bg-white/10 gap-1.5"
+                      >
+                        <ArrowRight className="w-3.5 h-3.5" />
+                        Ver detalle del sorteo
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={loadingId === raffle.id}
+                      onClick={() => handleLeave(raffle.id, raffle.title)}
+                      className="w-full text-xs text-gray-400 hover:text-red-400 hover:bg-red-950/20"
+                    >
+                      <LogOut className="w-3.5 h-3.5 mr-1" />
+                      Darse de baja
+                    </Button>
+                  </div>
+                )}
+
+                {raffle.isEntered && (isDrawing || isFinished) && (
+                  <div className="space-y-2">
+                    <div className="w-full py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold text-center">
+                      Participaste en este sorteo
+                    </div>
+                    <Link href={`/player/dashboard/raffles/${raffle.id}`}>
+                      <Button variant="ghost" size="sm" className="w-full text-xs text-gray-400 hover:text-white gap-1.5">
+                        <ArrowRight className="w-3.5 h-3.5" /> Ver detalle
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+
+                {!raffle.isEntered && isFull && !isFinished && (
+                  <Link href={`/player/dashboard/raffles/${raffle.id}`}>
+                    <div className="w-full py-2.5 rounded-xl bg-red-950/20 border border-red-900/30 text-red-400 text-xs font-bold text-center cursor-pointer hover:bg-red-950/40 transition-colors">
+                      Cupo máximo completado — Ver detalle
+                    </div>
+                  </Link>
+                )}
+
+                {!raffle.isEntered && raffle.type === "MANUAL" && !isFinished && (
+                  <Link href={`/player/dashboard/raffles/${raffle.id}`}>
+                    <div className="w-full py-2.5 rounded-xl bg-zinc-900 border border-white/5 text-gray-400 text-xs text-center font-medium cursor-pointer hover:bg-zinc-800 transition-colors">
+                      Sorteo por invitación — Ver detalle
+                    </div>
+                  </Link>
+                )}
+
+                {isFinished && !raffle.isEntered && (
+                  <Link href={`/player/dashboard/raffles/${raffle.id}`}>
+                    <Button variant="ghost" size="sm" className="w-full text-xs text-gray-400 hover:text-white gap-1.5">
+                      <ArrowRight className="w-3.5 h-3.5" /> Ver resultado
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            );
+
             return (
               <div
                 key={raffle.id}
@@ -196,9 +286,12 @@ export function PlayerRafflesClient({
                     : "bg-zinc-950/80 border-white/10 hover:border-white/20"
                 }`}
               >
+                {/* Mobile Actions (Above image on mobile only) */}
+                {renderCardActions(true)}
+
                 {/* Image & Header Overlay — Clickable */}
                 <Link href={`/player/dashboard/raffles/${raffle.id}`} className="block">
-                <div className="relative h-48 w-full bg-zinc-900 overflow-hidden">
+                <div className="relative h-48 mx-3.5 rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 md:mx-0 md:rounded-none md:border-0">
                   {raffle.prizeImage ? (
                     <img
                       src={raffle.prizeImage}
@@ -258,7 +351,7 @@ export function PlayerRafflesClient({
 
                 {/* Body Content */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex-1">
                     <Link href={`/player/dashboard/raffles/${raffle.id}`}>
                       <h4 className="text-xl font-bold text-white hover:text-secondary transition-colors cursor-pointer">
                         {raffle.title}
@@ -318,87 +411,8 @@ export function PlayerRafflesClient({
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="pt-2 space-y-2">
-                    {canEnter && (
-                      <>
-                        <Link href={`/player/dashboard/raffles/${raffle.id}`}>
-                          <Button
-                            className="w-full bg-secondary text-black hover:bg-yellow-400 font-bold py-5 rounded-xl shadow-lg shadow-yellow-500/15 gap-2"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                            Ver Sorteo e Inscribirme
-                          </Button>
-                        </Link>
-                      </>
-                    )}
-
-                    {raffle.isEntered && raffle.status === "ACTIVE" && (
-                      <div className="space-y-2">
-                        <div className="w-full py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4" />
-                          Ya estás participando en este sorteo
-                        </div>
-                        <Link href={`/player/dashboard/raffles/${raffle.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full text-xs text-gray-400 hover:text-white hover:bg-white/10 gap-1.5"
-                          >
-                            <ArrowRight className="w-3.5 h-3.5" />
-                            Ver detalle del sorteo
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={loadingId === raffle.id}
-                          onClick={() => handleLeave(raffle.id, raffle.title)}
-                          className="w-full text-xs text-gray-400 hover:text-red-400 hover:bg-red-950/20"
-                        >
-                          <LogOut className="w-3.5 h-3.5 mr-1" />
-                          Darse de baja
-                        </Button>
-                      </div>
-                    )}
-
-                    {raffle.isEntered && (isDrawing || isFinished) && (
-                      <div className="space-y-2">
-                        <div className="w-full py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold text-center">
-                          Participaste en este sorteo
-                        </div>
-                        <Link href={`/player/dashboard/raffles/${raffle.id}`}>
-                          <Button variant="ghost" size="sm" className="w-full text-xs text-gray-400 hover:text-white gap-1.5">
-                            <ArrowRight className="w-3.5 h-3.5" /> Ver detalle
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-
-                    {!raffle.isEntered && isFull && !isFinished && (
-                      <Link href={`/player/dashboard/raffles/${raffle.id}`}>
-                        <div className="w-full py-2.5 rounded-xl bg-red-950/20 border border-red-900/30 text-red-400 text-xs font-bold text-center cursor-pointer hover:bg-red-950/40 transition-colors">
-                          Cupo máximo completado — Ver detalle
-                        </div>
-                      </Link>
-                    )}
-
-                    {!raffle.isEntered && raffle.type === "MANUAL" && !isFinished && (
-                      <Link href={`/player/dashboard/raffles/${raffle.id}`}>
-                        <div className="w-full py-2.5 rounded-xl bg-zinc-900 border border-white/5 text-gray-400 text-xs text-center font-medium cursor-pointer hover:bg-zinc-800 transition-colors">
-                          Sorteo por invitación — Ver detalle
-                        </div>
-                      </Link>
-                    )}
-
-                    {isFinished && !raffle.isEntered && (
-                      <Link href={`/player/dashboard/raffles/${raffle.id}`}>
-                        <Button variant="ghost" size="sm" className="w-full text-xs text-gray-400 hover:text-white gap-1.5">
-                          <ArrowRight className="w-3.5 h-3.5" /> Ver resultado
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
+                  {/* Desktop Actions (At bottom as original) */}
+                  {renderCardActions(false)}
                 </div>
               </div>
             );

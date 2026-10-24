@@ -251,6 +251,66 @@ export function RaffleDetailPlayerView({
     }
   };
 
+  const renderActionButtons = () => (
+    <div className="space-y-2.5">
+      {canEnter && (
+        <Button
+          disabled={loadingAction}
+          onClick={handleEnter}
+          className="w-full bg-secondary text-black hover:bg-yellow-400 font-black py-6 text-base rounded-xl shadow-lg shadow-yellow-500/20 gap-2 transition-all transform hover:scale-[1.01] active:scale-98 cursor-pointer"
+        >
+          <Sparkles className="w-5 h-5" />
+          {loadingAction ? "Inscribiendo..." : "¡Inscribirme en este Sorteo!"}
+        </Button>
+      )}
+
+      {raffle.isEntered && raffle.status === "ACTIVE" && (
+        <div className="space-y-2.5">
+          <div className="w-full p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex flex-col items-center justify-center text-center gap-1 shadow-lg">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>¡Ya estás participando en este sorteo!</span>
+            </div>
+            {myTicketNumber && (
+              <span className="text-[11px] font-mono text-emerald-300 font-normal">
+                Tu número de ticket asignado: <strong className="text-white font-bold">#{myTicketNumber}</strong>
+              </span>
+            )}
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={loadingAction}
+            onClick={handleLeave}
+            className="w-full text-xs text-gray-400 hover:text-red-400 hover:bg-red-950/20 py-2 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5 mr-1" />
+            Darse de baja del sorteo
+          </Button>
+        </div>
+      )}
+
+      {!raffle.isEntered && isFull && !isFinished && (
+        <div className="w-full py-3 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-bold text-center">
+          El cupo máximo de participantes ha sido alcanzado.
+        </div>
+      )}
+
+      {!raffle.isEntered && raffle.type === "MANUAL" && !isFinished && (
+        <div className="w-full py-3 rounded-xl bg-zinc-900 border border-white/10 text-gray-400 text-xs text-center font-medium">
+          Sorteo exclusivo por invitación del organizador.
+        </div>
+      )}
+
+      {isFinished && !raffle.isEntered && (
+        <div className="w-full py-3 rounded-xl bg-zinc-900 border border-white/10 text-yellow-400 text-xs font-bold text-center">
+          Este sorteo ha finalizado.
+        </div>
+      )}
+    </div>
+  );
+
   const backUrl = isLoggedIn ? "/player/dashboard/raffles" : "/sorteos";
 
   return (
@@ -304,6 +364,57 @@ export function RaffleDetailPlayerView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ── LEFT COLUMN (7 cols): Images + Description + Participants ── */}
         <div className="lg:col-span-7 space-y-5">
+          {/* Mobile Top Hero & Action Card (Mobile only) */}
+          <div className="lg:hidden bg-gradient-to-b from-zinc-900/95 via-zinc-950 to-zinc-950 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md shadow-2xl space-y-3.5">
+            {/* Header Tag & Date */}
+            <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2.5">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-secondary" />
+                {raffle.type === "OPEN" ? "Sorteo Abierto" : "Sorteo Exclusivo"}
+              </span>
+              {raffle.drawDate ? (
+                <span className="text-[11px] font-mono text-gray-400 flex items-center gap-1" suppressHydrationWarning>
+                  <Calendar className="w-3.5 h-3.5 text-secondary/80" />
+                  {formatDate(raffle.drawDate)}
+                </span>
+              ) : (
+                <span className="text-[11px] font-mono text-gray-500">Fecha a confirmar</span>
+              )}
+            </div>
+
+            {/* Title */}
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
+              {raffle.title}
+            </h1>
+
+            {/* Quick stats & status pills */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-2 py-2 px-3 rounded-xl bg-black/40 border border-white/5">
+                <Users className="w-4 h-4 text-secondary shrink-0" />
+                <div className="truncate">
+                  <span className="text-white font-bold">{raffle._count.entries}</span>
+                  {raffle.maxEntries && (
+                    <span className="text-gray-500 font-mono text-[10px]"> / {raffle.maxEntries}</span>
+                  )}
+                  <span className="text-gray-400 text-[10px] block">Participantes</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 py-2 px-3 rounded-xl bg-black/40 border border-white/5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div className="truncate">
+                  <span className="text-emerald-400 font-bold block text-[11px]">Verificado</span>
+                  <span className="text-gray-500 text-[10px] block">100% Oficial</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action CTA Button */}
+            <div className="pt-1">
+              {renderActionButtons()}
+            </div>
+          </div>
+
           {/* Image Gallery Showcase */}
           <div className="space-y-3">
             <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 shadow-2xl flex items-center justify-center group">
@@ -410,8 +521,8 @@ export function RaffleDetailPlayerView({
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
           {/* Main Info & Action Card */}
           <div className="bg-zinc-950/90 border border-white/10 rounded-2xl p-5 md:p-6 backdrop-blur-md shadow-2xl space-y-5">
-            {/* Title */}
-            <div className="space-y-1.5 border-b border-white/10 pb-4">
+            {/* Title (Desktop only, mobile has it in top Hero card) */}
+            <div className="space-y-1.5 border-b border-white/10 pb-4 hidden lg:block">
               <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
                 {raffle.title}
               </h1>
@@ -494,63 +605,9 @@ export function RaffleDetailPlayerView({
               </div>
             </div>
 
-            {/* Action Button Section */}
-            <div className="space-y-2.5 pt-1">
-              {canEnter && (
-                <Button
-                  disabled={loadingAction}
-                  onClick={handleEnter}
-                  className="w-full bg-secondary text-black hover:bg-yellow-400 font-black py-6 text-base rounded-xl shadow-lg shadow-yellow-500/20 gap-2 transition-all transform hover:scale-[1.01] active:scale-98 cursor-pointer"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  {loadingAction ? "Inscribiendo..." : "¡Inscribirme en este Sorteo!"}
-                </Button>
-              )}
-
-              {raffle.isEntered && raffle.status === "ACTIVE" && (
-                <div className="space-y-2.5">
-                  <div className="w-full p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex flex-col items-center justify-center text-center gap-1 shadow-lg">
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>¡Ya estás participando en este sorteo!</span>
-                    </div>
-                    {myTicketNumber && (
-                      <span className="text-[11px] font-mono text-emerald-300 font-normal">
-                        Tu número de ticket asignado: <strong className="text-white font-bold">#{myTicketNumber}</strong>
-                      </span>
-                    )}
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={loadingAction}
-                    onClick={handleLeave}
-                    className="w-full text-xs text-gray-400 hover:text-red-400 hover:bg-red-950/20 py-2 cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5 mr-1" />
-                    Darse de baja del sorteo
-                  </Button>
-                </div>
-              )}
-
-              {!raffle.isEntered && isFull && !isFinished && (
-                <div className="w-full py-3 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-bold text-center">
-                  El cupo máximo de participantes ha sido alcanzado.
-                </div>
-              )}
-
-              {!raffle.isEntered && raffle.type === "MANUAL" && !isFinished && (
-                <div className="w-full py-3 rounded-xl bg-zinc-900 border border-white/10 text-gray-400 text-xs text-center font-medium">
-                  Sorteo exclusivo por invitación del organizador.
-                </div>
-              )}
-
-              {isFinished && !raffle.isEntered && (
-                <div className="w-full py-3 rounded-xl bg-zinc-900 border border-white/10 text-yellow-400 text-xs font-bold text-center">
-                  Este sorteo ha finalizado.
-                </div>
-              )}
+            {/* Action Button Section (Desktop only - below stats as original) */}
+            <div className="space-y-2.5 pt-1 hidden lg:block">
+              {renderActionButtons()}
             </div>
 
             {/* ChimuCheck Verification Badge */}

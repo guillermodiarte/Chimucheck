@@ -66,7 +66,22 @@ export function PublicSorteosList({
                   href={`/sorteos/${raffle.id}`}
                   className="group relative bg-zinc-950/80 border border-white/10 hover:border-primary/50 hover:shadow-[0_0_30px_rgba(255,215,0,0.15)] rounded-3xl overflow-hidden transition-all duration-300 flex flex-col justify-between block"
                 >
-                  <div className="relative h-52 w-full bg-zinc-900 overflow-hidden">
+                  {/* Mobile Top Action Button (Above image on mobile only) */}
+                  <div className="p-3.5 pb-2.5 md:hidden">
+                    {isFull ? (
+                      <div className="w-full py-2.5 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-bold text-center">
+                        Cupo máximo completado — Ver detalle
+                      </div>
+                    ) : (
+                      <div className="w-full h-11 bg-secondary text-black hover:bg-yellow-400 font-black tracking-wider text-xs uppercase rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all">
+                        <Sparkles className="w-4 h-4 fill-black" />
+                        <span>Ver Sorteo e Inscribirme</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative h-52 mx-3.5 rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 md:mx-0 md:rounded-none md:border-0">
                     {raffle.prizeImage ? (
                       <img
                         src={raffle.prizeImage}
@@ -107,7 +122,7 @@ export function PublicSorteosList({
                   </div>
 
                   <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex-1">
                       <h4 className="text-xl font-bold text-white group-hover:text-primary transition-colors">
                         {raffle.title}
                       </h4>
@@ -138,7 +153,8 @@ export function PublicSorteosList({
                       )}
                     </div>
 
-                    <div className="pt-2">
+                    {/* Desktop Action Button (Below, as original) */}
+                    <div className="pt-2 hidden md:block">
                       {isFull ? (
                         <div className="w-full py-3 rounded-xl bg-red-950/20 border border-red-900/30 text-red-400 text-xs font-bold text-center cursor-pointer">
                           Cupo máximo completado — Ver detalle
