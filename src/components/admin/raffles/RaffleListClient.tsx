@@ -112,16 +112,16 @@ export function RaffleListClient({ initialRaffles }: { initialRaffles: RaffleIte
     <div className="space-y-4">
       {/* Desktop Table */}
       <div className="hidden md:block border border-gray-800 rounded-xl overflow-hidden bg-black/40 backdrop-blur-sm">
-        <Table>
+        <Table className="w-full">
           <TableHeader className="bg-gray-900/80">
             <TableRow className="border-gray-800 hover:bg-gray-900/80">
-              <TableHead className="text-gray-300 w-14">Premio</TableHead>
-              <TableHead className="text-gray-300">Título / Premio</TableHead>
+              <TableHead className="text-gray-300 w-16">Premio</TableHead>
+              <TableHead className="text-gray-300 min-w-[200px]">Título / Premio</TableHead>
               <TableHead className="text-gray-300 w-24">Tipo</TableHead>
               <TableHead className="text-gray-300 w-28">Estado</TableHead>
               <TableHead className="text-gray-300 w-28">Participantes</TableHead>
-              <TableHead className="text-gray-300 w-36">Ganador</TableHead>
-              <TableHead className="text-right text-gray-300 w-36">Acciones</TableHead>
+              <TableHead className="text-gray-300 w-44">Ganador</TableHead>
+              <TableHead className="text-right text-gray-300 min-w-[220px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -140,7 +140,7 @@ export function RaffleListClient({ initialRaffles }: { initialRaffles: RaffleIte
                     key={raffle.id}
                     className="border-gray-800 hover:bg-gray-900/40 transition-colors"
                   >
-                    <TableCell>
+                    <TableCell className="w-16">
                       {raffle.prizeImage ? (
                         <img
                           src={raffle.prizeImage}
@@ -154,23 +154,24 @@ export function RaffleListClient({ initialRaffles }: { initialRaffles: RaffleIte
                       )}
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="min-w-[200px] max-w-[420px]">
                       <Link
                         href={`/admin/raffles/${raffle.id}`}
-                        className="font-bold text-white hover:text-secondary transition-colors block text-base"
+                        className="font-bold text-white hover:text-secondary transition-colors block text-base truncate"
+                        title={raffle.title}
                       >
                         {raffle.title}
                       </Link>
-                      <span className="text-xs text-secondary font-medium block mt-0.5">
+                      <span className="text-xs text-secondary font-medium block mt-0.5 truncate" title={raffle.prize}>
                         🎁 {raffle.prize}
                       </span>
                     </TableCell>
 
-                    <TableCell>{getTypeBadge(raffle.type)}</TableCell>
+                    <TableCell className="w-24">{getTypeBadge(raffle.type)}</TableCell>
 
-                    <TableCell>{getStatusBadge(raffle.status)}</TableCell>
+                    <TableCell className="w-28">{getStatusBadge(raffle.status)}</TableCell>
 
-                    <TableCell>
+                    <TableCell className="w-28">
                       <div className="flex items-center gap-1.5 text-sm text-gray-300">
                         <Users className="w-4 h-4 text-gray-500" />
                         <span className="font-semibold text-white">{entriesCount}</span>
@@ -180,21 +181,21 @@ export function RaffleListClient({ initialRaffles }: { initialRaffles: RaffleIte
                       </div>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="w-44">
                       {raffle.winnerAlias ? (
                         <div className="flex items-center gap-2">
                           {raffle.winnerImage ? (
                             <img
                               src={raffle.winnerImage}
                               alt={raffle.winnerAlias}
-                              className="w-6 h-6 rounded-full object-cover border border-yellow-500/50"
+                              className="w-6 h-6 rounded-full object-cover border border-yellow-500/50 shrink-0"
                             />
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xs font-bold">
+                            <div className="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xs font-bold shrink-0">
                               🏆
                             </div>
                           )}
-                          <span className="font-bold text-yellow-400 text-sm">
+                          <span className="font-bold text-yellow-400 text-sm truncate">
                             {raffle.winnerAlias}
                           </span>
                         </div>
@@ -204,55 +205,54 @@ export function RaffleListClient({ initialRaffles }: { initialRaffles: RaffleIte
                     </TableCell>
 
                     <TableCell className="text-right">
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-1">
-                          {/* Live screen button */}
-                          <Link href={`/admin/raffles/${raffle.id}/live`}>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="bg-yellow-500/20 text-secondary border border-yellow-500/40 hover:bg-yellow-500 hover:text-black gap-1 text-xs font-bold h-7 px-2"
-                            >
-                              <Sparkles className="w-3 h-3" />
-                              En Vivo
-                            </Button>
-                          </Link>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {/* Live screen button */}
+                        <Link href={`/admin/raffles/${raffle.id}/live`}>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="bg-yellow-500/20 text-secondary border border-yellow-500/40 hover:bg-yellow-500 hover:text-black gap-1 text-xs font-bold h-8 px-2.5 whitespace-nowrap"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            En Vivo
+                          </Button>
+                        </Link>
 
-                          {/* Detail / Manage button */}
-                          <Link href={`/admin/raffles/${raffle.id}`}>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-gray-300 hover:text-white hover:bg-gray-800 h-7 text-xs gap-1 px-2"
-                            >
-                              <Users className="w-3 h-3" />
-                              Gestionar
-                            </Button>
-                          </Link>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {/* Edit button */}
-                          <Link href={`/admin/raffles/${raffle.id}/edit`}>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-7 w-7"
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                          </Link>
+                        {/* Detail / Manage button */}
+                        <Link href={`/admin/raffles/${raffle.id}`}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-gray-300 hover:text-white hover:bg-gray-800 h-8 text-xs gap-1 px-2.5 whitespace-nowrap"
+                          >
+                            <Users className="w-3.5 h-3.5" />
+                            Gestionar
+                          </Button>
+                        </Link>
 
-                          {/* Delete button */}
+                        {/* Edit button */}
+                        <Link href={`/admin/raffles/${raffle.id}/edit`}>
                           <Button
                             size="icon"
                             variant="ghost"
-                            disabled={deletingId === raffle.id}
-                            onClick={() => handleDelete(raffle.id, raffle.title)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7"
+                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-8 w-8 shrink-0"
+                            title="Editar"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
-                        </div>
+                        </Link>
+
+                        {/* Delete button */}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          disabled={deletingId === raffle.id}
+                          onClick={() => handleDelete(raffle.id, raffle.title)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-8 w-8 shrink-0"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

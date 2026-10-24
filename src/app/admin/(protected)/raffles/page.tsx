@@ -16,7 +16,7 @@ export default async function AdminRafflesPage() {
   const recentWinners = await getRecentRaffleWinners(cooldownDays);
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-8 w-full max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
