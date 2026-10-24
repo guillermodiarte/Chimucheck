@@ -213,46 +213,62 @@ export function InteractiveWheel({ games, spinDuration = 8, title }: Interactive
       ctx.closePath();
       ctx.clip(); // everything below is clipped to this wedge
 
-      // 1. Base solid color fill (shows when no image or while image loads)
+      // 1. Base solid color fill
       const grad = ctx.createRadialGradient(0, 0, 30, 0, 0, radius);
       grad.addColorStop(0, catStyle.bg + "dd");
       grad.addColorStop(1, "#000000cc");
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // 2. Draw game image filling the entire wedge
+      // 2. Draw game image — cover the entire wedge regardless of sector angle
       const img = loadedImagesRef.current.get(game.id);
       if (img && img.complete && img.naturalWidth > 0) {
-        // Center of the sector along the mid-angle, at ~55% of radius
         const midA = startA + sectorAngle / 2;
-        const distFromCenter = radius * 0.52; // center of image placement
-
-        // We'll use a square crop of the image sized to cover the sector nicely
-        const imgSize = radius * 1.1; // generous — clipping does the rest
 
         ctx.save();
-        // Translate to the visual center of the wedge
-        ctx.translate(
-          Math.cos(midA) * distFromCenter,
-          Math.sin(midA) * distFromCenter
-        );
-        ctx.rotate(midA + Math.PI / 2); // face outward
+        // Rotate canvas so the sector bisector is along the +X axis
+        ctx.rotate(midA);
 
-        // Draw image centered at origin — the wedge clip does the shaping
-        ctx.globalAlpha = 0.82;
-        ctx.drawImage(img, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
+        // In this rotated frame the wedge spans:
+        //   X: 0 → radius
+        //   Y: -halfH → +halfH  where halfH = radius * sin(sectorAngle/2)
+        const halfH = radius * Math.sin(sectorAngle / 2);
+        // Bounding box of the wedge: width=radius, height=2*halfH
+        const boxW = radius;
+        const boxH = Math.max(halfH * 2, 1);
+
+        // Scale image to COVER the bounding box (like CSS background-size:cover)
+        const imgAspect = img.naturalWidth / img.naturalHeight;
+        const boxAspect = boxW / boxH;
+        let drawW: number, drawH: number;
+        if (imgAspect > boxAspect) {
+          // image wider than box → fit by height, crop width
+          drawH = boxH * 1.05; // tiny overdraw to hide any aliasing edge
+          drawW = drawH * imgAspect;
+        } else {
+          // image taller than box → fit by width, crop height
+          drawW = boxW * 1.05;
+          drawH = drawW / imgAspect;
+        }
+
+        // Center the image over the bounding box
+        const drawX = boxW / 2 - drawW / 2;
+        const drawY = -drawH / 2;
+
+        ctx.globalAlpha = 0.88;
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
         ctx.globalAlpha = 1;
         ctx.restore();
 
-        // Dark vignette overlay so borders + text stay readable
+        // Dark vignette: stronger at edges, lighter near center
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, radius, startA, endA);
         ctx.closePath();
-        const vignette = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius);
-        vignette.addColorStop(0, "rgba(0,0,0,0.0)");
-        vignette.addColorStop(0.7, "rgba(0,0,0,0.15)");
-        vignette.addColorStop(1, "rgba(0,0,0,0.55)");
+        const vignette = ctx.createRadialGradient(0, 0, radius * 0.15, 0, 0, radius);
+        vignette.addColorStop(0, "rgba(0,0,0,0.25)");
+        vignette.addColorStop(0.55, "rgba(0,0,0,0.05)");
+        vignette.addColorStop(1,   "rgba(0,0,0,0.50)");
         ctx.fillStyle = vignette;
         ctx.fill();
       }
@@ -263,7 +279,7 @@ export function InteractiveWheel({ games, spinDuration = 8, title }: Interactive
       ctx.arc(0, 0, radius, startA, endA);
       ctx.closePath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(255,255,255,0.30)";
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
       ctx.stroke();
 
       ctx.restore(); // end wedge clip
