@@ -155,7 +155,7 @@ export function SectionsDashboard({ homeContent, aboutContent, gamingContent, so
           Volver a Secciones
         </button>
         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-          <FooterForm initialContent={footerContent} />
+          <FooterForm initialContent={footerContent} socialsContent={socialsContent} onBack={() => handleSelectSection(null)} />
         </div>
       </div>
     );

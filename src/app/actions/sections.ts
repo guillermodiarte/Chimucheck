@@ -13,6 +13,7 @@ export async function updateSectionContent(key: string, content: any) {
     revalidatePath("/admin/sections");
     revalidatePath("/admin/banners");
     revalidatePath("/");
+    revalidatePath("/", "layout");
     return { success: true, message: "Sección actualizada correctamente" };
   } catch (error) {
     return { success: false, message: "Error al actualizar la sección" };

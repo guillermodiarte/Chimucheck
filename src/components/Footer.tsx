@@ -4,9 +4,11 @@ import Image from "next/image";
 import { getSocialConfig } from "@/lib/utils";
 
 export default function Footer({ socialLinks, footerData }: { socialLinks?: any; footerData?: any }) {
-  const logoUrl = footerData?.logoUrl || "/images/chimu-logo.png";
-  const title = footerData?.title || "ChimuCheck";
-  const subtitle = footerData?.subtitle || `© ${new Date().getFullYear()} Todos los derechos reservados.`;
+  const logoUrl = footerData?.logoUrl !== undefined ? footerData.logoUrl : "/images/chimu-logo.png";
+  const title = footerData?.title !== undefined ? footerData.title : "ChimuCheck";
+  const copyright = footerData?.copyright || footerData?.subtitle || `Chimucheck © ${new Date().getFullYear()}. Todos los derechos reservados.`;
+  const contactText = footerData?.contactText !== undefined ? footerData.contactText : "Contacto:";
+  const contactEmail = footerData?.contactEmail !== undefined ? footerData.contactEmail : "chimucheck@gmail.com";
 
   return (
     <footer className="bg-black border-t border-white/10 py-8">
@@ -14,17 +16,21 @@ export default function Footer({ socialLinks, footerData }: { socialLinks?: any;
         {/* Top Row: Logo & Socials */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="relative w-[60px] h-[60px]">
-              <Image
-                src={logoUrl}
-                alt="Footer Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <span className="text-2xl font-bold tracking-tighter text-white">
-              {title}
-            </span>
+            {logoUrl && (
+              <div className="relative w-[60px] h-[60px]">
+                <Image
+                  src={logoUrl}
+                  alt={title || "Footer Logo"}
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            )}
+            {title && (
+              <span className="text-2xl font-bold tracking-tighter text-white">
+                {title}
+              </span>
+            )}
           </div>
 
           <div className="flex space-x-6">
@@ -88,11 +94,18 @@ export default function Footer({ socialLinks, footerData }: { socialLinks?: any;
 
         {/* Bottom Row: Text Info */}
         <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-4 pt-4 border-t border-white/5">
-          <div className="text-gray-500 text-sm text-center md:text-left">
-            <p>Chimucheck © {new Date().getFullYear()}. Todos los derechos reservados.</p>
-            <p>Contacto: <a href="mailto:chimucheck@gmail.com" className="hover:text-primary transition-colors">chimucheck@gmail.com</a></p>
+          <div className="text-gray-500 text-sm text-center md:text-left space-y-1">
+            {copyright && <p className="whitespace-pre-line">{copyright}</p>}
+            {contactEmail && (
+              <p>
+                {contactText ? <span>{contactText} </span> : null}
+                <a href={`mailto:${contactEmail}`} className="hover:text-primary transition-colors">
+                  {contactEmail}
+                </a>
+              </p>
+            )}
           </div>
-          <div className="text-gray-500 text-sm text-center md:text-right">
+          <div className="text-gray-500 text-sm text-center md:text-right space-y-1">
             <p>Desarrollado por <span className="font-semibold text-white">Guillermo A. Diarte</span></p>
             <p>Email: <a href="mailto:guillermodiarte@gmail.com" className="hover:text-primary transition-colors">guillermodiarte@gmail.com</a></p>
           </div>
