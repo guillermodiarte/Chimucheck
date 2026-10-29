@@ -140,64 +140,28 @@ async function main() {
     console.log('About section seeded.')
   }
 
-  // Seed Prizes
-  const initialPrizes = [
-    {
-      title: "Taza Chimucheck (Varias Skins)",
-      price: "7 ChimuCoins",
-      description: "Tu café o bebida energética nunca se vio tan bien.",
-      images: [
-        "/images/prizes/premio-1.jpg",
-        "/images/prizes/premio-2.jpg",
-        "/images/prizes/premio-3.jpg",
-        "/images/prizes/premio-4.jpg"
-      ],
-      order: 1
-    },
-    {
-      title: "Gorra Oficial",
-      price: "7 ChimuCoins",
-      description: "Lleva el estilo de ChimuCheck a donde vayas.",
-      images: ["/images/prizes/premio-5.jpg"],
-      order: 2
-    },
-    {
-      title: "Remera Exclusiva",
-      price: "15 ChimuCoins",
-      description: "Vístete como un pro. Calidad premium y diseño único.",
-      images: [
-        "/images/prizes/premio-6.jpg",
-        "/images/prizes/premio-7.jpg",
-        "/images/prizes/premio-8.jpg",
-        "/images/prizes/premio-9.jpg"
-      ],
-      order: 3
-    },
-    {
-      title: "Almohadón Chimucheck",
-      price: "20 ChimuCoins",
-      description: "Comodidad máxima para esas largas sesiones de juego.",
-      images: ["/images/prizes/premio-10.jpg"],
-      order: 4
-    },
-    {
-      title: "Caja Misteriosa",
-      price: "25 ChimuCoins",
-      description: "¿Te atreves? Un premio sorpresa de alto valor.",
-      images: ["/images/prizes/premio-incognita.jpg"],
-      order: 5
-    }
+  // Clean up legacy mock prizes with broken image paths if they exist
+  const legacyBrokenTitles = [
+    "Taza Chimucheck (Varias Skins)",
+    "Gorra Oficial",
+    "Remera Exclusiva",
+    "Caja Misteriosa",
   ];
-
-  for (const prize of initialPrizes) {
-    const existing = await prisma.prize.findFirst({ where: { title: prize.title } });
-    if (!existing) {
-      await prisma.prize.create({
-        data: prize
-      });
+  const legacyPrizes = await prisma.prize.findMany({
+    where: { title: { in: legacyBrokenTitles } }
+  });
+  for (const p of legacyPrizes) {
+    let imgs: any[] = [];
+    try {
+      imgs = Array.isArray(p.images) ? (p.images as any[]) : JSON.parse((p.images as string) || "[]");
+    } catch {
+      imgs = [];
+    }
+    if (imgs.some((img) => typeof img === "string" && img.includes("/images/prizes/"))) {
+      await prisma.prize.delete({ where: { id: p.id } });
+      console.log(`Premios obsoletos eliminados: ${p.title}`);
     }
   }
-  console.log("Prizes seeded.");
 
   // Seed Prizes Page Section
   await prisma.siteSection.upsert({
