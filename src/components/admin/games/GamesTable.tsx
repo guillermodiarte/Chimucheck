@@ -6,7 +6,7 @@ import { Pencil, Search, ChevronDown, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DeleteGameButton from "@/components/admin/games/DeleteGameButton";
-import { CATEGORIES } from "@/lib/mmr";
+import { GAME_CATEGORIES } from "@/lib/mmr";
 
 const CATEGORY_STYLES: Record<string, { label: string; dot: string; border: string }> = {
   SHOOTER: { label: "Shooter", dot: "#ef4444", border: "border-red-500/40" },
@@ -14,6 +14,7 @@ const CATEGORY_STYLES: Record<string, { label: string; dot: string; border: stri
   KOMBAT: { label: "Kombat", dot: "#f97316", border: "border-orange-500/40" },
   SPORTS: { label: "Sports", dot: "#c084fc", border: "border-purple-500/40" },
   BOARD_GAME: { label: "Juegos de Mesa", dot: "#34d399", border: "border-emerald-500/40" },
+  ARENA_MULTIGAMES: { label: "⚔️ Arena Multigames", dot: "#eab308", border: "border-yellow-500/40" },
 };
 
 export default function GamesTable({ games }: { games: any[] }) {
@@ -47,7 +48,7 @@ export default function GamesTable({ games }: { games: any[] }) {
             className="w-full bg-gray-900/90 border border-gray-800 text-white h-11 px-3.5 pr-10 rounded-xl focus:border-primary/50 focus:outline-none transition-all appearance-none text-sm cursor-pointer"
           >
             <option value="ALL">Todas las Categorías</option>
-            {CATEGORIES.map((cat) => (
+            {GAME_CATEGORIES.map((cat) => (
               <option key={cat} value={cat} className="bg-gray-900 text-white">
                 {CATEGORY_STYLES[cat]?.label || cat}
               </option>

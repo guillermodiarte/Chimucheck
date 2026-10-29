@@ -4,6 +4,10 @@
 
 // --- Module 1 Enums & Types ---
 
+/**
+ * CATEGORIES: Categorías competitivas. Usadas en torneos, radar MMR y stats por categoría.
+ * NO incluye ARENA_MULTIGAMES (categoría especial solo para desafíos).
+ */
 export const CATEGORIES = [
   "SHOOTER",
   "RACING",
@@ -13,6 +17,21 @@ export const CATEGORIES = [
 ] as const;
 
 export type TournamentCategory = typeof CATEGORIES[number];
+
+/**
+ * GAME_CATEGORIES: Todas las categorías disponibles para catalogar juegos,
+ * incluida ARENA_MULTIGAMES (exclusiva para desafíos, sin radar competitivo).
+ */
+export const GAME_CATEGORIES = [
+  "SHOOTER",
+  "RACING",
+  "KOMBAT",
+  "SPORTS",
+  "BOARD_GAME",
+  "ARENA_MULTIGAMES",
+] as const;
+
+export type GameCategory = typeof GAME_CATEGORIES[number];
 
 export const RANK_TIERS = {
   AMATEUR: "AMATEUR",

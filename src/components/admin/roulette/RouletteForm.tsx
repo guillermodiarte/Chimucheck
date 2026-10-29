@@ -47,6 +47,7 @@ const CATEGORY_MAP: Record<string, { label: string; color: string; border: strin
   KOMBAT: { label: "Kombat", color: "bg-amber-500/20 text-amber-400", border: "border-amber-500/30" },
   SPORTS: { label: "Sports", color: "bg-purple-500/20 text-purple-400", border: "border-purple-500/30" },
   BOARD_GAME: { label: "Juegos de Mesa", color: "bg-emerald-500/20 text-emerald-400", border: "border-emerald-500/30" },
+  ARENA_MULTIGAMES: { label: "⚔️ Arena Multigames", color: "bg-yellow-500/20 text-yellow-400", border: "border-yellow-500/30" },
 };
 
 function getGameImage(imagesField?: string | null): string | null {

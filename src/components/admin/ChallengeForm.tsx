@@ -42,6 +42,15 @@ type GameEntry = {
   pendingFile?: File | null;
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  SHOOTER: "Shooter",
+  RACING: "Racing",
+  KOMBAT: "Kombat",
+  SPORTS: "Sports",
+  BOARD_GAME: "Juegos de Mesa",
+  ARENA_MULTIGAMES: "⚔️ Arena Multigames",
+};
+
 const ChallengeFormSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   description: z.string().optional(),
@@ -760,8 +769,8 @@ export default function ChallengeForm({ challenge, gamesCatalog = [], allPlayers
                     ) : (
                       Object.keys(categorizedGames).map((category) => (
                         <div key={category} className="p-1.5">
-                          <div className="text-[10px] font-black text-primary uppercase tracking-wider px-2 py-1 flex items-center justify-between bg-gray-900/60 rounded">
-                            <span>━━ {category} ━━</span>
+                          <div className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 flex items-center justify-between rounded ${category === "ARENA_MULTIGAMES" ? "text-yellow-400 bg-yellow-900/20" : "text-primary bg-gray-900/60"}`}>
+                            <span>━━ {CATEGORY_LABELS[category] || category} ━━</span>
                             <span className="text-[9px] text-gray-400 font-normal">
                               {categorizedGames[category].length} {categorizedGames[category].length === 1 ? "juego" : "juegos"}
                             </span>
@@ -833,8 +842,8 @@ export default function ChallengeForm({ challenge, gamesCatalog = [], allPlayers
                         <div>
                           <p className="font-bold text-white text-base leading-tight">{game.name}</p>
                           {game.categoryId && (
-                            <span className="text-[10px] font-semibold text-gray-400 bg-gray-700/60 px-1.5 py-0.5 rounded">
-                              {game.categoryId}
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${game.categoryId === "ARENA_MULTIGAMES" ? "text-yellow-400 bg-yellow-900/30" : "text-gray-400 bg-gray-700/60"}`}>
+                              {CATEGORY_LABELS[game.categoryId] || game.categoryId}
                             </span>
                           )}
                         </div>

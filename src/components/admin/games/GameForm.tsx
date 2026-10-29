@@ -17,16 +17,21 @@ import {
 } from "@/components/ui/form";
 import { toast } from "sonner";
 import { createGame, updateGame } from "@/app/actions/games";
-import { CATEGORIES } from "@/lib/mmr";
+import { GAME_CATEGORIES } from "@/lib/mmr";
 import { LocalImageUpload } from "@/components/admin/LocalImageUpload";
-import { X, ChevronDown, Loader2, Image as ImageIcon, Shield, Info } from "lucide-react";
+import { X, ChevronDown, Loader2, Image as ImageIcon, Shield, Info, Swords } from "lucide-react";
 
-const CATEGORY_DETAILS: Record<string, { label: string; desc: string }> = {
+const CATEGORY_DETAILS: Record<string, { label: string; desc: string; isSpecial?: boolean }> = {
   SHOOTER: { label: "Disparos / Shooter", desc: "FPS, Battle Royale y puntería" },
   RACING: { label: "Carreras / Racing", desc: "Simuladores, arcade y conducción" },
   KOMBAT: { label: "Combate / Kombat", desc: "Peleas 1v1 y lucha" },
   SPORTS: { label: "Deportes / Sports", desc: "Fútbol, básquet y disciplinas deportivas" },
   BOARD_GAME: { label: "Juegos de Mesa", desc: "Cartas, estrategia y tablero" },
+  ARENA_MULTIGAMES: {
+    label: "⚔️ Arena Multigames",
+    desc: "Categoría especial para Desafíos. Los juegos aquí no aparecen en el radar competitivo ni en torneos.",
+    isSpecial: true,
+  },
 };
 
 const GameSchema = z.object({
@@ -171,18 +176,28 @@ export default function GameForm({ game }: GameFormProps) {
                             {...field}
                             className="w-full bg-black/50 border border-gray-700 text-white h-11 px-3.5 pr-10 rounded-xl focus:border-primary/60 focus:ring-1 focus:ring-primary/40 focus:outline-none transition-all appearance-none text-sm cursor-pointer"
                           >
-                            {CATEGORIES.map((cat) => (
-                              <option key={cat} value={cat} className="bg-gray-900 text-white">
-                                {CATEGORY_DETAILS[cat]?.label || cat}
+                            <optgroup label="Categorías Competitivas (Torneos + Desafíos)">
+                              {(["SHOOTER", "RACING", "KOMBAT", "SPORTS", "BOARD_GAME"] as const).map((cat) => (
+                                <option key={cat} value={cat} className="bg-gray-900 text-white">
+                                  {CATEGORY_DETAILS[cat]?.label || cat}
+                                </option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="── Especial ──">
+                              <option value="ARENA_MULTIGAMES" className="bg-gray-900 text-yellow-300">
+                                {CATEGORY_DETAILS["ARENA_MULTIGAMES"].label}
                               </option>
-                            ))}
+                            </optgroup>
                           </select>
                           <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         </div>
                       </FormControl>
                       {currentCat && (
-                        <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1.5">
-                          <Info className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                        <p className={`text-xs mt-1.5 flex items-center gap-1.5 ${currentCat.isSpecial ? "text-yellow-500/80" : "text-gray-400"}`}>
+                          {currentCat.isSpecial
+                            ? <Swords className="w-3.5 h-3.5 text-yellow-500/70 shrink-0" />
+                            : <Info className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                          }
                           <span>{currentCat.desc}</span>
                         </p>
                       )}

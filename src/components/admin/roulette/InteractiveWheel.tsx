@@ -24,6 +24,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; stroke: string
   KOMBAT: { bg: "#ea580c", text: "#ffffff", stroke: "#f97316" },
   SPORTS: { bg: "#9333ea", text: "#ffffff", stroke: "#c084fc" },
   BOARD_GAME: { bg: "#059669", text: "#ffffff", stroke: "#34d399" },
+  ARENA_MULTIGAMES: { bg: "#b45309", text: "#ffffff", stroke: "#eab308" },
 };
 
 // Alternate color palette in case multiple games share the same category
