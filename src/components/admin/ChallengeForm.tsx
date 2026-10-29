@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +20,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { createChallenge, updateChallenge, unregisterPlayerFromChallenge } from "@/app/actions/challenges";
 import { LocalImageUpload } from "./LocalImageUpload";
-import { Plus, X, Gamepad2, Users, Trash2, Camera, Search, Swords } from "lucide-react";
+import { AddManualPlayerModal } from "./AddManualPlayerModal";
+import { Plus, X, Gamepad2, Users, Trash2, Camera, Search, Swords, ChevronDown, UserPlus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,12 +56,20 @@ const ChallengeFormSchema = z.object({
 interface ChallengeFormProps {
   challenge?: any;
   gamesCatalog?: any[];
+  allPlayers?: { id: string; alias?: string | null; name?: string | null; image?: string | null }[];
 }
 
-export default function ChallengeForm({ challenge, gamesCatalog = [] }: ChallengeFormProps) {
+export default function ChallengeForm({ challenge, gamesCatalog = [], allPlayers = [] }: ChallengeFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const availablePlayers = useMemo(() => {
+    const registeredIds = new Set(
+      challenge?.registrations?.map((r: any) => r.playerId) || []
+    );
+    return allPlayers.filter((p) => !registeredIds.has(p.id));
+  }, [allPlayers, challenge?.registrations]);
 
   // --- Games state ---
   const existingGames: GameEntry[] = (() => {
@@ -82,8 +91,21 @@ export default function ChallengeForm({ challenge, gamesCatalog = [] }: Challeng
   })();
 
   const [games, setGames] = useState<GameEntry[]>(existingGames);
-  const [selectedGameToAdd, setSelectedGameToAdd] = useState<string>("");
   const [gameSearch, setGameSearch] = useState<string>("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Group catalog games by category and filter by search term
   const categorizedGames = useMemo(() => {
@@ -99,9 +121,15 @@ export default function ChallengeForm({ challenge, gamesCatalog = [] }: Challeng
         return;
       }
 
+      let parsedImages = [];
+      try {
+        parsedImages = JSON.parse(game.images);
+      } catch {}
+      const coverImage = Array.isArray(parsedImages) && parsedImages.length > 0 ? parsedImages[0] : "";
+
       const cat = game.categoryId || "GENERAL";
       if (!map[cat]) map[cat] = [];
-      map[cat].push(game);
+      map[cat].push({ ...game, coverImage });
     });
 
     return map;
@@ -211,16 +239,14 @@ export default function ChallengeForm({ challenge, gamesCatalog = [] }: Challeng
   });
 
   // --- Game entry helpers ---
-  function handleAddGameFromCatalog() {
-    if (!selectedGameToAdd) return;
-    const gameObj = gamesCatalog.find((g) => g.id === selectedGameToAdd);
+  function handleAddGame(gameObj: any) {
     if (!gameObj) return;
 
     let parsedImages = [];
     try {
       parsedImages = JSON.parse(gameObj.images);
     } catch {}
-    const coverImage = Array.isArray(parsedImages) && parsedImages.length > 0 ? parsedImages[0] : "";
+    const coverImage = Array.isArray(parsedImages) && parsedImages.length > 0 ? parsedImages[0] : (gameObj.coverImage || "");
 
     setGames((prev) => [
       ...prev,
@@ -232,7 +258,8 @@ export default function ChallengeForm({ challenge, gamesCatalog = [] }: Challeng
         categoryId: gameObj.categoryId,
       },
     ]);
-    setSelectedGameToAdd("");
+    setGameSearch("");
+    setIsDropdownOpen(false);
   }
 
   function removeGame(index: number) {
@@ -693,54 +720,87 @@ export default function ChallengeForm({ challenge, gamesCatalog = [] }: Challeng
                 </span>
               </div>
 
-              {/* Search & Selector */}
-              <div className="space-y-2 bg-gray-800/40 p-3 rounded-lg border border-gray-700">
-                <div className="relative">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              {/* Single Unified Searchable Game Combobox */}
+              <div className="relative" ref={dropdownRef}>
+                <div className="relative flex items-center">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <Input
                     value={gameSearch}
-                    onChange={(e) => setGameSearch(e.target.value)}
-                    placeholder="Escribí para buscar juego..."
-                    className="pl-9 bg-gray-900 border-gray-700 text-sm h-9"
+                    onChange={(e) => {
+                      setGameSearch(e.target.value);
+                      setIsDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsDropdownOpen(true)}
+                    placeholder="Escribí para buscar o seleccioná un juego del catálogo..."
+                    className="pl-9 pr-10 bg-gray-900 border-gray-700 text-sm h-11 text-white focus:border-primary/60 rounded-lg shadow-inner"
                   />
-                  {gameSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setGameSearch("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-xs"
-                    >
-                      Limpiar
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen((prev) => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1.5 transition-colors"
+                    title={isDropdownOpen ? "Cerrar catálogo" : "Desplegar todos los juegos"}
+                  >
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isDropdownOpen ? "rotate-180 text-primary" : ""
+                      }`}
+                    />
+                  </button>
                 </div>
 
-                <div className="flex gap-2 items-center">
-                  <select
-                    value={selectedGameToAdd}
-                    onChange={(e) => setSelectedGameToAdd(e.target.value)}
-                    className="flex-1 bg-gray-900 border border-gray-700 text-white h-10 px-3 rounded-md focus:border-primary/50 transition-all text-sm"
-                  >
-                    <option value="">Seleccionar juego del catálogo...</option>
-                    {Object.keys(categorizedGames).map((category) => (
-                      <optgroup key={category} label={`━━ ${category} ━━`} className="bg-gray-950 font-bold text-primary">
-                        {categorizedGames[category].map((g) => (
-                          <option key={g.id} value={g.id} className="bg-gray-900 text-white font-normal">
-                            {g.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                  <Button
-                    type="button"
-                    onClick={handleAddGameFromCatalog}
-                    disabled={!selectedGameToAdd}
-                    className="bg-primary text-black hover:bg-yellow-400 font-bold shrink-0"
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Añadir
-                  </Button>
-                </div>
+                {/* Floating Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute z-30 left-0 right-0 mt-1.5 max-h-72 overflow-y-auto bg-gray-950 border border-gray-700 rounded-xl shadow-2xl backdrop-blur-md divide-y divide-gray-800">
+                    {Object.keys(categorizedGames).length === 0 ? (
+                      <div className="p-4 text-center text-xs text-gray-400">
+                        {gameSearch
+                          ? `No se encontró ningún juego para "${gameSearch}"`
+                          : "No hay más juegos disponibles en el catálogo."}
+                      </div>
+                    ) : (
+                      Object.keys(categorizedGames).map((category) => (
+                        <div key={category} className="p-1.5">
+                          <div className="text-[10px] font-black text-primary uppercase tracking-wider px-2 py-1 flex items-center justify-between bg-gray-900/60 rounded">
+                            <span>━━ {category} ━━</span>
+                            <span className="text-[9px] text-gray-400 font-normal">
+                              {categorizedGames[category].length} {categorizedGames[category].length === 1 ? "juego" : "juegos"}
+                            </span>
+                          </div>
+                          <div className="space-y-0.5 mt-1">
+                            {categorizedGames[category].map((game) => (
+                              <button
+                                key={game.id}
+                                type="button"
+                                onClick={() => handleAddGame(game)}
+                                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/80 text-left transition-colors group"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-8 h-8 rounded overflow-hidden bg-black shrink-0 relative border border-gray-800">
+                                    {game.coverImage ? (
+                                      <img
+                                        src={game.coverImage}
+                                        alt={game.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <Gamepad2 className="w-4 h-4 text-gray-600 m-auto" />
+                                    )}
+                                  </div>
+                                  <span className="text-sm font-medium text-white group-hover:text-primary transition-colors truncate">
+                                    {game.name}
+                                  </span>
+                                </div>
+                                <span className="text-xs bg-primary/20 text-primary group-hover:bg-primary group-hover:text-black font-bold px-2 py-0.5 rounded transition-colors flex items-center gap-1 shrink-0">
+                                  <Plus className="w-3 h-3" /> Añadir
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
 
               {games.length === 0 && (
@@ -855,45 +915,72 @@ export default function ChallengeForm({ challenge, gamesCatalog = [] }: Challeng
           </div>
 
           {/* Registered Players List (Edit Mode Only) */}
-          {challenge && challenge.registrations && challenge.registrations.length > 0 && (
+          {challenge && (
             <div className="space-y-4 pt-4 border-t border-gray-800">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                Jugadores Inscriptos ({challenge.registrations.length})
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {challenge.registrations.map((reg: any) => (
-                  <div key={reg.playerId} className="flex items-center justify-between bg-gray-800/40 border border-gray-700 p-3 rounded-lg">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-black shrink-0 relative">
-                        {reg.player?.image ? (
-                          <img src={reg.player.image} alt={reg.player.alias || "Avatar"} className="object-cover w-full h-full" />
-                        ) : (
-                          <Users className="w-4 h-4 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">
-                          {reg.player?.alias || reg.player?.name || "Sin nombre"}
-                        </p>
-                        <p className="text-xs text-gray-400 font-mono">
-                          {reg.score} pts · {reg.timesPlayed || 0} jugadas
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setPlayerToDelete({ id: reg.playerId, name: reg.player?.alias || reg.player?.name || "Sin nombre" })}
-                      className="text-gray-500 hover:text-red-400 shrink-0 h-8 w-8"
-                      title="Eliminar inscripción"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Jugadores Inscriptos ({challenge.registrations?.length || 0})
+                </h3>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowAddPlayerModal(true)}
+                  className="bg-primary/20 hover:bg-primary hover:text-black text-primary font-bold text-xs h-8 gap-1.5"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Agregar Jugador Manual
+                </Button>
               </div>
+
+              {challenge.registrations && challenge.registrations.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {challenge.registrations.map((reg: any) => (
+                    <div key={reg.playerId} className="flex items-center justify-between bg-gray-800/40 border border-gray-700 p-3 rounded-lg">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-black shrink-0 relative">
+                          {reg.player?.image ? (
+                            <img src={reg.player.image} alt={reg.player.alias || "Avatar"} className="object-cover w-full h-full" />
+                          ) : (
+                            <Users className="w-4 h-4 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white truncate">
+                            {reg.player?.alias || reg.player?.name || "Sin nombre"}
+                          </p>
+                          <p className="text-xs text-gray-400 font-mono">
+                            {reg.score} pts · {reg.timesPlayed || 0} jugadas
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setPlayerToDelete({ id: reg.playerId, name: reg.player?.alias || reg.player?.name || "Sin nombre" })}
+                        className="text-gray-500 hover:text-red-400 shrink-0 h-8 w-8"
+                        title="Eliminar inscripción"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
+                  <p className="text-gray-400 text-xs mb-2">No hay jugadores inscriptos en este desafío todavía.</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAddPlayerModal(true)}
+                    className="border-primary/40 text-primary hover:bg-primary/10 text-xs h-7"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 mr-1" /> Agregar primer jugador
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -906,6 +993,15 @@ export default function ChallengeForm({ challenge, gamesCatalog = [] }: Challeng
           </Button>
         </form>
       </Form>
+
+      {challenge && (
+        <AddManualPlayerModal
+          challengeId={challenge.id}
+          isOpen={showAddPlayerModal}
+          onClose={() => setShowAddPlayerModal(false)}
+          availablePlayers={availablePlayers}
+        />
+      )}
 
       <AlertDialog open={!!playerToDelete} onOpenChange={(open) => !open && setPlayerToDelete(null)}>
         <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">

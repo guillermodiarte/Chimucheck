@@ -274,6 +274,7 @@ export async function unregisterPlayerFromChallenge(challengeId: string, playerI
 
     revalidatePath("/admin/challenges");
     revalidatePath(`/admin/challenges/${challengeId}/live`);
+    revalidatePath(`/admin/challenges/${challengeId}/edit`);
     revalidatePath("/admin/requests");
     revalidatePath("/admin", "layout");
     revalidatePath(`/desafios/${challengeId}`);
@@ -281,6 +282,89 @@ export async function unregisterPlayerFromChallenge(challengeId: string, playerI
   } catch (error) {
     console.error("Error unregistering player from challenge:", error);
     return { success: false, message: "Error al eliminar inscripción" };
+  }
+}
+
+export async function addManualPlayerToChallenge(
+  challengeId: string,
+  payload: { playerId?: string; alias?: string; name?: string }
+) {
+  try {
+    const challenge = await db.challenge.findUnique({
+      where: { id: challengeId },
+      include: { registrations: true },
+    });
+
+    if (!challenge) return { success: false, message: "Desafío no encontrado" };
+
+    let targetPlayerId = payload.playerId;
+    let playerName = payload.alias || payload.name || "Jugador";
+
+    // 1. If existing playerId was selected
+    if (targetPlayerId) {
+      const existing = await db.player.findUnique({ where: { id: targetPlayerId } });
+      if (!existing) return { success: false, message: "Jugador no encontrado en el sistema" };
+      playerName = existing.alias || existing.name || "Jugador";
+    } else if (payload.alias || payload.name) {
+      // 2. Quick creation by alias / name (e.g. "Pepe", "Juan", "Lola")
+      const aliasClean = (payload.alias || payload.name || "").trim();
+      if (!aliasClean) return { success: false, message: "Ingresa un nombre o alias para el jugador" };
+
+      let player = await db.player.findFirst({
+        where: {
+          OR: [
+            { alias: { equals: aliasClean } },
+            { name: { equals: aliasClean } },
+          ],
+        },
+      });
+
+      if (!player) {
+        const randomHex = Math.random().toString(36).substring(2, 7);
+        const email = `${aliasClean.toLowerCase().replace(/[^a-z0-9]/g, "")}_${randomHex}@test.chimuchek.com`;
+        player = await db.player.create({
+          data: {
+            alias: aliasClean,
+            name: payload.name?.trim() || aliasClean,
+            email,
+            registrationStatus: "APPROVED",
+            active: true,
+          },
+        });
+      }
+
+      targetPlayerId = player.id;
+      playerName = player.alias || player.name || aliasClean;
+    } else {
+      return { success: false, message: "Debes seleccionar o ingresar un jugador" };
+    }
+
+    // Check if already in this challenge
+    const alreadyRegistered = challenge.registrations.some((r) => r.playerId === targetPlayerId);
+    if (alreadyRegistered) {
+      return { success: false, message: `El jugador "${playerName}" ya está en este desafío` };
+    }
+
+    // Add player to challenge directly as APPROVED
+    await db.challengeRegistration.create({
+      data: {
+        challengeId,
+        playerId: targetPlayerId,
+        status: "APPROVED",
+        score: 0,
+        timesPlayed: 0,
+        registeredAt: new Date(),
+      },
+    });
+
+    revalidatePath("/admin/challenges");
+    revalidatePath(`/admin/challenges/${challengeId}/live`);
+    revalidatePath(`/admin/challenges/${challengeId}/edit`);
+    revalidatePath(`/desafios/${challengeId}`);
+    return { success: true, message: `Jugador "${playerName}" agregado al desafío` };
+  } catch (error) {
+    console.error("Error adding manual player to challenge:", error);
+    return { success: false, message: "Error al agregar jugador" };
   }
 }
 

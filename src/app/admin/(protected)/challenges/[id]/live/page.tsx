@@ -9,17 +9,26 @@ export default async function AdminLiveChallengePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const challenge = await db.challenge.findUnique({
-    where: { id },
-    include: {
-      registrations: {
-        include: { player: true },
-        orderBy: { registeredAt: "asc" },
+  const [challenge, allPlayers] = await Promise.all([
+    db.challenge.findUnique({
+      where: { id },
+      include: {
+        registrations: {
+          include: { player: true },
+          orderBy: { registeredAt: "asc" },
+        },
       },
-    },
-  });
+    }),
+    db.player.findMany({
+      select: { id: true, name: true, alias: true, image: true },
+      orderBy: { alias: "asc" },
+    }),
+  ]);
 
   if (!challenge) return notFound();
+
+  const registeredPlayerIds = new Set(challenge.registrations.map((r: any) => r.playerId));
+  const availablePlayers = allPlayers.filter((p) => !registeredPlayerIds.has(p.id));
 
   const initialPlayers: ChallengeLivePlayer[] = challenge.registrations.map((r: any) => ({
     id: r.playerId,
@@ -50,6 +59,7 @@ export default async function AdminLiveChallengePage({
         initialStatus={challenge.status}
         initialPlayers={initialPlayers}
         prizePool={challenge.prizePool || undefined}
+        availablePlayers={availablePlayers}
       />
     </div>
   );

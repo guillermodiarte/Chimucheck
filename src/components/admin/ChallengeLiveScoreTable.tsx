@@ -25,6 +25,7 @@ import {
   UploadCloud,
   Image as ImageIcon,
   Trash2,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,6 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PodiumModal } from "@/components/tournament/PodiumModal";
 import { MediaSelectorModal } from "@/components/admin/MediaSelectorModal";
+import { AddManualPlayerModal } from "@/components/admin/AddManualPlayerModal";
 
 export type ChallengeLivePlayer = {
   id: string; // playerId
@@ -76,6 +78,7 @@ interface ChallengeLiveScoreTableProps {
   initialPlayers: ChallengeLivePlayer[];
   prizePool?: string;
   readOnly?: boolean; // For public live viewer
+  availablePlayers?: { id: string; alias?: string | null; name?: string | null; image?: string | null }[];
 }
 
 export function ChallengeLiveScoreTable({
@@ -85,6 +88,7 @@ export function ChallengeLiveScoreTable({
   initialPlayers,
   prizePool,
   readOnly = false,
+  availablePlayers = [],
 }: ChallengeLiveScoreTableProps) {
   const router = useRouter();
   const [players, setPlayers] = useState<ChallengeLivePlayer[]>(initialPlayers);
@@ -93,6 +97,7 @@ export function ChallengeLiveScoreTable({
   const [sortBy, setSortBy] = useState<"priority" | "points">("priority");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPodium, setShowPodium] = useState(false);
+  const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
 
   // Background for projector mode
   const [bgImage, setBgImageState] = useState("");
@@ -418,6 +423,17 @@ export function ChallengeLiveScoreTable({
         {/* Admin Action Buttons */}
         {!readOnly && (
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setShowAddPlayerModal(true)}
+              className="bg-primary/20 hover:bg-primary hover:text-black text-primary font-bold text-xs h-9 gap-1.5"
+              title="Agregar jugador manualmente"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Agregar Jugador</span>
+            </Button>
+
             <Button
               type="button"
               variant="outline"
@@ -754,6 +770,16 @@ export function ChallengeLiveScoreTable({
         winners={podiumWinners}
         prizePool={prizePool}
       />
+
+      {/* Manual player modal */}
+      {!readOnly && (
+        <AddManualPlayerModal
+          challengeId={challengeId}
+          isOpen={showAddPlayerModal}
+          onClose={() => setShowAddPlayerModal(false)}
+          availablePlayers={availablePlayers}
+        />
+      )}
     </div>
   );
 }
