@@ -136,6 +136,8 @@ export async function createTournament(prevState: any, formData: FormData) {
       },
     });
     revalidatePath("/admin/tournaments");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     revalidatePath("/torneos");
     return { success: true, message: "Torneo creado correctamente" };
   } catch (error) {
@@ -263,6 +265,8 @@ export async function updateTournament(id: string, prevState: any, formData: For
       },
     });
     revalidatePath("/admin/tournaments");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     revalidatePath("/torneos");
     revalidatePath("/player/dashboard");
     return { success: true, message: "Torneo actualizado correctamente" };
@@ -341,6 +345,8 @@ export async function deleteTournament(id: string) {
 
     await db.tournament.delete({ where: { id } });
     revalidatePath("/admin/tournaments");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     revalidatePath("/torneos");
     return { success: true };
   } catch (error) {
@@ -356,6 +362,8 @@ export async function toggleTournamentStatus(id: string, currentStatus: boolean)
       data: { active: !currentStatus },
     });
     revalidatePath("/admin/tournaments");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     revalidatePath("/torneos");
   } catch (error) {
     console.error("Error toggling tournament status:", error);
@@ -452,6 +460,8 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
 
     revalidatePath(`/torneos/${tournamentId}`);
     revalidatePath("/torneos");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     return { success: true, message: "Inscripción exitosa" };
 
   } catch (error) {
@@ -501,15 +511,19 @@ export async function unregisterPlayer(tournamentId: string, playerId: string) {
       },
     });
 
-    await db.tournament.update({
-      where: { id: tournamentId },
-      data: {
-        currentPlayers: { decrement: 1 },
-      },
-    });
+    if (registration.status !== "PENDING") {
+      await db.tournament.update({
+        where: { id: tournamentId },
+        data: {
+          currentPlayers: { decrement: 1 },
+        },
+      });
+    }
 
     revalidatePath(`/torneos/${tournamentId}`);
     revalidatePath("/torneos");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     return { success: true, message: "Inscripción cancelada" };
 
   } catch (error) {
@@ -837,6 +851,8 @@ export async function finishTournament(id: string) {
     // -------------------------
 
     revalidatePath("/admin/tournaments");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     revalidatePath("/torneos");
     return { success: true };
   } catch (error) {
@@ -920,6 +936,8 @@ export async function reactivateTournament(id: string) {
     });
 
     revalidatePath("/admin/tournaments");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     revalidatePath("/torneos");
     return { success: true };
   } catch (error) {

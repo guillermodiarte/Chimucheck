@@ -22,8 +22,7 @@ import { toast } from "sonner";
 import { createTournament, updateTournament, unregisterPlayer } from "@/app/actions/tournaments";
 import { CATEGORIES, RANK_TIERS } from "@/lib/mmr";
 import { LocalImageUpload } from "./LocalImageUpload";
-import { MediaSelectorModal } from "./MediaSelectorModal";
-import { Plus, X, Gamepad2, Users, Trash2 } from "lucide-react";
+import { Plus, X, Gamepad2, Users, Trash2, Image as ImageIcon, Camera } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,6 +97,9 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
       try {
         const parsed = JSON.parse(tournament.prizePool);
         if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+          const imgs: string[] = Array.isArray(parsed.images)
+            ? parsed.images
+            : (parsed.image ? [parsed.image] : []);
           return { 
             type: parsed.type || "TEXTO",
             first: parsed.first || "", 
@@ -105,17 +107,55 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
             third: parsed.third || "",
             chimucoinsFirst: parsed.chimucoinsFirst || "",
             chimucoinsSecond: parsed.chimucoinsSecond || "",
-            chimucoinsThird: parsed.chimucoinsThird || ""
+            chimucoinsThird: parsed.chimucoinsThird || "",
+            images: imgs,
+            imageFirst: parsed.imageFirst || "",
+            imageSecond: parsed.imageSecond || "",
+            imageThird: parsed.imageThird || "",
           };
         }
       } catch {
         // Legacy string value — treat as first place prize
-        return { type: "TEXTO", first: tournament.prizePool, second: "", third: "", chimucoinsFirst: "", chimucoinsSecond: "", chimucoinsThird: "" };
+        return { type: "TEXTO", first: tournament.prizePool, second: "", third: "", chimucoinsFirst: "", chimucoinsSecond: "", chimucoinsThird: "", images: [], imageFirst: "", imageSecond: "", imageThird: "" };
       }
     }
-    return { type: "TEXTO", first: "", second: "", third: "", chimucoinsFirst: "", chimucoinsSecond: "", chimucoinsThird: "" };
+    return { type: "TEXTO", first: "", second: "", third: "", chimucoinsFirst: "", chimucoinsSecond: "", chimucoinsThird: "", images: [], imageFirst: "", imageSecond: "", imageThird: "" };
   })();
   const [prizes, setPrizes] = useState(existingPrizes);
+
+  // Per-position prize images
+  type PrizeImageState = { url: string; pendingFile?: File | null };
+  const [prizeImageFirst, setPrizeImageFirst] = useState<PrizeImageState>(() => {
+    const img = existingPrizes.imageFirst || (existingPrizes.images?.[0] ?? "");
+    return { url: img, pendingFile: null };
+  });
+  const [prizeImageSecond, setPrizeImageSecond] = useState<PrizeImageState>(() => {
+    const img = existingPrizes.imageSecond || (existingPrizes.images?.[1] ?? "");
+    return { url: img, pendingFile: null };
+  });
+  const [prizeImageThird, setPrizeImageThird] = useState<PrizeImageState>(() => {
+    const img = existingPrizes.imageThird || (existingPrizes.images?.[2] ?? "");
+    return { url: img, pendingFile: null };
+  });
+
+  const handlePrizeImageFile = (pos: "first" | "second" | "third", file: File) => {
+    const previewUrl = URL.createObjectURL(file);
+    if (pos === "first") setPrizeImageFirst({ url: previewUrl, pendingFile: file });
+    else if (pos === "second") setPrizeImageSecond({ url: previewUrl, pendingFile: file });
+    else setPrizeImageThird({ url: previewUrl, pendingFile: file });
+  };
+
+  const handlePrizeImageUrl = (pos: "first" | "second" | "third", url: string) => {
+    if (pos === "first") setPrizeImageFirst({ url, pendingFile: null });
+    else if (pos === "second") setPrizeImageSecond({ url, pendingFile: null });
+    else setPrizeImageThird({ url, pendingFile: null });
+  };
+
+  const handlePrizeImageRemove = (pos: "first" | "second" | "third") => {
+    if (pos === "first") setPrizeImageFirst({ url: "", pendingFile: null });
+    else if (pos === "second") setPrizeImageSecond({ url: "", pendingFile: null });
+    else setPrizeImageThird({ url: "", pendingFile: null });
+  };
 
   const form = useForm<z.infer<typeof TournamentSchema>>({
     resolver: zodResolver(TournamentSchema) as any,
@@ -231,6 +271,35 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
         uploadedGames.push({ name: game.name.trim(), image: imageUrl, format: game.format || "" });
       }
 
+      // Upload pending prize images (per-position)
+      const uploadPrizeImage = async (imgState: { url: string; pendingFile?: File | null }, label: string): Promise<string> => {
+        if (imgState.pendingFile) {
+          const uploadFormData = new FormData();
+          uploadFormData.append("file", imgState.pendingFile);
+          uploadFormData.append("folder", "imagenes");
+          const toastId = toast.loading(`Subiendo imagen de premio (${label})...`);
+          const response = await fetch("/api/upload", { method: "POST", body: uploadFormData });
+          const uploadResult = await response.json();
+          toast.dismiss(toastId);
+          if (response.ok && uploadResult.success) return uploadResult.url as string;
+          toast.error(`Error al subir imagen de premio (${label})`);
+          throw new Error("upload-failed");
+        }
+        return imgState.url;
+      };
+
+      let finalImageFirst = "";
+      let finalImageSecond = "";
+      let finalImageThird = "";
+      try {
+        finalImageFirst = await uploadPrizeImage(prizeImageFirst, "1er Puesto");
+        finalImageSecond = await uploadPrizeImage(prizeImageSecond, "2do Puesto");
+        finalImageThird = await uploadPrizeImage(prizeImageThird, "3er Puesto");
+      } catch {
+        setIsSubmitting(false);
+        return;
+      }
+
       // Build FormData
       const formData = new FormData();
       formData.append("name", data.name);
@@ -246,6 +315,9 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
         chimucoinsFirst: prizes.chimucoinsFirst,
         chimucoinsSecond: prizes.chimucoinsSecond,
         chimucoinsThird: prizes.chimucoinsThird,
+        imageFirst: finalImageFirst,
+        imageSecond: finalImageSecond,
+        imageThird: finalImageThird,
       });
       formData.append("prizePool", prizesJson);
       formData.append("active", String(data.active));
@@ -454,47 +526,146 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
                 {(prizes.type === "TEXTO" || prizes.type === "AMBOS") && (
                   <div className="space-y-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
                     <label className="text-xs font-semibold text-gray-300 block mb-1">Premios en Texto</label>
+
+                    {/* First Place Row */}
                     <div>
                       <label className="text-_2xs text-gray-400 mb-1 block">
                         {prizes.second ? "🥇 Primer Puesto" : "🏆 Premio del Evento"}
                       </label>
-                      <Input
-                        value={prizes.first}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setPrizes((p) => ({
-                            ...p,
-                            first: val,
-                            second: val ? p.second : "",
-                            third: val && p.second ? p.third : "",
-                          }));
-                        }}
-                        className="bg-gray-800 border-gray-700"
-                        placeholder="Ej: $100.000 + Skins"
-                      />
+                      <div className="flex gap-2 items-start">
+                        <Input
+                          value={prizes.first}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPrizes((p) => ({
+                              ...p,
+                              first: val,
+                              second: val ? p.second : "",
+                              third: val && p.second ? p.third : "",
+                            }));
+                            if (!val) {
+                              setPrizeImageFirst({ url: "", pendingFile: null });
+                              setPrizeImageSecond({ url: "", pendingFile: null });
+                              setPrizeImageThird({ url: "", pendingFile: null });
+                            }
+                          }}
+                          className="bg-gray-800 border-gray-700 flex-1"
+                          placeholder="Ej: $100.000 + Skins"
+                        />
+                        {/* Prize image picker — 1st */}
+                        <div className="shrink-0">
+                          {prizeImageFirst.url ? (
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-yellow-500/40 bg-black group">
+                              <img src={prizeImageFirst.url} alt="Premio 1" className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => handlePrizeImageRemove("first")}
+                                className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-red-400"
+                                title="Quitar imagen"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <LocalImageUpload
+                              label=""
+                              onFileSelect={(f) => handlePrizeImageFile("first", f)}
+                              onUrlSelect={(url) => handlePrizeImageUrl("first", url)}
+                              defaultFolder="imagenes"
+                              compact
+                            />
+                          )}
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Second Place Row */}
                     <div>
                       <label className="text-_2xs text-gray-400 mb-1 block">🥈 Segundo Puesto (opcional)</label>
-                      <Input
-                        value={prizes.second}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setPrizes((p) => ({ ...p, second: val, third: val ? p.third : "" }));
-                        }}
-                        disabled={!prizes.first}
-                        className="bg-gray-800 border-gray-700 disabled:opacity-40"
-                        placeholder={prizes.first ? "Ej: $50.000" : "Completá Primer Puesto primero"}
-                      />
+                      <div className="flex gap-2 items-start">
+                        <Input
+                          value={prizes.second}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPrizes((p) => ({ ...p, second: val, third: val ? p.third : "" }));
+                            if (!val) {
+                              setPrizeImageSecond({ url: "", pendingFile: null });
+                              setPrizeImageThird({ url: "", pendingFile: null });
+                            }
+                          }}
+                          disabled={!prizes.first}
+                          className="bg-gray-800 border-gray-700 disabled:opacity-40 flex-1"
+                          placeholder={prizes.first ? "Ej: $50.000" : "Completá Primer Puesto primero"}
+                        />
+                        <div className="shrink-0">
+                          {prizes.first && prizeImageSecond.url ? (
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-500/40 bg-black group">
+                              <img src={prizeImageSecond.url} alt="Premio 2" className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => handlePrizeImageRemove("second")}
+                                className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-red-400"
+                                title="Quitar imagen"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : prizes.first ? (
+                            <LocalImageUpload
+                              label=""
+                              onFileSelect={(f) => handlePrizeImageFile("second", f)}
+                              onUrlSelect={(url) => handlePrizeImageUrl("second", url)}
+                              defaultFolder="imagenes"
+                              compact
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg border border-dashed border-gray-700 flex items-center justify-center opacity-30">
+                              <Camera className="w-4 h-4 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Third Place Row */}
                     <div>
                       <label className="text-_2xs text-gray-400 mb-1 block">🥉 Tercer Puesto (opcional)</label>
-                      <Input
-                        value={prizes.third}
-                        onChange={(e) => setPrizes((p) => ({ ...p, third: e.target.value }))}
-                        disabled={!prizes.first || !prizes.second}
-                        className="bg-gray-800 border-gray-700 disabled:opacity-40"
-                        placeholder={!prizes.first || !prizes.second ? "Completá Primer y Segundo Puesto" : "Ej: $25.000"}
-                      />
+                      <div className="flex gap-2 items-start">
+                        <Input
+                          value={prizes.third}
+                          onChange={(e) => setPrizes((p) => ({ ...p, third: e.target.value }))}
+                          disabled={!prizes.first || !prizes.second}
+                          className="bg-gray-800 border-gray-700 disabled:opacity-40 flex-1"
+                          placeholder={!prizes.first || !prizes.second ? "Completá Primer y Segundo Puesto" : "Ej: $25.000"}
+                        />
+                        <div className="shrink-0">
+                          {prizes.first && prizes.second && prizeImageThird.url ? (
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-orange-500/30 bg-black group">
+                              <img src={prizeImageThird.url} alt="Premio 3" className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => handlePrizeImageRemove("third")}
+                                className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-red-400"
+                                title="Quitar imagen"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : prizes.first && prizes.second ? (
+                            <LocalImageUpload
+                              label=""
+                              onFileSelect={(f) => handlePrizeImageFile("third", f)}
+                              onUrlSelect={(url) => handlePrizeImageUrl("third", url)}
+                              defaultFolder="imagenes"
+                              compact
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg border border-dashed border-gray-700 flex items-center justify-center opacity-30">
+                              <Camera className="w-4 h-4 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -554,6 +725,8 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
                     </div>
                   </div>
                 )}
+
+                {/* Prize Images Block (Optional) - REMOVED: images are now per-position inline */}
               </div>
 
               {/* Description */}
@@ -699,7 +872,7 @@ export default function TournamentForm({ tournament, gamesCatalog = [] }: Tourna
                       Torneo Restrictivo (Requiere Aprobación)
                     </FormLabel>
                     <p className="text-sm text-yellow-600/80">
-                      Si se activa, los jugadores quedarán "Pendientes" y un Admin deberá aprobarlos manualmente desde el menú "Solicitudes".
+                      Si se activa, los jugadores quedarán &quot;Pendientes&quot; de aprobación. El menú &quot;Solicitudes&quot; se habilitará automáticamente en el panel mientras el torneo esté vigente para revisar y aprobar inscripciones.
                     </p>
                   </div>
                 </FormItem>

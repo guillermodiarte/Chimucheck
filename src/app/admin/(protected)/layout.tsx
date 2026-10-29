@@ -3,6 +3,7 @@ import { MobileNav } from "@/components/admin/MobileNav";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { getApprovalMenuState } from "@/app/actions/requests";
 
 export default async function AdminLayout({
   children,
@@ -16,13 +17,15 @@ export default async function AdminLayout({
     redirect("/admin");
   }
 
+  const { visible: showRequests, pendingCount } = await getApprovalMenuState();
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-black text-white">
       {/* Mobile Navigation */}
-      <MobileNav />
+      <MobileNav showRequests={showRequests} pendingCount={pendingCount} />
       {/* Desktop Sidebar */}
       <div className="hidden md:flex h-full">
-        <Sidebar />
+        <Sidebar showRequests={showRequests} pendingCount={pendingCount} />
       </div>
 
       <main className="flex-1 overflow-y-auto">

@@ -124,6 +124,8 @@ export async function updateTournamentStatus(id: string, newStatus: TournamentSt
     }
 
     revalidatePath("/admin/tournaments");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
     revalidatePath("/torneos");
     return { success: true };
   } catch (error) {

@@ -99,7 +99,7 @@ export default function Navbar({
 
   const isNavActive = (href: string) => {
     if (href === "/") return pathname === "/";
-    if (href === "/torneos") return pathname === "/torneos" || pathname.startsWith("/torneos");
+    if (href === "/torneos") return pathname === "/torneos" || pathname.startsWith("/torneos") || pathname === "/desafios" || pathname.startsWith("/desafios");
     if (href === "/sorteos")
       return (
         pathname === "/sorteos" ||
@@ -115,7 +115,7 @@ export default function Navbar({
   const navItems = [
     { href: "/", label: "Inicio", icon: Home, isHome: true },
     { href: "/premios", label: "Premios", icon: Award },
-    { href: "/torneos", label: "Torneos", icon: Trophy },
+    { href: "/torneos", label: "Torneos y Desafíos", icon: Trophy },
     { href: "/sorteos", label: "Sorteos", icon: Ticket },
     { href: "/votaciones", label: "Votaciones", icon: Vote },
     { href: "/acerca-de", label: "Historia", icon: BookOpen, scrollToTop: true },
@@ -195,15 +195,15 @@ export default function Navbar({
                 <Link
                   href="/torneos"
                   className={`px-2 py-1 rounded-md text-base font-bold transition-all duration-300 relative group ${
-                    pathname === "/torneos" || pathname.startsWith("/torneos")
+                    pathname === "/torneos" || pathname.startsWith("/torneos") || pathname === "/desafios" || pathname.startsWith("/desafios")
                       ? "text-primary"
                       : "text-gray-300 hover:text-primary hover:scale-110"
                   }`}
                 >
-                  Torneos
+                  Torneos y Desafíos
                   <span
                     className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all ${
-                      pathname === "/torneos" || pathname.startsWith("/torneos")
+                      pathname === "/torneos" || pathname.startsWith("/torneos") || pathname === "/desafios" || pathname.startsWith("/desafios")
                         ? "w-full"
                         : "w-0 group-hover:w-full"
                     }`}

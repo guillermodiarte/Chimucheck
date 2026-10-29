@@ -15,9 +15,11 @@ interface LocalImageUploadProps {
   className?: string;
   label?: string;
   defaultFolder?: string;
+  /** Renders a small icon-only button pair instead of the full-size layout */
+  compact?: boolean;
 }
 
-export function LocalImageUpload({ onFileSelect, onUrlSelect, className, label = "Subir Imagen", defaultFolder }: LocalImageUploadProps) {
+export function LocalImageUpload({ onFileSelect, onUrlSelect, className, label = "Subir Imagen", defaultFolder, compact = false }: LocalImageUploadProps) {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
 
@@ -34,6 +36,50 @@ export function LocalImageUpload({ onFileSelect, onUrlSelect, className, label =
     onFileSelect(file);
     // Reset input value to allow re-uploading same file if needed
     setFileInputKey(prev => prev + 1);
+  }
+
+  // Compact mode: small icon-only button for inline prize image upload
+  if (compact) {
+    return (
+      <div className={cn("flex items-center gap-1", className)}>
+        <div className="relative">
+          <button
+            type="button"
+            title="Subir imagen"
+            className="w-10 h-10 rounded-lg border border-dashed border-gray-600 hover:border-yellow-500/60 bg-gray-800/60 hover:bg-gray-700/60 flex items-center justify-center transition-colors"
+          >
+            <UploadCloud className="w-4 h-4 text-gray-400" />
+          </button>
+          <input
+            key={fileInputKey}
+            type="file"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            onChange={handleFileChange}
+            accept="image/*,video/*"
+          />
+        </div>
+        {onUrlSelect && (
+          <>
+            <button
+              type="button"
+              title="Biblioteca"
+              onClick={() => setShowMediaSelector(true)}
+              className="w-10 h-10 rounded-lg border border-dashed border-blue-700/40 hover:border-blue-500/60 bg-gray-800/60 hover:bg-blue-900/30 flex items-center justify-center transition-colors"
+            >
+              <ImageIcon className="w-4 h-4 text-blue-400" />
+            </button>
+            <MediaSelectorModal
+              open={showMediaSelector}
+              onOpenChange={setShowMediaSelector}
+              onSelect={(url) => {
+                if (onUrlSelect) onUrlSelect(url);
+              }}
+              defaultFolder={defaultFolder}
+            />
+          </>
+        )}
+      </div>
+    );
   }
 
   return (

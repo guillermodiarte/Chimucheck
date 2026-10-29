@@ -3,40 +3,123 @@
 import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+export async function getApprovalMenuState() {
+  try {
+    const [
+      activeRestrictedTournament,
+      activeRestrictedChallenge,
+      pendingTournamentRequests,
+      pendingChallengeRequests,
+      pendingPlayerRequests
+    ] = await Promise.all([
+      db.tournament.findFirst({
+        where: {
+          isRestricted: true,
+          active: true,
+          status: { notIn: ["FINALIZADO", "CANCELADO"] },
+        },
+        select: { id: true },
+      }),
+      db.challenge.findFirst({
+        where: {
+          isRestricted: true,
+          active: true,
+          status: { notIn: ["FINALIZADO", "CANCELADO"] },
+        },
+        select: { id: true },
+      }),
+      db.tournamentRegistration.count({
+        where: {
+          status: "PENDING",
+          tournament: {
+            active: true,
+            status: { notIn: ["FINALIZADO", "CANCELADO"] },
+          },
+        },
+      }),
+      db.challengeRegistration.count({
+        where: {
+          status: "PENDING",
+          challenge: {
+            active: true,
+            status: { notIn: ["FINALIZADO", "CANCELADO"] },
+          },
+        },
+      }),
+      db.player.count({
+        where: {
+          registrationStatus: "PENDING",
+        },
+      }),
+    ]);
+
+    const totalPending = pendingTournamentRequests + pendingChallengeRequests + pendingPlayerRequests;
+    const isVisible = Boolean(activeRestrictedTournament) || Boolean(activeRestrictedChallenge) || totalPending > 0;
+
+    return {
+      visible: isVisible,
+      pendingCount: totalPending,
+    };
+  } catch (error) {
+    console.error("Error getting approval menu state:", error);
+    return { visible: false, pendingCount: 0 };
+  }
+}
+
 export async function getPendingRequests() {
   try {
-    return await db.tournamentRegistration.findMany({
-      where: {
-        status: "PENDING",
-        // Solo solicitudes de torneos que aún están activos y no han finalizado
-        tournament: {
-          active: true,
-          status: {
-            notIn: ["FINALIZADO", "CANCELADO"]
-          }
-        }
-      },
-      include: {
-        player: {
-          select: {
-            id: true,
-            alias: true,
-            name: true,
-            image: true,
-            email: true
-          }
+    const [tournamentRequests, challengeRequests] = await Promise.all([
+      db.tournamentRegistration.findMany({
+        where: {
+          status: "PENDING",
+          tournament: {
+            active: true,
+            status: { notIn: ["FINALIZADO", "CANCELADO"] },
+          },
         },
-        tournament: {
-          select: {
-            id: true,
-            name: true,
-            date: true,
-            isRestricted: true
-          }
+        include: {
+          player: {
+            select: { id: true, alias: true, name: true, image: true, email: true },
+          },
+          tournament: {
+            select: { id: true, name: true, date: true, isRestricted: true },
+          },
         },
+        orderBy: { registeredAt: "asc" },
+      }),
+      db.challengeRegistration.findMany({
+        where: {
+          status: "PENDING",
+          challenge: {
+            active: true,
+            status: { notIn: ["FINALIZADO", "CANCELADO"] },
+          },
+        },
+        include: {
+          player: {
+            select: { id: true, alias: true, name: true, image: true, email: true },
+          },
+          challenge: {
+            select: { id: true, name: true, date: true, isRestricted: true },
+          },
+        },
+        orderBy: { registeredAt: "asc" },
+      }),
+    ]);
+
+    const mappedChallenges = challengeRequests.map((c: any) => ({
+      ...c,
+      tournament: {
+        id: c.challenge.id,
+        name: `[Desafío] ${c.challenge.name}`,
+        date: c.challenge.date,
+        isRestricted: c.challenge.isRestricted,
       },
-      orderBy: { registeredAt: "asc" },
-    });
+    }));
+
+    return [...tournamentRequests, ...mappedChallenges].sort(
+      (a: any, b: any) => new Date(a.registeredAt).getTime() - new Date(b.registeredAt).getTime()
+    );
   } catch (error) {
     console.error("Error fetching pending requests:", error);
     return [];
@@ -45,37 +128,58 @@ export async function getPendingRequests() {
 
 export async function getRejectedRequests() {
   try {
-    return await db.tournamentRegistration.findMany({
-      where: {
-        status: "REJECTED",
-        tournament: {
-          active: true,
-          status: {
-            notIn: ["FINALIZADO", "CANCELADO"]
-          }
-        }
-      },
-      include: {
-        player: {
-          select: {
-            id: true,
-            alias: true,
-            name: true,
-            image: true,
-            email: true
-          }
+    const [tournamentRequests, challengeRequests] = await Promise.all([
+      db.tournamentRegistration.findMany({
+        where: {
+          status: "REJECTED",
+          tournament: {
+            active: true,
+            status: { notIn: ["FINALIZADO", "CANCELADO"] },
+          },
         },
-        tournament: {
-          select: {
-            id: true,
-            name: true,
-            date: true,
-            isRestricted: true
-          }
+        include: {
+          player: {
+            select: { id: true, alias: true, name: true, image: true, email: true },
+          },
+          tournament: {
+            select: { id: true, name: true, date: true, isRestricted: true },
+          },
         },
+        orderBy: { registeredAt: "desc" },
+      }),
+      db.challengeRegistration.findMany({
+        where: {
+          status: "REJECTED",
+          challenge: {
+            active: true,
+            status: { notIn: ["FINALIZADO", "CANCELADO"] },
+          },
+        },
+        include: {
+          player: {
+            select: { id: true, alias: true, name: true, image: true, email: true },
+          },
+          challenge: {
+            select: { id: true, name: true, date: true, isRestricted: true },
+          },
+        },
+        orderBy: { registeredAt: "desc" },
+      }),
+    ]);
+
+    const mappedChallenges = challengeRequests.map((c: any) => ({
+      ...c,
+      tournament: {
+        id: c.challenge.id,
+        name: `[Desafío] ${c.challenge.name}`,
+        date: c.challenge.date,
+        isRestricted: c.challenge.isRestricted,
       },
-      orderBy: { registeredAt: "desc" },
-    });
+    }));
+
+    return [...tournamentRequests, ...mappedChallenges].sort(
+      (a: any, b: any) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
+    );
   } catch (error) {
     console.error("Error fetching rejected requests:", error);
     return [];
@@ -89,28 +193,56 @@ export async function updateRequestStatus(registrationId: string, status: "APPRO
       include: { tournament: true }
     });
 
-    if (!registration) {
-      return { success: false, message: "Registro no encontrado" };
-    }
+    if (registration) {
+      if (registration.status === status) {
+        return { success: false, message: "Esta solicitud ya tiene este estado" };
+      }
 
-    if (registration.status === status) {
-      return { success: false, message: "Esta solicitud ya tiene este estado" };
-    }
-
-    await db.tournamentRegistration.update({
-      where: { id: registrationId },
-      data: { status }
-    });
-
-    if (status === "APPROVED") {
-      await db.tournament.update({
-        where: { id: registration.tournamentId },
-        data: { currentPlayers: { increment: 1 } }
+      await db.tournamentRegistration.update({
+        where: { id: registrationId },
+        data: { status }
       });
+
+      if (status === "APPROVED") {
+        await db.tournament.update({
+          where: { id: registration.tournamentId },
+          data: { currentPlayers: { increment: 1 } }
+        });
+      } else if (registration.status === "APPROVED" && (status === "REJECTED" || status === "PENDING")) {
+        await db.tournament.update({
+          where: { id: registration.tournamentId },
+          data: { currentPlayers: { decrement: 1 } }
+        });
+      }
+
+      revalidatePath(`/torneos/${registration.tournamentId}`);
+    } else {
+      // Check ChallengeRegistration
+      const challengeReg = await db.challengeRegistration.findUnique({
+        where: { id: registrationId },
+        include: { challenge: true }
+      });
+
+      if (!challengeReg) {
+        return { success: false, message: "Registro no encontrado" };
+      }
+
+      if (challengeReg.status === status) {
+        return { success: false, message: "Esta solicitud ya tiene este estado" };
+      }
+
+      await db.challengeRegistration.update({
+        where: { id: registrationId },
+        data: { status }
+      });
+
+      revalidatePath("/admin/challenges");
+      revalidatePath(`/admin/challenges/${challengeReg.challengeId}/live`);
+      revalidatePath(`/desafios/${challengeReg.challengeId}`);
     }
 
     revalidatePath("/admin/requests");
-    revalidatePath(`/torneos/${registration.tournamentId}`);
+    revalidatePath("/admin", "layout");
 
     let msg = "Solicitud actualizada";
     if (status === "APPROVED") msg = "Solicitud aprobada";
@@ -130,17 +262,41 @@ export async function deleteRegistration(registrationId: string) {
       where: { id: registrationId },
     });
 
-    if (!registration) {
-      return { success: false, message: "Registro no encontrado" };
+    if (registration) {
+      await db.tournamentRegistration.delete({
+        where: { id: registrationId }
+      });
+
+      if (registration.status === "APPROVED") {
+        await db.tournament.update({
+          where: { id: registration.tournamentId },
+          data: { currentPlayers: { decrement: 1 } }
+        }).catch(() => {});
+      }
+
+      revalidatePath("/admin/requests");
+      revalidatePath("/admin", "layout");
+      revalidatePath(`/torneos/${registration.tournamentId}`);
+      return { success: true, message: "Inscripción eliminada correctamente" };
     }
 
-    await db.tournamentRegistration.delete({
-      where: { id: registrationId }
+    const challengeReg = await db.challengeRegistration.findUnique({
+      where: { id: registrationId },
     });
 
-    revalidatePath("/admin/requests");
-    revalidatePath(`/torneos/${registration.tournamentId}`);
-    return { success: true, message: "Inscripción eliminada correctamente" };
+    if (challengeReg) {
+      await db.challengeRegistration.delete({
+        where: { id: registrationId }
+      });
+
+      revalidatePath("/admin/requests");
+      revalidatePath("/admin", "layout");
+      revalidatePath(`/admin/challenges/${challengeReg.challengeId}/live`);
+      revalidatePath(`/desafios/${challengeReg.challengeId}`);
+      return { success: true, message: "Inscripción eliminada correctamente" };
+    }
+
+    return { success: false, message: "Registro no encontrado" };
   } catch (error) {
     console.error("Error deleting registration:", error);
     return { success: false, message: "Error al eliminar la inscripción" };

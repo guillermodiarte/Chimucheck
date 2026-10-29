@@ -94,6 +94,7 @@ model Player {
   stats                   PlayerStats?
   categoryStats           PlayerCategoryStats[]
   registrations           TournamentRegistration[]
+  challengeRegistrations  ChallengeRegistration[]
   teams                   Team[]
   accounts                Account[]
   raffleEntries           RaffleEntry[]
@@ -193,6 +194,41 @@ model TournamentRegistration {
   player       Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, tournamentId])
+}
+
+model Challenge {
+  id             String                  @id @default(uuid())
+  name           String
+  description    String?
+  date           DateTime
+  status         String                  @default("INSCRIPCION") // INSCRIPCION, EN_JUEGO, FINALIZADO, CANCELADO
+  maxPlayers     Int                     @default(32)
+  prizePool      String?                 // JSON con { type, first, second, third, imageFirst, ... }
+  active         Boolean                 @default(true)
+  isRestricted   Boolean                 @default(false)
+  games          String?                 @default("[]") // JSON [{ name, image, format, gameId, categoryId }]
+  winners        String?                 @default("[]") // JSON con el podio final
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  registrations  ChallengeRegistration[]
+}
+
+model ChallengeRegistration {
+  id           String    @id @default(uuid())
+  playerId     String
+  challengeId  String
+  status       String    @default("APPROVED") // PENDING (si es restrictivo), APPROVED, REJECTED
+  score        Int       @default(0)
+  scoreHistory String    @default("[]")       // Historial para Undo/Redo
+  timesPlayed  Int       @default(0)          // Cantidad de veces que jugó
+  lastPlayedAt DateTime?                      // Momento en que sumó puntos por última vez
+  isAbsent     Boolean   @default(false)      // Estado ausente / bloqueado temporal
+  registeredAt DateTime  @default(now())      // Orden de inscripción FIFO
+
+  challenge    Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  player       Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, challengeId])
 }
 
 model Notification {
