@@ -5,6 +5,11 @@ import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { calculateRank, canJoinTournament, RankTier, MMR_CONSTANTS } from "@/lib/mmr";
+import { auth } from "@/auth";
+import locationsData from "@/data/provincias_localidades.json";
+
+const rawLocations = locationsData as Record<string, string[]>;
+const ALL_PROVINCES = Object.keys(rawLocations);
 
 const TournamentSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
@@ -385,6 +390,18 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
       return { success: false, message: "El torneo está lleno" };
     }
 
+    // Verify player exists and has complete profile data for tournaments
+    const player = await db.player.findUnique({ where: { id: playerId } });
+    if (!player) return { success: false, message: "Jugador no encontrado" };
+
+    if (player.needsProfileCompletion || !player.province || !player.city || !player.name) {
+      return {
+        success: false,
+        message: "Debes completar y confirmar tus datos personales antes de inscribirte al torneo.",
+        needsProfileCompletion: true,
+      };
+    }
+
     // --- MMR Validation ---
     const playerStats = await db.playerCategoryStats.findUnique({
       where: {
@@ -439,9 +456,6 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
       });
     }
 
-    // Get player info for notification
-    const player = await db.player.findUnique({ where: { id: playerId } });
-
     // Create notification for admin (non-blocking)
     try {
       await db.notification.create({
@@ -467,6 +481,165 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
   } catch (error) {
     console.error("Error registering player:", error);
     return { success: false, message: "Error al inscribirse" };
+  }
+}
+
+export async function registerPlayerWithProfile(
+  tournamentId: string,
+  data: {
+    name: string;
+    alias: string;
+    phone?: string;
+    province: string;
+    city: string;
+  }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, message: "Debes iniciar sesión para inscribirte." };
+    }
+    const playerId = session.user.id;
+
+    // Validate fields
+    const name = data.name?.trim();
+    const alias = data.alias?.trim();
+    const phone = data.phone?.trim() || null;
+    const province = data.province?.trim();
+    const city = data.city?.trim();
+
+    if (!name || name.length < 2) {
+      return { success: false, message: "El nombre completo debe tener al menos 2 caracteres." };
+    }
+    if (!alias || alias.length < 2 || alias.length > 20) {
+      return { success: false, message: "El alias debe tener entre 2 y 20 caracteres." };
+    }
+    if (!/^[a-zA-Z0-9_\-. ]+$/.test(alias)) {
+      return { success: false, message: "El alias solo puede contener letras, números, guiones y puntos." };
+    }
+    if (!province || !ALL_PROVINCES.includes(province)) {
+      return { success: false, message: "La provincia seleccionada no es válida." };
+    }
+    const validCities = rawLocations[province] || [];
+    if (!city || !validCities.includes(city)) {
+      return { success: false, message: `La localidad '${city}' no pertenece a ${province}.` };
+    }
+
+    // Check alias uniqueness (excluding current player)
+    const existingAlias = await db.player.findFirst({
+      where: { alias, id: { not: playerId } },
+    });
+    if (existingAlias) {
+      return { success: false, message: "El alias ya está en uso. Por favor elegí otro." };
+    }
+
+    // Update player profile with confirmed data
+    await db.player.update({
+      where: { id: playerId },
+      data: {
+        name,
+        alias,
+        phone,
+        country: "Argentina",
+        province,
+        city,
+        needsProfileCompletion: false,
+      },
+    });
+
+    // Verify tournament
+    const tournament = await db.tournament.findUnique({
+      where: { id: tournamentId },
+      include: { registrations: true },
+    });
+
+    if (!tournament) return { success: false, message: "Torneo no encontrado" };
+    if (!tournament.active) return { success: false, message: "El torneo no está activo" };
+    if (tournament.registrations.length >= tournament.maxPlayers) {
+      return { success: false, message: "El torneo está lleno" };
+    }
+
+    // MMR Validation
+    const playerStats = await db.playerCategoryStats.findUnique({
+      where: {
+        playerId_category: {
+          playerId,
+          category: tournament.category,
+        },
+      },
+    });
+    const points = playerStats?.points || 0;
+    const playerRank = calculateRank(points);
+    const requiredRank = tournament.requiredRank as RankTier;
+
+    if (!canJoinTournament(playerRank.tier, requiredRank)) {
+      return {
+        success: false,
+        message: `No cumples con el nivel. Eres ${playerRank.label} y el torneo es para ${requiredRank}.`,
+      };
+    }
+
+    const existingRegistration = await db.tournamentRegistration.findUnique({
+      where: {
+        playerId_tournamentId: {
+          playerId,
+          tournamentId,
+        },
+      },
+    });
+
+    if (existingRegistration) {
+      return { success: false, message: "Ya estás inscrito en este torneo" };
+    }
+
+    const status = tournament.isRestricted ? "PENDING" : "CONFIRMED";
+
+    await db.tournamentRegistration.create({
+      data: {
+        playerId,
+        tournamentId,
+        status,
+      },
+    });
+
+    if (status === "CONFIRMED") {
+      await db.tournament.update({
+        where: { id: tournamentId },
+        data: { currentPlayers: { increment: 1 } },
+      });
+    }
+
+    // Notification
+    try {
+      await db.notification.create({
+        data: {
+          type: tournament.isRestricted ? "PENDING_REGISTRATION" : "TOURNAMENT_REGISTRATION",
+          title: tournament.isRestricted ? "Solicitud de Inscripción" : "Inscripción a Torneo",
+          message: tournament.isRestricted
+            ? `${alias} ha solicitado unirse a ${tournament.name}.`
+            : `${alias} se inscribió a ${tournament.name}.`,
+          data: JSON.stringify({ playerId, tournamentId, tournamentName: tournament.name }),
+        },
+      });
+    } catch (notifErr) {
+      console.error("Notification error:", notifErr);
+    }
+
+    revalidatePath(`/torneos/${tournamentId}`);
+    revalidatePath("/torneos");
+    revalidatePath("/admin/requests");
+    revalidatePath("/admin", "layout");
+    revalidatePath("/player/dashboard/profile");
+
+    return {
+      success: true,
+      message: tournament.isRestricted
+        ? "¡Datos guardados! Tu solicitud quedó pendiente de revisión por los organizadores."
+        : "¡Datos guardados e inscripción confirmada!",
+    };
+  } catch (error) {
+    console.error("Error in registerPlayerWithProfile:", error);
+    return { success: false, message: "Error al procesar la inscripción" };
   }
 }
 

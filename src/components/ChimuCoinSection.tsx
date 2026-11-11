@@ -28,7 +28,7 @@ export default function ChimuCoinSection({ data }: { data?: ChimuCoinData | null
   const imageUrl = data?.imageUrl || "/images/chimucoin/main.jpg";
 
   return (
-    <section className="py-24 bg-gradient-to-b from-gray-900 to-black relative overflow-hidden">
+    <section className="pt-20 pb-12 bg-gradient-to-b from-gray-900 to-black relative overflow-hidden">
       {/* Glow Effects */}
       <div className="absolute top-1/4 left-0 w-96 h-96 bg-primary/10 rounded-full blur-[150px]" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-secondary/10 rounded-full blur-[150px]" />
@@ -36,7 +36,7 @@ export default function ChimuCoinSection({ data }: { data?: ChimuCoinData | null
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* ChimuCoins Intro */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}

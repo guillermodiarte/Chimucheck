@@ -1,6 +1,7 @@
 
 import { getTournamentById } from "@/app/actions/tournaments";
 import { auth } from "@/auth";
+import { db } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Calendar, Users, Trophy, Gamepad2, AlertCircle, CheckCircle2, Image as ImageIcon } from "lucide-react";
@@ -49,6 +50,22 @@ export default async function TournamentDetailPage({ params }: { params: Promise
     (userRegistration.status === "APPROVED" || userRegistration.status === "CONFIRMED");
 
   const isFull = tournament.registrations.length >= tournament.maxPlayers;
+
+  const currentPlayer = session?.user?.id
+    ? await db.player.findUnique({
+        where: { id: session.user.id },
+        select: {
+          id: true,
+          name: true,
+          alias: true,
+          email: true,
+          phone: true,
+          province: true,
+          city: true,
+          needsProfileCompletion: true,
+        },
+      })
+    : null;
 
   return (
     <div className="relative min-h-screen pt-28 md:pt-40 lg:pt-48 pb-12 px-4 md:px-8">
@@ -421,6 +438,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
                       userId={session?.user?.id || ""}
                       registrationStatus={userRegistration?.status}
                       isRestricted={tournament.isRestricted}
+                      player={currentPlayer}
                     />
                   )}
                 </div>

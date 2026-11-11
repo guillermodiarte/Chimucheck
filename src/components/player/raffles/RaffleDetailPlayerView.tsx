@@ -185,12 +185,16 @@ export function RaffleDetailPlayerView({
 
   const handleEnter = async () => {
     if (!isLoggedIn) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("pending_raffle_enter", raffle.id);
+      }
+      toast.info("Iniciá sesión para completar tu inscripción automáticamente");
       window.dispatchEvent(
         new CustomEvent("open-login-modal", {
           detail: {
             callbackUrl:
               typeof window !== "undefined"
-                ? `${window.location.pathname}${window.location.search}`
+                ? `${window.location.pathname}?autoEnter=${raffle.id}`
                 : undefined,
           },
         })
@@ -228,6 +232,28 @@ export function RaffleDetailPlayerView({
       toast.error(res.message || "Error al inscribirse");
     }
   };
+
+  // Auto-inscribir si el usuario viene de iniciar sesión
+  useEffect(() => {
+    if (!isLoggedIn || !currentUser?.id) return;
+
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlRaffleId = urlParams.get("autoEnter");
+      const storageRaffleId = localStorage.getItem("pending_raffle_enter");
+      const targetRaffleId = urlRaffleId || storageRaffleId;
+
+      if (targetRaffleId === raffle.id && !raffle.isEntered) {
+        localStorage.removeItem("pending_raffle_enter");
+        if (urlRaffleId) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete("autoEnter");
+          window.history.replaceState({}, "", newUrl.toString());
+        }
+        handleEnter();
+      }
+    }
+  }, [isLoggedIn, currentUser?.id]);
 
   const handleLeave = async () => {
     if (!confirm(`¿Estás seguro de darte de baja del sorteo "${raffle.title}"?`)) return;
@@ -279,13 +305,11 @@ export function RaffleDetailPlayerView({
           </div>
 
           <Button
-            variant="ghost"
-            size="sm"
             disabled={loadingAction}
             onClick={handleLeave}
-            className="w-full text-xs text-gray-400 hover:text-red-400 hover:bg-red-950/20 py-2 cursor-pointer"
+            className="w-full bg-red-950/30 hover:bg-red-950/60 text-red-400 hover:text-red-300 border border-red-900/40 hover:border-red-700/60 font-semibold text-xs py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5 mr-1" />
+            <LogOut className="w-3.5 h-3.5 text-red-400" />
             Darse de baja del sorteo
           </Button>
         </div>
@@ -334,7 +358,7 @@ export function RaffleDetailPlayerView({
                 : raffle.status === "DRAWING"
                 ? "bg-purple-500/10 text-purple-400 border-purple-500/30 animate-pulse"
                 : raffle.status === "FINISHED"
-                ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
+                ? "bg-zinc-950/90 text-yellow-400 border-yellow-400/60 shadow-lg font-black"
                 : "bg-zinc-800 text-gray-400 border-zinc-700"
             }`}
           >

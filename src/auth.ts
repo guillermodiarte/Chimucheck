@@ -43,6 +43,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const providerAccountId = account.providerAccountId;
           const email = user.email ? user.email.toLowerCase().trim() : null;
 
+          // Helper to extract whatever data the OAuth provider delivers (name, phone, avatar, username)
+          const extractedName =
+            user.name ||
+            (profile as any)?.name ||
+            ((profile as any)?.given_name && (profile as any)?.family_name
+              ? `${(profile as any).given_name} ${(profile as any).family_name}`.trim()
+              : null) ||
+            (profile as any)?.data?.name ||
+            null;
+
+          const extractedPhone =
+            (user as any)?.phone ||
+            (profile as any)?.phone_number ||
+            (profile as any)?.phone ||
+            (profile as any)?.data?.phone ||
+            null;
+
+          const extractedImage =
+            user.image ||
+            (profile as any)?.picture?.data?.url ||
+            (profile as any)?.picture ||
+            (profile as any)?.avatar_url ||
+            (profile as any)?.data?.profile_image_url ||
+            (profile as any)?.profile_image_url_https ||
+            null;
+
           // 1. Check if this OAuth account already exists
           const existingAccount = await db.account.findUnique({
             where: {
@@ -70,22 +96,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               player.registrationStatus = "APPROVED";
             }
 
-            // Update avatar if missing in DB
-            if (!player.image && user.image) {
-              await db.player.update({
-                where: { id: player.id },
-                data: { image: user.image },
-              });
+            // Update profile data from OAuth if missing in DB
+            const playerUpdates: any = {};
+            if (!player.image && extractedImage) playerUpdates.image = extractedImage;
+            if (!player.name && extractedName) playerUpdates.name = extractedName;
+            if (!player.phone && extractedPhone) playerUpdates.phone = extractedPhone;
+
+            // Mark needsProfileCompletion if missing critical tournament data
+            const missingData = !player.province || !player.city || !player.name;
+            if (missingData && !player.needsProfileCompletion) {
+              playerUpdates.needsProfileCompletion = true;
+              player.needsProfileCompletion = true;
             }
 
-            // Mark existing OAuth users who haven't filled province/city
-            const missingData = !player.province || !player.city;
-            if (missingData && !player.needsProfileCompletion) {
+            if (Object.keys(playerUpdates).length > 0) {
               await db.player.update({
                 where: { id: player.id },
-                data: { needsProfileCompletion: true },
+                data: playerUpdates,
               });
-              player.needsProfileCompletion = true;
             }
 
             user.id = player.id;
@@ -133,21 +161,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 },
               });
 
-              if (!existingPlayer.image && user.image) {
-                await db.player.update({
-                  where: { id: existingPlayer.id },
-                  data: { image: user.image },
-                });
-              }
+              const playerUpdates: any = {};
+              if (!existingPlayer.image && extractedImage) playerUpdates.image = extractedImage;
+              if (!existingPlayer.name && extractedName) playerUpdates.name = extractedName;
+              if (!existingPlayer.phone && extractedPhone) playerUpdates.phone = extractedPhone;
 
               // Mark existing OAuth users who haven't filled province/city
-              const missingData = !existingPlayer.province || !existingPlayer.city;
+              const missingData = !existingPlayer.province || !existingPlayer.city || !existingPlayer.name;
               if (missingData && !existingPlayer.needsProfileCompletion) {
+                playerUpdates.needsProfileCompletion = true;
+                existingPlayer.needsProfileCompletion = true;
+              }
+
+              if (Object.keys(playerUpdates).length > 0) {
                 await db.player.update({
                   where: { id: existingPlayer.id },
-                  data: { needsProfileCompletion: true },
+                  data: playerUpdates,
                 });
-                existingPlayer.needsProfileCompletion = true;
               }
 
               user.id = existingPlayer.id;
@@ -162,7 +192,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const finalEmail = email || `${provider}_${providerAccountId}@chimuchek.local`;
 
           let baseAlias = (
-            user.name ||
+            (profile as any)?.data?.username ||
+            (profile as any)?.screen_name ||
+            (profile as any)?.username ||
+            extractedName ||
             (user.email ? user.email.split("@")[0] : null) ||
             `${provider}_player`
           )
@@ -187,10 +220,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           const newPlayer = await db.player.create({
             data: {
-              name: user.name || uniqueAlias,
+              name: extractedName || uniqueAlias,
               email: finalEmail,
               alias: uniqueAlias,
-              image: user.image,
+              image: extractedImage,
+              phone: extractedPhone,
               active: true,
               registrationStatus: "APPROVED",
               needsProfileCompletion: true,

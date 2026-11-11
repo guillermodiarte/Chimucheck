@@ -96,6 +96,17 @@ export default async function Home() {
         interval={bannerInterval}
       />
 
+      {/* News Section */}
+      {showNews && (
+        <section id="news" className="py-20 px-4 max-w-[1400px] mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
+            <span className="text-primary">Últimas</span> Novedades
+          </h2>
+
+          <NewsGrid news={news} />
+        </section>
+      )}
+
       {/* Streaming Section */}
       <StreamingSection config={streamingContent} />
 
@@ -120,25 +131,10 @@ export default async function Home() {
       {/* ChimuCoin Section */}
       <ChimuCoinSectionWrapper />
 
-
-
-
-
-      {/* News Section */}
-      {showNews && (
-        <section id="news" className="py-24 px-4 max-w-[1400px] mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
-            <span className="text-primary">Últimas</span> Novedades
-          </h2>
-
-          <NewsGrid news={news} />
-        </section>
-      )}
-
       {/* Events Section */}
       {showEvents && events.length > 0 && (
-        <section id="events" className="py-24 px-4 max-w-[1400px] mx-auto bg-gray-900/20">
-          <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
+        <section id="events" className="pt-10 pb-20 px-4 max-w-[1400px] mx-auto bg-gray-900/20">
+          <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
             Próximos <span className="text-secondary">Eventos</span>
           </h2>
 

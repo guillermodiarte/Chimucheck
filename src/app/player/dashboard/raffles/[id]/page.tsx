@@ -9,18 +9,16 @@ export default async function PlayerRaffleDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await auth();
-  if (!session?.user) {
-    redirect("/player/login");
-  }
-
   const { id } = await params;
-  const playerId = session.user.id;
-  const currentUser = {
-    id: session.user.id,
-    name: session.user.name || null,
-    alias: (session.user as any).alias || null,
-    image: (session.user as any).image || session.user.image || null,
-  };
+  const playerId = session?.user?.id;
+  const currentUser = session?.user
+    ? {
+        id: session.user.id,
+        name: session.user.name || null,
+        alias: (session.user as any).alias || null,
+        image: (session.user as any).image || session.user.image || null,
+      }
+    : null;
 
   const raffle = await db.raffle.findUnique({
     where: { id },
@@ -71,7 +69,7 @@ export default async function PlayerRaffleDetailPage({
             isEntered,
             myEntryDate,
           } as any}
-          isLoggedIn={true}
+          isLoggedIn={Boolean(session?.user)}
           currentUser={currentUser}
         />
       </div>
